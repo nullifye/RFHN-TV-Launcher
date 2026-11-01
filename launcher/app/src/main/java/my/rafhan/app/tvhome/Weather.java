@@ -102,6 +102,21 @@ final class Weather {
         }
     }
 
+    /**
+     * ECMWF's weather now (its IFS model, through Open-Meteo): the temperature and how hot it
+     * feels (°C), and the 15-minute step it's for (Malaysian time).
+     */
+    static final class Now {
+        final double temp, feels;
+        final LocalDateTime time;
+
+        Now(double temp, double feels, LocalDateTime time) {
+            this.temp = temp;
+            this.feels = feels;
+            this.time = time;
+        }
+    }
+
     /** One hourly API reading at a station (APIMS's table of the last 24 hours). */
     static final class Reading {
         final LocalDateTime time;
@@ -326,6 +341,23 @@ final class Weather {
             }
             return new Air((int) Math.round(cur.getDouble("us_aqi")), cur.optDouble("pm2_5", Double.NaN),
                     cur.optDouble("aerosol_optical_depth", Double.NaN), time);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Open-Meteo's ECMWF "current" block, or null; a missing feels-like is NaN. */
+    static Now parseNow(String json) {
+        try {
+            JSONObject cur = new JSONObject(json).getJSONObject("current");
+            if (cur.isNull("temperature_2m")) return null;
+            LocalDateTime time = null;
+            try {
+                time = LocalDateTime.parse(cur.optString("time")); // "2026-11-01T16:00", Malaysian time
+            } catch (RuntimeException ignored) {
+                // no time: the values still show
+            }
+            return new Now(cur.getDouble("temperature_2m"), cur.optDouble("apparent_temperature", Double.NaN), time);
         } catch (Exception e) {
             return null;
         }

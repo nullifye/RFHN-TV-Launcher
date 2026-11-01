@@ -177,7 +177,7 @@ Under the prayer card (its title has a ring sun, apart from the prayer card's so
 
 ```
 ☀ WEATHER · KLANG                    ⚠ Thunderstorms warning until 20:00
-⛈ 24–32°C                    API 75 MODERATE        AQI 153 UNHEALT…
+⛈ 24–32°C FEELS 35°C        API 75 MODERATE        AQI 153 UNHEALT…
 ☀ MORNING ⛈ AFTERNOON ☀ NIGHT  ↑ Rising · +2 in 3 h   PM2.5 39 · Haze 0.78
 MET · 17:20                  APIMS · 17:00          COPERNICUS · 17:00
 ```
@@ -186,9 +186,10 @@ The band word sits beside the number; a long one that doesn't fit ends in "…".
 
 | Part | What it shows | From | Fetched |
 |---|---|---|---|
-| Weather | The title with the place and today's outlook in words ("Thunderstorms in places, afternoon"); today's low and high from MET (°C; not a "feels like"); an icon each for the morning, afternoon and night (no rain, cloudy, rain, thunderstorms); when the forecast was fetched | MET Malaysia's forecast, through data.gov.my's open API (no key) | Hourly (MET puts it out daily and sometimes revises it in the day) |
+| Weather | The title with the place and today's outlook in words ("Thunderstorms in places, afternoon"); today's low and high from MET (°C); an icon each for the morning, afternoon and night (no rain, cloudy, rain, thunderstorms); when the forecast was fetched | MET Malaysia's forecast, through data.gov.my's open API (no key) | Hourly (MET puts it out daily and sometimes revises it in the day) |
 | Warning | In amber on the title row, instead of the outlook, while a MET warning (thunderstorms, heavy rain…) names your place: "⚠ Thunderstorms warning until 20:00". MET lists districts ("Selangor (Sepang, Kuala Langat, Klang and Petaling)"), so with Location on Auto the prayer zone's areas count too. Sea warnings aren't shown. | MET Malaysia's warnings, through data.gov.my | Every 15 min (MET issues them whenever needed) |
 | API | The Air Pollutant Index at the station, its band in the band's colour (Good ≤50 blue, Moderate ≤100 green, Unhealthy ≤200 yellow, Very unhealthy ≤300 orange, Hazardous red, as soft pastels), whether it's rising or falling (the reading shown against the one 3 hours before: "↑ Rising · +2 in 3 h" in amber, "↓ Falling" in green, "→ Steady" for a move under 2), and the reading's hour | The DOE's APIMS: every station's latest hourly reading, from the same map service the APIMS portal draws from, and the station's last 24 hours (for the trend, about 6 KB) | Once an hour, when the new reading is out (from about 10 past; tried again every 10 min until it is) |
+| Feels | Beside the range: how hot it feels now (heat and humidity together), after a small word: "FEELS 35°C". Hidden until it first loads. | ECMWF's IFS model for the station's spot, through Open-Meteo (no key) | Every 15 min (its values come in 15-minute steps) |
 | AQI | The US Air Quality Index for the station's spot and its band (≤50 green, ≤100 yellow, ≤150 orange, ≤200 red, ≤300 purple, above maroon, as pastels); PM2.5 (µg/m³) and haze: the aerosol optical depth, how much the air's particles dim the sunlight (about 0.1 clear, 0.5 hazy, 1 or more thick haze); the model's hour | The EU's Copernicus Atmosphere Monitoring Service (CAMS) model, through Open-Meteo (no key) | Once an hour, at the start of each hour (its values are hourly) |
 
 
@@ -197,7 +198,7 @@ The band word sits beside the number; a long one that doesn't fit ends in "…".
 - **The forecast text** is MET's own (in Malay), put into English: "Ribut petir di beberapa tempat" → Thunderstorms in places; a phrase it doesn't know yet shows as MET wrote it.
 - **Offline:** everything is kept in `files/weather/` and shown from there straight away. A reading over 3 hours old turns grey, and a part that has never loaded shows "–".
 - **APIMS has no published API:** the card reads the APIMS portal's own map service (`eqms.doe.gov.my/api3/publicmapproxy/…/CAQM_MCAQM_Current_Reading`). If the DOE changes it, the API part shows "–" until the launcher is updated; the rest keeps working.
-- **Credits:** Weather: MET Malaysia (data.gov.my) · Air Pollutant Index: Department of Environment Malaysia (APIMS) · Air quality: Copernicus Atmosphere Monitoring Service, via Open-Meteo (CC BY 4.0).
+- **Credits:** Weather: MET Malaysia (data.gov.my) · Air Pollutant Index: Department of Environment Malaysia (APIMS) · Feels like: ECMWF, via Open-Meteo (CC BY 4.0) · Air quality: Copernicus Atmosphere Monitoring Service, via Open-Meteo (CC BY 4.0).
 
 ## Most used apps
 

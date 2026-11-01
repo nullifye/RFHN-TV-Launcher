@@ -38,6 +38,7 @@ import java.util.concurrent.Executors;
  * Everything is kept in files/weather/ and shown from there straight away (offline too), and
  * fetched again as its source changes: the APIMS reading (with the station's last 24 hours, for
  * the trend) once each hour's is out, from about 10 past; Copernicus's values each new hour;
+ * ECMWF's feels-like now (Open-Meteo) every 15 minutes;
  * MET's warnings every 15 minutes; its forecast hourly; the list of MET places weekly. It's
  * checked on the clock's minute tick, so there's no polling; the fetches run on their own thread
  * so a slow server never holds up the app list.
@@ -52,11 +53,14 @@ final class WeatherPanel {
     private static final String WARNINGS = "https://api.data.gov.my/weather/warning/?limit=30";
     private static final String CAMS = "https://air-quality-api.open-meteo.com/v1/air-quality"
             + "?current=us_aqi,pm2_5,aerosol_optical_depth&timezone=Asia%2FKuala_Lumpur";
+    /** ECMWF's feels-like now (its IFS model, 15-minute steps), for the same spot. */
+    private static final String ECMWF = "https://api.open-meteo.com/v1/forecast"
+            + "?current=temperature_2m,apparent_temperature&models=ecmwf_ifs025&timezone=Asia%2FKuala_Lumpur";
     // How often each part is fetched, by how often its source changes: MET's forecast is put out
     // daily (now and then revised in the day), its warnings whenever needed; the APIMS reading and
     // Copernicus's values are hourly (hourlyDue); the place list hardly ever changes.
     private static final long FORECAST_EVERY_MS = 3_600_000L, WARNINGS_EVERY_MS = 15 * 60_000L,
-            PLACES_EVERY_MS = 7 * 24 * 3_600_000L, HOURLY_RETRY_MS = 10 * 60_000L,
+            PLACES_EVERY_MS = 7 * 24 * 3_600_000L, NOW_EVERY_MS = 15 * 60_000L, HOURLY_RETRY_MS = 10 * 60_000L,
             RETRY_MS = 5 * 60_000L, OLD_MS = 3 * 3_600_000L;
     /** Minutes past the hour each hourly source has its new reading out (the APIMS portal looks at :10). */
     private static final int APIMS_MINUTE = 10, CAMS_MINUTE = 1;
@@ -77,7 +81,7 @@ final class WeatherPanel {
     private final Handler main = new Handler(Looper.getMainLooper());
     private final float dp;
     private final ImageView titleIcon, skyIcon;
-    private final TextView title, outlook, temp, skyTime;
+    private final TextView title, outlook, temp, feelsLabel, feelsTemp, skyTime;
     private final ImageView[] partIcons = new ImageView[3]; // morning, afternoon, night
     private final Gauge api, aqi;
     private boolean fetching;
@@ -118,8 +122,15 @@ final class WeatherPanel {
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(px(16), px(16));
         slp.setMarginEnd(px(6));
         top.addView(skyIcon, slp);
+        // The range, then how hot it feels now (ECMWF), with a small word before it: "FEELS 35°C".
+        LinearLayout temps = new LinearLayout(ctx); // baseline-aligned: the word sits on the numbers' line
         temp = value();
-        top.addView(temp);
+        temps.addView(temp);
+        feelsLabel = small("FEELS", DIM, 8.5f, 0.06f);
+        temps.addView(feelsLabel, start(9));
+        feelsTemp = value();
+        temps.addView(feelsTemp, start(4));
+        top.addView(temps);
         sky.addView(top);
         LinearLayout parts = new LinearLayout(ctx);
         parts.setGravity(Gravity.CENTER_VERTICAL);
@@ -213,6 +224,10 @@ final class WeatherPanel {
         }
 
         Weather.Station st = station(ctx, stations(ctx));
+        File nf = st == null ? null : file(ctx, nowName(st.id));
+        Weather.Now now = nf == null ? null : Weather.parseNow(read(nf));
+        boolean nowOld = now != null && System.currentTimeMillis() - nf.lastModified() > OLD_MS;
+        degrees(feelsTemp, feelsLabel, now == null ? Double.NaN : now.feels, nowOld);
         if (st != null && st.api >= 0) {
             boolean old = st.time == null || st.time.isBefore(LocalDateTime.now().minus(Duration.ofMillis(OLD_MS)));
             int b = Weather.band(st.api, Weather.API_TOP);
@@ -239,6 +254,16 @@ final class WeatherPanel {
         } else {
             aqi.none("AQI –", "COPERNICUS");
         }
+    }
+
+    /** "35°C" and its word, greyed when old; hidden when there's no value. */
+    private static void degrees(TextView number, TextView word, double value, boolean old) {
+        int show = Double.isNaN(value) ? android.view.View.GONE : android.view.View.VISIBLE;
+        number.setVisibility(show);
+        word.setVisibility(show);
+        if (Double.isNaN(value)) return;
+        number.setText(Math.round(value) + "°C");
+        number.setTextColor(old ? DIM : TEXT);
     }
 
     /**
@@ -358,7 +383,7 @@ final class WeatherPanel {
         if (stationsDue(ctx, now)) return true;
         if (now - file(ctx, "warnings.json").lastModified() > WARNINGS_EVERY_MS) return true;
         Weather.Station s = station(ctx, stations(ctx));
-        return s != null && (airDue(ctx, s, now) || trendDue(ctx, s));
+        return s != null && (airDue(ctx, s, now) || trendDue(ctx, s) || nowDue(ctx, s, now));
     }
 
     /** The APIMS readings: the shown station's newer hour should be out (from :10 past the hour). */
@@ -380,6 +405,11 @@ final class WeatherPanel {
         Weather.Air a = Weather.parseAir(read(f));
         LocalDateTime have = a == null || Double.isNaN(a.haze) ? null : a.time;
         return Weather.hourlyDue(have, LocalDateTime.now(), CAMS_MINUTE, now - f.lastModified(), HOURLY_RETRY_MS);
+    }
+
+    /** ECMWF's values now: older than one 15-minute step. */
+    private static boolean nowDue(Context ctx, Weather.Station s, long now) {
+        return now - file(ctx, nowName(s.id)).lastModified() > NOW_EVERY_MS;
     }
 
     /** Fetches whatever is old, in order (the place and station decide the rest). Blocking. */
@@ -412,6 +442,12 @@ final class WeatherPanel {
                 fetchTo(ctx, CAMS + String.format(Locale.ROOT, "&latitude=%.4f&longitude=%.4f", s.lat, s.lon),
                         f.getName());
             }
+            File n = file(ctx, nowName(s.id));
+            if (nowDue(ctx, s, now)) {
+                deleteOthers(ctx, "now-", n.getName());
+                fetchTo(ctx, ECMWF + String.format(Locale.ROOT, "&latitude=%.4f&longitude=%.4f", s.lat, s.lon),
+                        n.getName());
+            }
         }
     }
 
@@ -427,6 +463,10 @@ final class WeatherPanel {
 
     private static String trendName(String stationId) {
         return "trend-" + stationId + ".json";
+    }
+
+    private static String nowName(String stationId) {
+        return "now-" + stationId + ".json";
     }
 
     private static String airName(String stationId) {
@@ -498,6 +538,13 @@ final class WeatherPanel {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = px(margin);
+        return lp;
+    }
+
+    private LinearLayout.LayoutParams start(int margin) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMarginStart(px(margin));
         return lp;
     }
 

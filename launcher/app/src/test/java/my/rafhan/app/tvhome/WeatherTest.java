@@ -107,6 +107,21 @@ public class WeatherTest {
     }
 
     @Test
+    public void ecmwfNow() {
+        String json = "{\"latitude\":3.0,\"longitude\":101.5,\"utc_offset_seconds\":28800,\"current\":"
+                + "{\"time\":\"2026-11-01T16:00\",\"interval\":900,\"temperature_2m\":29.7,\"apparent_temperature\":35.1}}";
+        Weather.Now n = Weather.parseNow(json);
+        assertNotNull(n);
+        assertEquals(29.7, n.temp, 1e-9);
+        assertEquals(35.1, n.feels, 1e-9);
+        assertEquals(LocalDateTime.of(2026, 11, 1, 16, 0), n.time);
+        Weather.Now noFeels = Weather.parseNow("{\"current\":{\"time\":\"x\",\"temperature_2m\":30}}");
+        assertNotNull(noFeels); // a bad time or missing feels-like still shows the temperature
+        assertTrue(Double.isNaN(noFeels.feels));
+        assertNull(Weather.parseNow("{\"current\":{\"temperature_2m\":null}}"));
+    }
+
+    @Test
     public void everyPhraseMetUsesHasEnglish() {
         // Every summary and period seen across all 440 places over 7 days on 31 October 2026.
         String[] phrases = {"Tiada Hujan", "Ribut petir", "Ribut petir di beberapa tempat", "Hujan di beberapa tempat",
@@ -215,6 +230,7 @@ public class WeatherTest {
             assertTrue(Weather.parsePlaces(bad).isEmpty());
             assertTrue(Weather.parseStations(bad).isEmpty());
             assertNull(Weather.parseAir(bad));
+            assertNull(Weather.parseNow(bad));
         }
     }
 
