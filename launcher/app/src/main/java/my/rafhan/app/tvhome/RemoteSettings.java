@@ -62,13 +62,14 @@ final class RemoteSettings {
                         new int[] {0, 1, 2, 3}, new String[] {"Off", "Low", "Medium", "High"}),
                 row("wallpaper", LauncherSettings.WALLPAPER, "Wallpaper", "Bing photo of the day, built-in photos or your own")
                         .put("value", LauncherSettings.wallpaper(ctx))
-                        .put("name", SettingsScreen.wallpaperName(LauncherSettings.wallpaper(ctx)))));
+                        .put("name", SettingsScreen.wallpaperName(LauncherSettings.wallpaper(ctx))),
+                toggle(LauncherSettings.WEATHER_FX, "Weather effects", "Rain, lightning and haze, as it is outside")));
         String zone = LauncherSettings.zone(ctx);
         String[] z = zoneEntry(ctx, zone);
-        cats.put(category("Prayer times", "Zone, card and azan",
+        cats.put(category("Prayer times", "Card, zone and azan",
+                toggle(LauncherSettings.SHOW_PRAYER, "Prayer card", "Today's five prayer times on the home screen"),
                 row("zone", LauncherSettings.ZONE, "Zone", z != null ? z[0] + " · " + z[2] : "JAKIM e-solat zone")
                         .put("value", zone),
-                toggle(LauncherSettings.SHOW_PRAYER, "Prayer card", "Today's five prayer times on the home screen"),
                 toggle(LauncherSettings.AZAN, "Azan", "Plays the azan and shows a banner at each prayer time, while the TV is on"),
                 choice(LauncherSettings.PRAYER_REMINDER, "Reminder before prayer",
                         "A banner over any app, without sound, while the TV is on",

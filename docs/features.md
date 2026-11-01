@@ -160,8 +160,8 @@ The gear at the end of the top bar opens the launcher's Settings: categories on 
 
 | Category | Options |
 |---|---|
-| Home screen | Clock Auto / 12-hour / 24-hour, apps per row (5, 6 or 7: the dock and the app list), System card, Now Playing card (the Weather card is under Weather), wallpaper dim (Off/Low/Medium/High), wallpaper (Bing daily photo, seven built-in photos, your pictures or none). A hidden card's column closes up. |
-| Prayer times | Zone (picker), prayer card on/off, azan on/off, reminder before prayer (Off / 5 / 10 / 15 / 30 min), play azan now |
+| Home screen | Clock Auto / 12-hour / 24-hour, apps per row (5, 6 or 7: the dock and the app list), System card, Now Playing card (the Weather card is under Weather), wallpaper dim (Off/Low/Medium/High), wallpaper (Bing daily photo, seven built-in photos, your pictures or none), weather effects on/off (they work with the Weather card off too). A hidden card's column closes up. |
+| Prayer times | Prayer card on/off, zone (picker), azan on/off, reminder before prayer (Off / 5 / 10 / 15 / 30 min), play azan now |
 | Weather | Weather card on/off, location (Auto or any of MET Malaysia's 440 places), air quality station (Nearest or any of the 68 APIMS stations) |
 | Most used | Most used card on/off, week starts on (Monday / Sunday), leave out (app picker) |
 | Screen saver | On/off, which one (OK cycles Prayer time, Live log, Globe and the TV's others), Start now (preview); with Globe chosen, a switch for each of its layers (clouds, wind and countries start off) |
@@ -198,6 +198,12 @@ The band word sits beside the number; a long one that doesn't fit ends in "…".
 - **The forecast text** is MET's own (in Malay), put into English: "Ribut petir di beberapa tempat" → Thunderstorms in places; a phrase it doesn't know yet shows as MET wrote it.
 - **Offline:** everything is kept in `files/weather/` and shown from there straight away. A reading over 3 hours old turns grey, and a part that has never loaded shows "–".
 - **APIMS has no published API:** the card reads the APIMS portal's own map service (`eqms.doe.gov.my/api3/publicmapproxy/…/CAQM_MCAQM_Current_Reading`). If the DOE changes it, the API part shows "–" until the launcher is updated; the rest keeps working.
+- **Weather effects** (Settings → Home screen, on by default): the home screen shows the weather as it is now, behind the cards, from ECMWF's weather code (fetched with the feels-like, every 15 min):
+  - **Drizzle or fog:** a misty glass with fine droplets.
+  - **Rain:** drops land on the glass, more and bigger the heavier the rain, and some run down it, wiping a clear trail. Each drop shows the wallpaper behind it shrunk and upside down, as real water does.
+  - **Thunderstorm** (or a MET thunderstorm warning in force): soft lightning flashes every 5–13 s, sometimes a double flash.
+  - **Unhealthy air** (API over 100): a faint warm haze.
+  - **It plays, then settles:** for 45 seconds after home comes back to the front, or the weather gets worse, then everything stops where it is and the screen is still, so a home screen left on uses no CPU for it. It runs at about 30 frames a second while it plays. When the rain stops, the glass clears over 2–3 seconds.
 - **Credits:** Weather: MET Malaysia (data.gov.my) · Air Pollutant Index: Department of Environment Malaysia (APIMS) · Feels like: ECMWF, via Open-Meteo (CC BY 4.0) · Air quality: Copernicus Atmosphere Monitoring Service, via Open-Meteo (CC BY 4.0).
 
 ## Most used apps

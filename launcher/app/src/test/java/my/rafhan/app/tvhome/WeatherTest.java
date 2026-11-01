@@ -1,6 +1,7 @@
 package my.rafhan.app.tvhome;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -109,16 +110,35 @@ public class WeatherTest {
     @Test
     public void ecmwfNow() {
         String json = "{\"latitude\":3.0,\"longitude\":101.5,\"utc_offset_seconds\":28800,\"current\":"
-                + "{\"time\":\"2026-11-01T16:00\",\"interval\":900,\"temperature_2m\":29.7,\"apparent_temperature\":35.1}}";
+                + "{\"time\":\"2026-11-01T16:00\",\"interval\":900,\"temperature_2m\":29.7,\"apparent_temperature\":35.1,\"weather_code\":53}}";
         Weather.Now n = Weather.parseNow(json);
         assertNotNull(n);
         assertEquals(29.7, n.temp, 1e-9);
         assertEquals(35.1, n.feels, 1e-9);
         assertEquals(LocalDateTime.of(2026, 11, 1, 16, 0), n.time);
+        assertEquals(53, n.code);
         Weather.Now noFeels = Weather.parseNow("{\"current\":{\"time\":\"x\",\"temperature_2m\":30}}");
         assertNotNull(noFeels); // a bad time or missing feels-like still shows the temperature
         assertTrue(Double.isNaN(noFeels.feels));
+        assertEquals(-1, noFeels.code);
         assertNull(Weather.parseNow("{\"current\":{\"temperature_2m\":null}}"));
+    }
+
+    @Test
+    public void homeScreenEffects() {
+        assertEquals(Weather.FX_NONE, Weather.rainEffect(2)); // partly cloudy
+        assertEquals(Weather.FX_NONE, Weather.rainEffect(-1)); // no code yet
+        assertEquals(Weather.FX_MIST, Weather.rainEffect(53)); // drizzle
+        assertEquals(Weather.FX_MIST, Weather.rainEffect(45)); // fog
+        assertEquals(Weather.FX_LIGHT, Weather.rainEffect(80));
+        assertEquals(Weather.FX_RAIN, Weather.rainEffect(95));
+        assertEquals(Weather.FX_HEAVY, Weather.rainEffect(82));
+        assertTrue(Weather.thunder(95, null));
+        assertFalse(Weather.thunder(63, null));
+        LocalDateTime t = LocalDateTime.of(2026, 11, 1, 15, 0);
+        assertTrue(Weather.thunder(1, new Weather.Warning("THUNDERSTORMS WARNING", "", t, t.plusHours(3))));
+        assertTrue(Weather.thunder(1, new Weather.Warning("Amaran Ribut Petir", "", t, t.plusHours(3))));
+        assertFalse(Weather.thunder(1, new Weather.Warning("CONTINUOUS RAIN WARNING", "", t, t.plusHours(3))));
     }
 
     @Test

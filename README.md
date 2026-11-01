@@ -37,7 +37,7 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
     <td width="50%"><img src="docs/app-grid.jpg" width="100%" alt="All apps grid"></td>
   </tr>
   <tr>
-    <td valign="top"><b>Home</b>: big clock with the date and Hijri date, today's prayer times with a countdown, your most used apps this week, today's weather and air quality (MET Malaysia, APIMS and Copernicus), a system card (CPU, RAM, storage, network, USB debugging), Now Playing with cover art and controls, and an app dock you arrange yourself.</td>
+    <td valign="top"><b>Home</b>: big clock with the date and Hijri date, today's prayer times with a countdown, your most used apps this week, today's weather and air quality (MET Malaysia, APIMS and Copernicus) with rain, lightning and haze on the glass as the weather is now, a system card (CPU, RAM, storage, network, USB debugging), Now Playing with cover art and controls, and an app dock you arrange yourself.</td>
     <td valign="top"><b>All apps</b> (Down from the dock): 5 per row (6 or 7 in Settings, the dock follows), most used first (all time), with a glass focus highlight that springs from tile to tile. Hold OK on any app to add it to the dock.</td>
   </tr>
   <tr>

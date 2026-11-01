@@ -131,6 +131,7 @@ public class MainActivity extends Activity {
     private PrayerPanel prayer;
     private UsagePanel usage;
     private WeatherPanel weather;
+    private WeatherEffects weatherFx;
     /** This week (the Most used card) and all time (the grid order). */
     private UsageScores.Scores usageScores = UsageScores.Scores.NONE;
     private final GradientDrawable glowDrawable = new GradientDrawable();
@@ -310,7 +311,12 @@ public class MainActivity extends Activity {
             up.setFocused(upIdx);
         });
         usage = new UsagePanel(this, usageCard);
-        weather = new WeatherPanel(this, weatherCard);
+        // The weather on the glass: over the wallpaper, under everything else.
+        weatherFx = new WeatherEffects(this, wallpaper);
+        FrameLayout rootView = findViewById(R.id.root);
+        rootView.addView(weatherFx, rootView.indexOfChild(wallpaper) + 1, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        weather = new WeatherPanel(this, weatherCard, weatherFx);
         alignSystemPanel();
         centreDatesOnClock();
 
@@ -1521,6 +1527,9 @@ public class MainActivity extends Activity {
                 applyCardSettings();
                 weather.settingsChanged(); // back on: show and fetch now, not at the next minute
                 break;
+            case LauncherSettings.WEATHER_FX:
+                weather.settingsChanged();
+                break;
             case LauncherSettings.WALL_DIM:
                 applyWallpaperDim();
                 break;
@@ -1702,6 +1711,7 @@ public class MainActivity extends Activity {
     private void applyWallpaperDim() {
         int a = LauncherSettings.DIM_ALPHA[Math.max(0, Math.min(3, LauncherSettings.choice(this, LauncherSettings.WALL_DIM)))];
         wallpaper.setColorFilter(Color.argb(a, 0, 0, 0), PorterDuff.Mode.SRC_ATOP);
+        weatherFx.wallpaperChanged();
     }
 
     /**
@@ -1747,6 +1757,7 @@ public class MainActivity extends Activity {
             wallpaperGen++; // drop a decode still in flight
             wallpaper.setImageDrawable(null);
             wallpaper.setVisibility(View.GONE);
+            weatherFx.wallpaperChanged();
             return;
         }
         File file = found;
@@ -1898,9 +1909,11 @@ public class MainActivity extends Activity {
         if (want == live) return;
         live = want;
         if (want) {
+            weatherFx.resume();
             system.onResume();
             if (LauncherSettings.flag(this, LauncherSettings.SHOW_NOW)) nowPlaying.start();
         } else {
+            weatherFx.pause();
             system.onPause();
             nowPlaying.stop();
         }

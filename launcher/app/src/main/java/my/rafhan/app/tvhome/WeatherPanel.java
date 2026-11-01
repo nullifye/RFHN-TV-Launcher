@@ -53,9 +53,9 @@ final class WeatherPanel {
     private static final String WARNINGS = "https://api.data.gov.my/weather/warning/?limit=30";
     private static final String CAMS = "https://air-quality-api.open-meteo.com/v1/air-quality"
             + "?current=us_aqi,pm2_5,aerosol_optical_depth&timezone=Asia%2FKuala_Lumpur";
-    /** ECMWF's feels-like now (its IFS model, 15-minute steps), for the same spot. */
+    /** ECMWF's feels-like and weather code now (its IFS model, 15-minute steps), for the same spot. */
     private static final String ECMWF = "https://api.open-meteo.com/v1/forecast"
-            + "?current=temperature_2m,apparent_temperature&models=ecmwf_ifs025&timezone=Asia%2FKuala_Lumpur";
+            + "?current=temperature_2m,apparent_temperature,weather_code&models=ecmwf_ifs025&timezone=Asia%2FKuala_Lumpur";
     // How often each part is fetched, by how often its source changes: MET's forecast is put out
     // daily (now and then revised in the day), its warnings whenever needed; the APIMS reading and
     // Copernicus's values are hourly (hourlyDue); the place list hardly ever changes.
@@ -84,11 +84,13 @@ final class WeatherPanel {
     private final TextView title, outlook, temp, feelsLabel, feelsTemp, skyTime;
     private final ImageView[] partIcons = new ImageView[3]; // morning, afternoon, night
     private final Gauge api, aqi;
+    private final WeatherEffects effects; // the home screen's rain, lightning and haze, or null
     private boolean fetching;
     private long lastAttempt;
 
-    WeatherPanel(Context ctx, LinearLayout root) {
+    WeatherPanel(Context ctx, LinearLayout root, WeatherEffects effects) {
         this.ctx = ctx;
+        this.effects = effects;
         dp = ctx.getResources().getDisplayMetrics().density;
         // Title: WEATHER · KLANG, and today's outlook in words on the right.
         LinearLayout header = new LinearLayout(ctx);
@@ -154,7 +156,12 @@ final class WeatherPanel {
 
     /** Called every minute (clock tick) and on resume: shows what's kept, fetches what's old. */
     void refresh() {
-        if (!LauncherSettings.flag(ctx, LauncherSettings.SHOW_WEATHER)) return; // off: nothing fetched
+        // Fetched for the card or the effects (the effects work with the card hidden); both off: nothing.
+        if (!LauncherSettings.flag(ctx, LauncherSettings.SHOW_WEATHER)
+                && !LauncherSettings.flag(ctx, LauncherSettings.WEATHER_FX)) {
+            if (effects != null) effects.setWeather(Weather.FX_NONE, false, false);
+            return;
+        }
         render();
         if (fetching || System.currentTimeMillis() - lastAttempt < RETRY_MS) return;
         if (stale(ctx)) fetch();
@@ -228,8 +235,17 @@ final class WeatherPanel {
         Weather.Now now = nf == null ? null : Weather.parseNow(read(nf));
         boolean nowOld = now != null && System.currentTimeMillis() - nf.lastModified() > OLD_MS;
         degrees(feelsTemp, feelsLabel, now == null ? Double.NaN : now.feels, nowOld);
+        boolean apiOld = st == null || st.time == null
+                || st.time.isBefore(LocalDateTime.now().minus(Duration.ofMillis(OLD_MS)));
+        if (effects != null) {
+            // The weather now (an old reading counts as none): rain, lightning, and haze when the API is unhealthy.
+            boolean on = LauncherSettings.flag(ctx, LauncherSettings.WEATHER_FX);
+            int code = now == null || nowOld ? -1 : now.code;
+            effects.setWeather(on ? Weather.rainEffect(code) : Weather.FX_NONE, on && Weather.thunder(code, warning),
+                    on && !apiOld && st.api > 100);
+        }
         if (st != null && st.api >= 0) {
-            boolean old = st.time == null || st.time.isBefore(LocalDateTime.now().minus(Duration.ofMillis(OLD_MS)));
+            boolean old = apiOld;
             int b = Weather.band(st.api, Weather.API_TOP);
             // Rising or falling: this station's last few hours (APIMS's hourly table).
             Integer change = Weather.change(Weather.parseHourly(read(file(ctx, trendName(st.id))), st.id), st.time,

@@ -32,7 +32,7 @@ final class LauncherSettings {
             STATUS_BG = "status_background", APPS_PER_ROW = "apps_per_row";
     // The Weather card (Settings → Weather): on/off, MET place id ("" = Auto), APIMS station id ("" = Nearest).
     static final String SHOW_WEATHER = "show_weather", WEATHER_PLACE = "weather_place",
-            WEATHER_STATION = "weather_station";
+            WEATHER_STATION = "weather_station", WEATHER_FX = "weather_effects";
     // The Globe screen saver's layers (Settings → Screen saver, when Globe is the one shown).
     static final String GLOBE_PRAYER_LINES = "globe_prayer_lines", GLOBE_MAKKAH = "globe_makkah",
             GLOBE_ZONE = "globe_zone", GLOBE_CITY_LIGHTS = "globe_city_lights", GLOBE_CLOUDS = "globe_clouds",

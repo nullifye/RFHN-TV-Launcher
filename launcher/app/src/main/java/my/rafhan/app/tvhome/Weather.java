@@ -104,15 +104,18 @@ final class Weather {
 
     /**
      * ECMWF's weather now (its IFS model, through Open-Meteo): the temperature and how hot it
-     * feels (°C), and the 15-minute step it's for (Malaysian time).
+     * feels (°C), the WMO weather code (-1 if missing) and the 15-minute step it's for (Malaysian
+     * time).
      */
     static final class Now {
         final double temp, feels;
+        final int code;
         final LocalDateTime time;
 
-        Now(double temp, double feels, LocalDateTime time) {
+        Now(double temp, double feels, int code, LocalDateTime time) {
             this.temp = temp;
             this.feels = feels;
+            this.code = code;
             this.time = time;
         }
     }
@@ -357,10 +360,41 @@ final class Weather {
             } catch (RuntimeException ignored) {
                 // no time: the values still show
             }
-            return new Now(cur.getDouble("temperature_2m"), cur.optDouble("apparent_temperature", Double.NaN), time);
+            return new Now(cur.getDouble("temperature_2m"), cur.optDouble("apparent_temperature", Double.NaN),
+                    cur.isNull("weather_code") ? -1 : cur.optInt("weather_code", -1), time);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // ---------------------------------------------------------------- home screen effects
+
+    /** The home screen's rain on the glass: none, mist (drizzle, fog), light rain, rain, heavy rain. */
+    static final int FX_NONE = 0, FX_MIST = 1, FX_LIGHT = 2, FX_RAIN = 3, FX_HEAVY = 4;
+
+    /** The rain effect for a WMO weather code (ECMWF's weather_code now). */
+    static int rainEffect(int wmo) {
+        switch (wmo) {
+            case 45: case 48: // fog
+            case 51: case 53: case 55: case 56: case 57: // drizzle
+                return FX_MIST;
+            case 61: case 66: case 80: // slight rain, showers
+                return FX_LIGHT;
+            case 63: case 81: case 95: // moderate rain, showers, a thunderstorm
+                return FX_RAIN;
+            case 65: case 67: case 82: case 96: case 99: // heavy rain, violent showers, storms with hail
+                return FX_HEAVY;
+            default:
+                return FX_NONE;
+        }
+    }
+
+    /** Lightning: a thunderstorm now (WMO 95–99), or a MET thunderstorm warning in force. */
+    static boolean thunder(int wmo, Warning warning) {
+        if (wmo == 95 || wmo == 96 || wmo == 99) return true;
+        if (warning == null) return false;
+        String t = warning.title.toLowerCase(Locale.ROOT);
+        return t.contains("thunder") || t.contains("ribut petir");
     }
 
     // ---------------------------------------------------------------- choosing

@@ -443,6 +443,7 @@ final class SettingsScreen {
     }
 
     private void prayerRows(List<Row> out) {
+        out.add(toggle(LauncherSettings.SHOW_PRAYER, "Prayer card", "Today's five prayer times on the home screen"));
         String zone = LauncherSettings.zone(ctx);
         String[] z = RemoteSettings.zoneEntry(ctx, zone);
         Row r = new Row(PICKER, "Zone");
@@ -450,7 +451,6 @@ final class SettingsScreen {
         r.value = () -> zone;
         r.action = this::openZonePicker;
         out.add(r);
-        out.add(toggle(LauncherSettings.SHOW_PRAYER, "Prayer card", "Today's five prayer times on the home screen"));
         out.add(toggle(LauncherSettings.AZAN, "Azan", "Plays the azan and shows a banner at each prayer time, while the TV is on"));
         out.add(choice(LauncherSettings.PRAYER_REMINDER, "Reminder before prayer",
                 "A banner over any app, without sound, while the TV is on",
@@ -512,6 +512,7 @@ final class SettingsScreen {
         w.value = () -> name;
         w.action = this::openWallpaperPicker;
         out.add(w);
+        out.add(toggle(LauncherSettings.WEATHER_FX, "Weather effects", "Rain, lightning and haze, as it is outside"));
     }
 
     /** The name the wallpaper row shows (also the phone remote's). */
