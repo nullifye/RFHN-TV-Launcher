@@ -46,7 +46,7 @@ public class GlobeDream extends DreamService {
         root.setBackgroundColor(0xFF000000);
         globe = new GlobeView(ui, feeds);
         globe.failed = this::cantDraw;
-        overlay = new GlobeView.Overlay(ui, feeds);
+        overlay = new GlobeView.Overlay(ui, feeds, globe);
         root.addView(globe);
         root.addView(overlay);
         setContentView(root);

@@ -59,7 +59,7 @@ final class GlobeView extends GLSurfaceView {
     /** Which layers are on (Settings → Screen saver, with Globe chosen); read again every few seconds. */
     static final class Layers {
         boolean sky, lines, makkah, zone, lights, clouds, snow, aurora, wind, glint, rim, edits, quakes, iss, tiangong, hubble,
-                legend;
+                legend, countries;
         /** Turning at the Earth's own speed (Settings → Turning) rather than round it every 2 minutes. */
         boolean realTime;
 
@@ -82,6 +82,7 @@ final class GlobeView extends GLSurfaceView {
             glint = LauncherSettings.flag(ctx, LauncherSettings.GLOBE_GLINT);
             rim = LauncherSettings.flag(ctx, LauncherSettings.GLOBE_RIM);
             legend = LauncherSettings.flag(ctx, LauncherSettings.GLOBE_LEGEND);
+            countries = LauncherSettings.flag(ctx, LauncherSettings.GLOBE_COUNTRIES);
         }
     }
     private static final long MOVE_EVERY_MS = 60_000, SLIDE_MS = 2_000;
@@ -111,7 +112,37 @@ final class GlobeView extends GLSurfaceView {
     private final double startFrom;
     // Turning the arrows asked for and not yet done (degrees), and when one was last pressed (uptime).
     private double toTurn, toTilt;
-    private volatile long lastInput = -IDLE_MS;
+    /** When the arrows last turned it (uptime); the Overlay's stop-turning popup reads it too. */
+    volatile long lastInput = -IDLE_MS;
+    /**
+     * The view as last drawn, for the Overlay (main thread) to place things on the globe: the
+     * Earth-fixed → view rotation (earthToView) and the drift (px, as drift()). Swapped whole.
+     */
+    volatile float[] shownView;
+    volatile float shownDx, shownDy;
+    /** Run on the main thread after each frame (the Overlay's redraw, while a popup is up), so it keeps step. */
+    volatile Runnable afterFrame;
+
+    /**
+     * The popup country's border, drawn in the globe's own pass (so in step with it, and with no
+     * work per point on the CPU): its line segments as Earth-fixed unit vectors, two points (x, y,
+     * z) each, and its colour. Set by the Overlay when a country pops up; borderFade is the
+     * popup's fade (0 hides it).
+     */
+    static final class Border {
+        final float[] lines;
+        final float red, green, blue;
+
+        Border(float[] lines, int color) {
+            this.lines = lines;
+            red = ((color >> 16) & 0xFF) / 255f;
+            green = ((color >> 8) & 0xFF) / 255f;
+            blue = (color & 0xFF) / 255f;
+        }
+    }
+
+    volatile Border border;
+    volatile float borderFade;
     /** Run (on the main thread) if the globe can't be drawn on this TV; gpu says which graphics chip. */
     volatile Runnable failed;
     volatile String gpu = "";
@@ -272,7 +303,7 @@ final class GlobeView extends GLSurfaceView {
     }
 
     /** The ecliptic longitude (degrees) a place faces right now: where to look from to see it. */
-    private static double facing(double lat, double lon, long epochMs) {
+    static double facing(double lat, double lon, long epochMs) {
         double[] c = Globe.toEcliptic(Globe.vector(lat, lon), epochMs);
         return Math.toDegrees(Math.atan2(c[0], c[2]));
     }
@@ -452,6 +483,28 @@ final class GlobeView extends GLSurfaceView {
                     + "  gl_FragColor = vec4(v_color.rgb * a, a);\n" // premultiplied
                     + "}\n";
 
+    // The popup country's border: a_pos = a point on it, Earth-fixed; the part round the back of
+    // the globe fades out per pixel. u_color (premultiplied) only in the fragment shader.
+    private static final String BORDER_VS =
+            "attribute vec3 a_pos;\n"
+                    + "uniform mat3 u_toView;\n"
+                    + "uniform vec2 u_center, u_screen;\n"
+                    + "uniform float u_radius;\n"
+                    + "varying float v_z;\n"
+                    + "void main() {\n"
+                    + "  vec3 v = u_toView * a_pos;\n"
+                    + "  v_z = v.z;\n"
+                    + "  gl_Position = vec4((u_center + v.xy * u_radius) / u_screen * 2.0 - 1.0, 0.0, 1.0);\n"
+                    + "}\n";
+
+    private static final String BORDER_FS =
+            "precision mediump float;\n"
+                    + "uniform vec4 u_color;\n"
+                    + "varying float v_z;\n"
+                    + "void main() {\n"
+                    + "  gl_FragColor = u_color * smoothstep(0.0, 0.06, v_z);\n"
+                    + "}\n";
+
     // Dots: a_pos = (x, y, z, kind). Surface markers are on the unit sphere; orbital points
     // carry their actual position in Earth radii, and are occluded by the sphere per pixel.
     private static final String DOT_VS =
@@ -535,6 +588,9 @@ final class GlobeView extends GLSurfaceView {
     private final class Renderer implements GLSurfaceView.Renderer {
         private int globe, glow, skyProg, meshVbo, meshIbo, dots, windProg, dayTex, nightTex, iconTex, cloudTex, snowTex, auroraTex, width, height, frames;
         private int skyVbo, skyCount;
+        private int borderProg, borderVbo, borderVerts;
+        private Border borderMade; // what borderVbo holds
+        private float lineMax = 1, windLine = 1;
         private long skyMade = -1; // the catalogue file's time when skyVbo was filled
         private final FloatBuffer sunAndMoon = floats(new float[2 * Sky.STRIDE]);
         // Particles: where (radians), how old and how long they live (s), their trail (unit vectors, newest first).
@@ -568,6 +624,9 @@ final class GlobeView extends GLSurfaceView {
             glow = program(GLOW_VS, GLOW_FS);
             dots = program(DOT_VS, DOT_FS);
             skyProg = program(SKY_VS, SKY_FS);
+            borderProg = program(BORDER_VS, BORDER_FS);
+            borderVbo = 0;
+            borderMade = null;
             mesh();
             if (globe == 0 || glow == 0) { // this GPU can't draw it: let the screen saver show something else
                 String chip = GLES20.glGetString(GLES20.GL_RENDERER);
@@ -580,7 +639,9 @@ final class GlobeView extends GLSurfaceView {
             windBuf = ByteBuffer.allocateDirect(windVerts.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
             float[] range = new float[2];
             GLES20.glGetFloatv(GLES20.GL_ALIASED_LINE_WIDTH_RANGE, range, 0);
-            GLES20.glLineWidth(Math.max(1, Math.min(range[1], density)));
+            lineMax = Math.max(1, range[1]);
+            windLine = Math.max(1, Math.min(range[1], density));
+            GLES20.glLineWidth(windLine);
             dayTex = texture(GlobeFeeds.dayMap(ctx));
             nightTex = texture(GlobeFeeds.nightMap(ctx));
             if (dayTex == 0 || nightTex == 0) GlobeFeeds.dropMaps(ctx); // downloaded again next time
@@ -635,6 +696,11 @@ final class GlobeView extends GLSurfaceView {
                 tilt -= (tilt - level) * Math.min(1, dt * 1.5); // eases back to level (or the wander's tilt)
             }
             float[] toView = earthToView(now, from, tilt), toEarth = transpose(toView);
+            shownDx = d[0];
+            shownDy = d[1];
+            shownView = toView; // a new array each frame: handed over whole
+            Runnable after = afterFrame;
+            if (after != null) post(after); // the popup redrawn with this frame's view: in step with the globe
             double[] sub = Globe.subsolar(now), sun = Globe.vector(sub[0], sub[1]);
             float[] sunView = mul(toView, sun);
 
@@ -705,6 +771,7 @@ final class GlobeView extends GLSurfaceView {
             float[] u = feeds.windU, v = feeds.windV;
             if (on.wind && u != null && v != null && windProg != 0) wind(u, v, toView, toEarth, cx, cy, radius);
             else windStarted = false;
+            border(toView, cx, cy, radius);
 
             buildDots(now, up);
             if (count == 0) {
@@ -834,6 +901,50 @@ final class GlobeView extends GLSurfaceView {
          * Moves the wind particles on and draws their trails. A particle lives 2–5 s, then starts
          * again somewhere on the side facing the viewer (so none are wasted round the back).
          */
+        /**
+         * The popup country's border, if one is up: uploaded once per popup, then turned with the
+         * globe by the GPU. A soft wide line under a thin one (GL lines have no anti-aliasing).
+         */
+        private void border(float[] toView, float cx, float cy, float radius) {
+            Border b = border;
+            float f = borderFade;
+            if (b == null || f <= 0 || borderProg == 0) return;
+            if (b != borderMade) {
+                if (borderVbo == 0) {
+                    int[] ids = new int[1];
+                    GLES20.glGenBuffers(1, ids, 0);
+                    borderVbo = ids[0];
+                }
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, borderVbo);
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, b.lines.length * 4, floats(b.lines), GLES20.GL_STATIC_DRAW);
+                borderVerts = b.lines.length / 3;
+                borderMade = b;
+            } else {
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, borderVbo);
+            }
+            GLES20.glUseProgram(borderProg);
+            GLES20.glUniformMatrix3fv(loc(borderProg, "u_toView"), 1, false, toView, 0);
+            GLES20.glUniform2f(loc(borderProg, "u_center"), cx, cy);
+            GLES20.glUniform2f(loc(borderProg, "u_screen"), width, height);
+            GLES20.glUniform1f(loc(borderProg, "u_radius"), radius);
+            int pos = GLES20.glGetAttribLocation(borderProg, "a_pos");
+            GLES20.glVertexAttribPointer(pos, 3, GLES20.GL_FLOAT, false, 0, 0);
+            GLES20.glEnableVertexAttribArray(pos);
+            GLES20.glEnable(GLES20.GL_BLEND);
+            GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+            int color = loc(borderProg, "u_color");
+            float soft = 0.22f * f, line = 0.75f * f;
+            GLES20.glLineWidth(Math.min(lineMax, 4 * density));
+            GLES20.glUniform4f(color, b.red * soft, b.green * soft, b.blue * soft, soft);
+            GLES20.glDrawArrays(GLES20.GL_LINES, 0, borderVerts);
+            GLES20.glLineWidth(Math.min(lineMax, 1.5f * density));
+            GLES20.glUniform4f(color, b.red * line, b.green * line, b.blue * line, line);
+            GLES20.glDrawArrays(GLES20.GL_LINES, 0, borderVerts);
+            GLES20.glLineWidth(windLine);
+            GLES20.glDisableVertexAttribArray(pos);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+        }
+
         private void wind(float[] u, float[] v, float[] toView, float[] toEarth, float cx, float cy, float radius) {
             long ns = System.nanoTime();
             float dt = windStarted ? Math.min(0.1f, (ns - windFrameNs) / 1e9f) : 0;
@@ -1321,7 +1432,7 @@ final class GlobeView extends GLSurfaceView {
         private static final int GREY = 0xFF737373, DIM = 0xFF5E5E5E, DARK = 0xFF454545;
         private static final String CREDITS = "Earth, snow & ice: NASA  ·  Clouds: contains modified EUMETSAT data"
                 + "  ·  Aurora, wind: NOAA  ·  Map edits © OpenStreetMap contributors  ·  Earthquakes: USGS  ·  Orbits: CelesTrak"
-                + "  ·  Stars: HYG  ·  Deep sky: OpenNGC";
+                + "  ·  Stars: HYG  ·  Deep sky: OpenNGC  ·  Countries: Natural Earth  ·  Flags: Flagpedia";
         // The legend: what each line's swatch is, and its colour (icons have their own).
         private static final int LINE = 0, KAABA_ICON = 1, RING_MARK = 2, DOT_MARK = 3, SATELLITE_ICON = 4, PERSON_ICON = 5,
                 SATELLITE_CN_ICON = 6, HUBBLE_ICON = 7;
@@ -1350,9 +1461,30 @@ final class GlobeView extends GLSurfaceView {
         private long hintFrom = SystemClock.uptimeMillis(); // shown for HINT_MS from the start
         private static final long HINT_MS = 8_000;
 
-        Overlay(Context ctx, GlobeFeeds feeds) {
+        // Country popups: a flag and a name on a country facing the screen, now and then (every
+        // 10–20 s) and 1.5 s after the arrows stop; about 7 s each, a different one each time.
+        private static final long POPUP_MS = 7_000, FADE_IN_MS = 600, FADE_OUT_MS = 800, AFTER_TURN_MS = 1_500;
+        private static final int POPUP_EVERY_MS = 10_000, POPUP_SPREAD_MS = 10_000;
+        private static final String HOME = "my"; // the prayer zones' country: shown warm
+        private static final int HOME_TINT = 0xFFCC9440, CARD = 0xB3121214, EDGE = 0x26FFFFFF, NAME = 0xFFA6A6A6;
+        private final GlobeView globe;
+        private List<Countries.Country> countries = java.util.Collections.emptyList();
+        private java.util.Map<String, Countries.Shape> shapes = java.util.Collections.emptyMap();
+        private final Runnable redraw = this::invalidate;
+        private long countriesRead;
+        private Countries.Country popup;
+        private Bitmap popupFlag;
+        private long popupAt, nextPopup, inputSeen = Long.MIN_VALUE;
+        private final java.util.ArrayDeque<String> recentNames = new java.util.ArrayDeque<>();
+        private final java.util.Set<String> recent = new java.util.HashSet<>();
+        private final Paint popupName = new Paint(Paint.ANTI_ALIAS_FLAG), popupSub = new Paint(Paint.ANTI_ALIAS_FLAG),
+                popupPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+        private final RectF popupCard = new RectF(), popupFlagAt = new RectF();
+
+        Overlay(Context ctx, GlobeFeeds feeds, GlobeView globe) {
             super(ctx);
             this.feeds = feeds;
+            this.globe = globe;
             density = ctx.getResources().getDisplayMetrics().density;
             float sd = ctx.getResources().getDisplayMetrics().scaledDensity;
             clock.setTypeface(Fonts.outfit(ctx, 500));
@@ -1370,6 +1502,10 @@ final class GlobeView extends GLSurfaceView {
             hint.setTextSize(12 * sd);
             hint.setColor(DIM);
             legendRight = random.nextBoolean();
+            popupName.setTypeface(Fonts.outfit(ctx, 500));
+            popupName.setTextSize(14 * sd);
+            popupSub.setTypeface(Fonts.outfit(ctx, 400));
+            popupSub.setTextSize(10 * sd);
         }
 
         /** "Your zone: Klang" for SGR03: the first place in the prayer zone list's entry. */
@@ -1396,14 +1532,84 @@ final class GlobeView extends GLSurfaceView {
             hintFrom = SystemClock.uptimeMillis();
             removeCallbacks(ticker);
             removeCallbacks(move);
+            removeCallbacks(popups);
             ticker.run();
             postDelayed(move, MOVE_EVERY_MS);
+            nextPopup = SystemClock.uptimeMillis() + POPUP_EVERY_MS + random.nextInt(POPUP_SPREAD_MS);
+            postDelayed(popups, 500);
         }
 
         void stop() {
             removeCallbacks(ticker);
             removeCallbacks(move);
+            removeCallbacks(popups);
             if (fade != null) fade.cancel();
+            popup = null;
+            globe.afterFrame = null;
+            globe.border = null;
+        }
+
+        /** Every half second: is it time for a country's popup (at random, or the arrows have stopped)? */
+        private final Runnable popups = new Runnable() {
+            @Override
+            public void run() {
+                postDelayed(this, 500);
+                long up = SystemClock.uptimeMillis();
+                float[] view = globe.shownView;
+                if (!on.countries || view == null) {
+                    popup = null;
+                    globe.afterFrame = null;
+                    globe.border = null;
+                    return;
+                }
+                // Until GlobeFeeds has made the list and the outlines (they can come later than the list).
+                if ((countries.isEmpty() || shapes.isEmpty()) && up - countriesRead > 30_000) {
+                    countriesRead = up;
+                    countries = GlobeFeeds.countries(getContext());
+                    shapes = GlobeFeeds.shapes(getContext());
+                }
+                if (countries.isEmpty()) return;
+                long input = globe.lastInput;
+                if (input > 0 && input != inputSeen && up - input >= AFTER_TURN_MS) {
+                    // The arrows have stopped: the country nearest the middle, if one is near (within
+                    // about 32°: level, the middle is the orbit's plane, which a country facing you
+                    // can be 27° above or below).
+                    inputSeen = input;
+                    Countries.Country c = Countries.nearestToMiddle(countries, view);
+                    if (c != null && Countries.facingness(c, view) >= 0.85) show(c);
+                    return;
+                }
+                if (popup == null && up >= nextPopup) {
+                    nextPopup = up + POPUP_EVERY_MS + random.nextInt(POPUP_SPREAD_MS);
+                    // Facing the screen (not squashed at the rim) and in the left two-thirds of the
+                    // globe: the land moves left to right, so it stays in view for the popup's 7 s.
+                    Countries.Country c = Countries.pick(Countries.facing(countries, view, 0.35, 1 / 3.0), recent,
+                            HOME, random);
+                    if (c != null) show(c);
+                }
+            }
+        };
+
+        private void show(Countries.Country c) {
+            popup = c;
+            popupAt = SystemClock.uptimeMillis();
+            popupFlag = null;
+            // Its border, as line segments of unit vectors, for the globe's own pass (Border).
+            Countries.Shape shape = shapes.get(c.name);
+            globe.borderFade = 0;
+            globe.border = shape == null ? null : new Border(segments(shape), HOME.equals(c.code) ? HOME_TINT : 0xFF8C8C8C);
+            globe.afterFrame = redraw; // redrawn after each globe frame while it's up
+            recentNames.addLast(c.name);
+            recent.add(c.name);
+            while (recentNames.size() > 30) recent.remove(recentNames.removeFirst());
+            if (!c.code.isEmpty()) {
+                File f = GlobeFeeds.flag(getContext(), c.code);
+                if (f.isFile()) popupFlag = BitmapFactory.decodeFile(f.getPath());
+                else GlobeFeeds.fetchFlag(getContext(), c.code, () -> {
+                    if (popup == c) popupFlag = BitmapFactory.decodeFile(GlobeFeeds.flag(getContext(), c.code).getPath());
+                });
+            }
+            invalidate();
         }
 
         private final Runnable ticker = new Runnable() {
@@ -1526,6 +1732,128 @@ final class GlobeView extends GLSurfaceView {
                 long at = edit.spot.time > 0 ? edit.spot.time : edit.showAt; // when it was saved
                 block(c, ago(ms - at) + " · \u201c" + edit.spot.text.replaceAll("\\s+", " ") + "\u201d", text, GREY,
                         DOT_MARK, COLORS[4], right, y, room, 2, a, pad);
+            }
+            drawPopup(c);
+        }
+
+        /** A shape's rings as GL_LINES segments: each pair of neighbouring points (closing each ring), x, y, z. */
+        private static float[] segments(Countries.Shape shape) {
+            int n = 0;
+            for (float[] r : shape.rings) n += r.length / 2;
+            float[] out = new float[n * 6];
+            int o = 0;
+            for (float[] r : shape.rings) {
+                int pts = r.length / 2;
+                for (int k = 0; k < pts; k++) {
+                    int next = (k + 1) % pts;
+                    double[] a = Globe.vector(r[k * 2], r[k * 2 + 1]), b = Globe.vector(r[next * 2], r[next * 2 + 1]);
+                    out[o++] = (float) a[0];
+                    out[o++] = (float) a[1];
+                    out[o++] = (float) a[2];
+                    out[o++] = (float) b[0];
+                    out[o++] = (float) b[1];
+                    out[o++] = (float) b[2];
+                }
+            }
+            return out;
+        }
+
+        /**
+         * The country's popup, on top: a dot on its label point, a short line out (away from the
+         * globe's middle) to a card with the flag and the name, and the sovereign for a territory.
+         * It fades in and out, follows the country as the globe turns (redrawn after each of the
+         * globe's frames, so in step with it), and fades early if the country turns away. Dim, for burn-in: the
+         * name at 65 %, the flag at 60 %.
+         */
+        private void drawPopup(Canvas c) {
+            Countries.Country k = popup;
+            float[] view = globe.shownView;
+            if (k == null || view == null) return;
+            long t = SystemClock.uptimeMillis() - popupAt;
+            if (t >= POPUP_MS) {
+                popup = null;
+                globe.afterFrame = null;
+                globe.border = null;
+                return;
+            }
+            double[] p = Globe.vector(k.lat, k.lon);
+            float vx = (float) (view[0] * p[0] + view[3] * p[1] + view[6] * p[2]);
+            float vy = (float) (view[1] * p[0] + view[4] * p[1] + view[7] * p[2]);
+            float vz = (float) (view[2] * p[0] + view[5] * p[1] + view[8] * p[2]);
+            float f = t < FADE_IN_MS ? t / (float) FADE_IN_MS
+                    : t > POPUP_MS - FADE_OUT_MS ? (POPUP_MS - t) / (float) FADE_OUT_MS : 1f;
+            f *= Math.max(0f, Math.min(1f, (vz - 0.05f) / 0.15f)); // turning away round the rim
+            globe.borderFade = f; // the border, drawn with the globe, fades with the card
+            if (f <= 0) return;
+            float w = getWidth(), h = getHeight(), r = RADIUS * Math.min(w, h);
+            float mx = w / 2f + globe.shownDx, my = h / 2f + globe.shownDy; // the globe's middle, as drawn
+            float px = mx + vx * r, py = my - vy * r;
+            boolean home = HOME.equals(k.code);
+            int tint = home ? HOME_TINT : 0xFF8C8C8C;
+
+            // Out from the middle: the card beside the country, not over it.
+            float ox = px - mx, oy = py - my, len = (float) Math.hypot(ox, oy);
+            if (len < 1) {
+                ox = 0.7f;
+                oy = -0.7f;
+                len = 1;
+            }
+            float lead = 34 * density, ex = px + ox / len * lead, ey = py + oy / len * lead;
+
+            String sub = home ? "Your country" : k.sovereign;
+            float fh = 20 * density, fw = popupFlag == null ? 0 : Math.min(36 * density,
+                    fh * popupFlag.getWidth() / (float) Math.max(1, popupFlag.getHeight()));
+            float textW = Math.max(popupName.measureText(k.name), sub.isEmpty() ? 0 : popupSub.measureText(sub));
+            float padX = 10 * density, gap = fw > 0 ? 8 * density : 0;
+            float cw = padX * 2 + fw + gap + textW;
+            float ch = Math.max(fh, sub.isEmpty() ? popupName.getTextSize() : popupName.getTextSize()
+                    + popupSub.getFontSpacing()) + 14 * density;
+            float left = ox >= 0 ? ex : ex - cw, top = ey - ch / 2;
+            float margin = 16 * density;
+            left = Math.max(margin, Math.min(w - margin - cw, left));
+            top = Math.max(margin, Math.min(h - margin - ch, top));
+            float near = ox >= 0 ? left : left + cw; // where the line meets the card
+
+
+            popupPaint.setStyle(Paint.Style.STROKE);
+            popupPaint.setStrokeWidth(Math.max(1, density));
+            popupPaint.setColor(tint);
+            popupPaint.setAlpha(Math.round(150 * f));
+            c.drawLine(px, py, near, top + ch / 2, popupPaint);
+            popupPaint.setStyle(Paint.Style.FILL);
+            popupPaint.setAlpha(Math.round(200 * f));
+            c.drawCircle(px, py, 3 * density, popupPaint);
+
+            RectF card = popupCard;
+            card.set(left, top, left + cw, top + ch);
+            float corner = 10 * density;
+            popupPaint.setColor(CARD);
+            popupPaint.setAlpha(Math.round(0xB3 * f));
+            c.drawRoundRect(card, corner, corner, popupPaint);
+            popupPaint.setStyle(Paint.Style.STROKE);
+            popupPaint.setColor(home ? HOME_TINT : EDGE);
+            popupPaint.setAlpha(Math.round((home ? 150 : 0x26) * f));
+            c.drawRoundRect(card, corner, corner, popupPaint);
+            popupPaint.setStyle(Paint.Style.FILL);
+
+            float x = left + padX;
+            if (popupFlag != null) {
+                RectF flag = popupFlagAt;
+                flag.set(x, top + (ch - fh) / 2, x + fw, top + (ch + fh) / 2);
+                popupPaint.setColor(0xFFFFFFFF);
+                popupPaint.setAlpha(Math.round(153 * f)); // 60 %: a white field never glares
+                c.drawBitmap(popupFlag, null, flag, popupPaint);
+                x += fw + gap;
+            }
+            float nameBase = sub.isEmpty() ? top + ch / 2 + popupName.getTextSize() * 0.35f
+                    : top + 7 * density + popupName.getTextSize();
+            popupName.setColor(NAME);
+            popupName.setAlpha(Math.round(255 * f));
+            c.drawText(k.name, x, nameBase, popupName);
+            if (!sub.isEmpty()) {
+                popupSub.setColor(home ? HOME_TINT : DIM);
+                popupSub.setAlpha(Math.round(255 * f));
+                c.drawText(sub, x, nameBase + popupSub.getFontSpacing(), popupSub);
             }
         }
 

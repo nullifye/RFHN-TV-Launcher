@@ -39,7 +39,8 @@ final class LauncherSettings {
             GLOBE_SNOW = "globe_snow", GLOBE_AURORA = "globe_aurora", GLOBE_EDITS = "globe_edits",
             GLOBE_QUAKES = "globe_quakes", GLOBE_ISS = "globe_iss", GLOBE_TIANGONG = "globe_tiangong",
             GLOBE_HUBBLE = "globe_hubble", GLOBE_LEGEND = "globe_legend", GLOBE_WIND = "globe_wind",
-            GLOBE_GLINT = "globe_glint", GLOBE_RIM = "globe_rim", GLOBE_SKY = "globe_sky";
+            GLOBE_GLINT = "globe_glint", GLOBE_RIM = "globe_rim", GLOBE_SKY = "globe_sky",
+            GLOBE_COUNTRIES = "globe_countries";
     /** How the Globe turns on its own (a choice): SPIN_TWO_MINUTES or SPIN_REAL_TIME. */
     static final String GLOBE_SPIN = "globe_spin";
     static final int SPIN_TWO_MINUTES = 0, SPIN_REAL_TIME = 1;
@@ -90,10 +91,12 @@ final class LauncherSettings {
 
     /**
      * Every switch starts on, except the info overlay (it would double up with an overlay app)
-     * and the Globe's clouds and wind (clouds cover much of the map; wind also takes more CPU).
+     * and the Globe's clouds, wind and country popups (clouds cover much of the map; wind also
+     * takes more CPU; the popups are something to switch on if you like them).
      */
     private static boolean defaultFlag(String key) {
-        return !STATUS_BAR.equals(key) && !GLOBE_CLOUDS.equals(key) && !GLOBE_WIND.equals(key);
+        return !STATUS_BAR.equals(key) && !GLOBE_CLOUDS.equals(key) && !GLOBE_WIND.equals(key)
+                && !GLOBE_COUNTRIES.equals(key);
     }
 
     static void setFlag(Context ctx, String key, boolean on) {

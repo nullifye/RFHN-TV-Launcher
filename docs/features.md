@@ -122,11 +122,12 @@ Each layer has its own switch (Settings → Screen saver, with Globe chosen). No
 | Map edits | A green dot for each OpenStreetMap edit saved in the last minute, appearing through the minute and fading over 3 minutes | OpenStreetMap minutely changesets | Every minute | On |
 | Earthquakes | Orange rings for the past day's M2.5+ quakes, sized by magnitude (7 dp at M2.5 to 30 dp at about M7); the last hour's pulse | USGS | Every 5 min | On |
 | ISS, Tiangong, Hubble | Each with its icon and its path over the last 10 minutes | CelesTrak's orbits; positions worked out on the TV | Every 12 h | On |
+| Countries | Now and then (every 10–20 s) a country facing the screen, in the left two-thirds of the globe (the land moves left to right, so it stays in view), pops up: its border drawn on the globe (by the GPU in the globe's own frame, so it turns smoothly with it, even Canada's 6,900 points), a dot on it, and a card with its flag and name (and, for a territory, its country: "Pitcairn Islands · United Kingdom"), about 7 s, following it as the globe turns. 1.5 s after you stop turning with the arrows, the country nearest the middle pops up. Malaysia gets a warm amber card, "Your country", pointing at the peninsula. Israel is shown as Palestine, with Palestine's flag (Natural Earth's separate Palestine entry is left out, so it isn't shown twice). All 242 countries and territories; a different one each time | Natural Earth 1:50m (public domain) for the names and label points; Flagpedia (flagcdn.com) for the flags | Once, 3 MB (15 KB of names and 250 KB of thinned outlines kept); each flag (~1 KB) the first time it shows | Off |
 | Legend | The key, the latest edit and the latest earthquake | – | – | On |
 
 - **Satellites:** CelesTrak publishes each satellite's orbit (two-line elements); `Orbit.java` works out where it is with SGP4, the model those are made for. Tested against the reference implementation: within 10 m for the ISS and Tiangong.
 - **Wind:** NOAA sends GFS as GRIB2; `Grib.java` reads it (the complex packing NOMADS uses). Its values matched Open-Meteo's GFS within 0.2 m/s. If the newest run isn't out yet, it takes the one before.
-- **Credits** (shown on screen too): Earth, snow and ice: NASA · Clouds: contains modified EUMETSAT data · Aurora and wind: NOAA · Map edits © OpenStreetMap contributors (ODbL) · Earthquakes: USGS · Orbits: CelesTrak · Stars: HYG Database (CC BY-SA 4.0) · Deep sky: OpenNGC (CC BY-SA 4.0).
+- **Credits** (shown on screen too): Earth, snow and ice: NASA · Clouds: contains modified EUMETSAT data · Aurora and wind: NOAA · Map edits © OpenStreetMap contributors (ODbL) · Earthquakes: USGS · Orbits: CelesTrak · Stars: HYG Database (CC BY-SA 4.0) · Deep sky: OpenNGC (CC BY-SA 4.0) · Countries: Natural Earth (public domain) · Flags: Flagpedia.
 
 ## Now Playing
 
@@ -163,7 +164,7 @@ The gear at the end of the top bar opens the launcher's Settings: categories on 
 | Prayer times | Zone (picker), prayer card on/off, azan on/off, reminder before prayer (Off / 5 / 10 / 15 / 30 min), play azan now |
 | Weather | Weather card on/off, location (Auto or any of MET Malaysia's 440 places), air quality station (Nearest or any of the 68 APIMS stations) |
 | Most used | Most used card on/off, week starts on (Monday / Sunday), leave out (app picker) |
-| Screen saver | On/off, which one (OK cycles Prayer time, Live log, Globe and the TV's others), Start now (preview); with Globe chosen, a switch for each of its 16 layers (clouds and wind start off) |
+| Screen saver | On/off, which one (OK cycles Prayer time, Live log, Globe and the TV's others), Start now (preview); with Globe chosen, a switch for each of its layers (clouds, wind and countries start off) |
 | Notifications | TV Home updates, Play Store updates, new HDMI devices, Bluetooth, connection status, low memory (each on/off), low-memory level 80/85/90 % |
 | Info overlay | Show over apps on/off (off by default), what the left, centre and right show (network speed / uptime / clock / elapsed time / nothing), position (top / bottom), text size (small / medium / large), background on/off |
 | Phone remote | Remote on/off (the banner and bell keep working when it's off), its address, forget all paired phones (press OK twice), and each paired phone with when it was last used and its own Forget (OK twice) |

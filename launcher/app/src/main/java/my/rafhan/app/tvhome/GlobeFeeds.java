@@ -22,6 +22,10 @@ import java.util.zip.GZIPInputStream;
  *  - the sky's stars and Messier objects: the HYG and OpenNGC catalogues, downloaded once while
  *    Sky is on (about 17 MB, streamed) and boiled down on the TV to sky.csv (Sky.build, about
  *    0.3 MB), which is kept in the files dir like the maps;
+ *  - the countries: Natural Earth's 1:50m map, downloaded once while Countries is on (3 MB) and
+ *    boiled down to countries-2.csv (names, codes, label points; about 15 KB) and the countries'
+ *    outlines, thinned (country-shapes-1.bin, about 250 KB), and each country's
+ *    flag (Flagpedia, about 1 KB) the first time it pops up, kept in flags/;
  *  - two live feeds, fetched only while the screen saver runs: OpenStreetMap's changesets of
  *    the last minute (every 60 s) and USGS's M2.5+ earthquakes of the past day (every 5 min). A
  *    feed that fails just leaves its layer empty;
@@ -52,6 +56,11 @@ final class GlobeFeeds {
             + "&REQUEST=GetMap&VERSION=1.3.0&CRS=EPSG:4326&BBOX=-90,-180,90,180&WIDTH=1024&HEIGHT=512"
             + "&FORMAT=image/png&TRANSPARENT=true&LAYERS=";
     private static final String AURORA = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json";
+    /** Natural Earth's 1:50m countries (public domain), at a fixed version: 242 places, 3 MB, read once. */
+    private static final String COUNTRIES = "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@v5.1.2/geojson/"
+            + "ne_50m_admin_0_countries.geojson";
+    /** Flagpedia's flags, 80 px wide, by two-letter code (about 0.4–3 KB each). */
+    private static final String FLAGS = "https://flagcdn.com/w80/";
     private static final String HYG = "https://raw.githubusercontent.com/astronexus/HYG-Database/main/hyg/v3/hyg_v38.csv.gz";
     private static final String OPENNGC = "https://raw.githubusercontent.com/mattiaverga/OpenNGC/master/database_files/";
     /** How long an edit's dot stays (fading). */
@@ -150,6 +159,97 @@ final class GlobeFeeds {
         }
     }
 
+    /**
+     * The countries the Globe can name, kept as a small list (Countries.toCsv). The "-2": the
+     * names changed to everyday ones (South Korea, not Republic of Korea), so an older list is made
+     * again.
+     */
+    static File countriesFile(Context ctx) {
+        return new File(new File(ctx.getFilesDir(), "globe"), "countries-2.csv");
+    }
+
+    /** The countries' outlines, kept compactly (Countries.shapesToBytes, about 250 KB). */
+    static File shapesFile(Context ctx) {
+        return new File(new File(ctx.getFilesDir(), "globe"), "country-shapes-1.bin");
+    }
+
+    /** The kept outlines by country name, or none yet. */
+    static java.util.Map<String, Countries.Shape> shapes(Context ctx) {
+        File f = shapesFile(ctx);
+        try {
+            return f.isFile() ? Countries.shapesFromBytes(java.nio.file.Files.readAllBytes(f.toPath()))
+                    : new java.util.HashMap<>();
+        } catch (IOException e) {
+            return new java.util.HashMap<>();
+        }
+    }
+
+    /** The kept countries, or none yet. */
+    static List<Countries.Country> countries(Context ctx) {
+        File f = countriesFile(ctx);
+        try {
+            return f.isFile() ? Countries.fromCsv(new String(java.nio.file.Files.readAllBytes(f.toPath()),
+                    StandardCharsets.UTF_8)) : Collections.emptyList();
+        } catch (IOException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Makes the countries list and their outlines if they aren't there yet: Natural Earth's map,
+     * downloaded once, boiled down to names, codes and label points (about 15 KB kept) and
+     * thinned outlines (about 250 KB). A list that comes out short (an error page) isn't kept.
+     * Blocking.
+     */
+    static synchronized boolean fetchCountries(Context ctx) {
+        File f = countriesFile(ctx), s = shapesFile(ctx), dir = f.getParentFile();
+        File tmp = new File(f.getPath() + ".tmp"), stmp = new File(s.getPath() + ".tmp");
+        if (f.isFile() && s.isFile()) return true;
+        if (dir == null || (!dir.isDirectory() && !dir.mkdirs())) return false;
+        try {
+            String geo = text(get(COUNTRIES));
+            List<Countries.Country> list = Countries.parse(geo);
+            if (list.size() < 200) throw new IOException("only " + list.size() + " countries");
+            java.util.Map<String, Countries.Shape> shapes = Countries.parseShapes(geo);
+            if (shapes.size() < 200) throw new IOException("only " + shapes.size() + " outlines");
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
+                out.write(Countries.toCsv(list).getBytes(StandardCharsets.UTF_8));
+            }
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(stmp)) {
+                out.write(Countries.shapesToBytes(shapes));
+            }
+            //noinspection ResultOfMethodCallIgnored
+            new File(dir, "countries.csv").delete(); // the first list, with formal names
+            return stmp.renameTo(s) && tmp.renameTo(f);
+        } catch (Exception e) {
+            android.util.Log.w("TvHome", "globe: countries failed: " + e);
+            return false;
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            tmp.delete();
+            //noinspection ResultOfMethodCallIgnored
+            stmp.delete();
+        }
+    }
+
+    /** A country's flag as kept (files/globe/flags/my.png). */
+    static File flag(Context ctx, String code) {
+        return new File(new File(new File(ctx.getFilesDir(), "globe"), "flags"), code + ".png");
+    }
+
+    /** Downloads a flag the first time its country is shown, off the main thread; then runs {@code done} there. */
+    static void fetchFlag(Context ctx, String code, Runnable done) {
+        Context app = ctx.getApplicationContext();
+        android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+        Thread t = new Thread(() -> {
+            File f = flag(app, code);
+            if (!f.isFile()) Wallpapers.download(FLAGS + code + ".png", f);
+            main.post(done);
+        }, "globe-flag");
+        t.setDaemon(true);
+        t.start();
+    }
+
     static boolean mapsReady(Context ctx) {
         return dayMap(ctx).isFile() && nightMap(ctx).isFile();
     }
@@ -184,7 +284,7 @@ final class GlobeFeeds {
     }
 
     private void loop() {
-        long nextOsm = 0, nextQuakes = 0, nextOrbits = 0, nextAurora = 0, nextSky = 0;
+        long nextOsm = 0, nextQuakes = 0, nextOrbits = 0, nextAurora = 0, nextSky = 0, nextCountries = 0;
         readOrbits(false); // what's kept, straight away
         loadWind();
         while (running) {
@@ -217,6 +317,10 @@ final class GlobeFeeds {
             if (now >= nextSky && on(LauncherSettings.GLOBE_SKY)) {
                 nextSky = now + 60 * 60_000; // tried again hourly until it's in
                 fetchSky(app);
+            }
+            if (now >= nextCountries && on(LauncherSettings.GLOBE_COUNTRIES)) {
+                nextCountries = now + 60 * 60_000; // once made, kept for good
+                fetchCountries(app);
             }
             try {
                 Thread.sleep(1_000);

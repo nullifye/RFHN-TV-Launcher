@@ -436,6 +436,8 @@ final class SettingsScreen {
             out.add(toggle(LauncherSettings.GLOBE_ISS, "ISS", "The International Space Station"));
             out.add(toggle(LauncherSettings.GLOBE_TIANGONG, "Tiangong", "China's space station"));
             out.add(toggle(LauncherSettings.GLOBE_HUBBLE, "Hubble", "The Hubble Space Telescope"));
+            out.add(toggle(LauncherSettings.GLOBE_COUNTRIES, "Countries",
+                    "A country's flag and name now and then, and when you stop turning"));
             out.add(toggle(LauncherSettings.GLOBE_LEGEND, "Legend", "What each colour and icon means, with the latest edit and earthquake"));
         }
     }
