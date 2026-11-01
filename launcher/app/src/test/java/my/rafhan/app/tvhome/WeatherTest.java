@@ -28,7 +28,7 @@ public class WeatherTest {
         Weather.Day later = Weather.parseForecast(json, "Tn181", LocalDate.of(2026, 11, 6));
         assertEquals("Thunderstorms, afternoon", Weather.outlook(later));
         assertEquals("Storms pm", Weather.shortOutlook(later));
-        // Morning, evening (MET's "petang") and night, each with its own icon on the card.
+        // Morning, afternoon (MET's "petang") and night, each with its own icon on the card.
         assertEquals("No rain", Weather.word(later.morning));
         assertEquals("Storms", Weather.word(later.afternoon));
         assertEquals(Weather.STORM, Weather.kind(later.afternoon));
@@ -71,6 +71,26 @@ public class WeatherTest {
         assertEquals("Rc024", Weather.autoPlace("Pahang", "Pulau Tioman", places).id);
         assertEquals("St013", Weather.autoPlace("Johor", "Pulau Aur dan Pulau Pemanggil", places).id);
         assertEquals("Town", Weather.place(places, "Tn181").type());
+    }
+
+    @Test
+    public void autoPlaceIsTheAirStationsTownWhenTheZoneHasIt() {
+        // MET's own ids (31 October 2026).
+        List<Weather.Place> places = java.util.Arrays.asList(new Weather.Place("Tn037", "Bachok"),
+                new Weather.Place("Tn033", "Kota Bharu"), new Weather.Place("Ds024", "Kota Bharu"),
+                new Weather.Place("Tn035", "Kuala Kangsar"), new Weather.Place("Tn041", "Ipoh"),
+                new Weather.Place("Tn105", "Port Dickson"), new Weather.Place("Tn104", "Seremban"),
+                new Weather.Place("Tn181", "Klang"), new Weather.Place("Ds004", "Kota Setar"));
+        String ktn = "Bachok, Kota Bharu, Machang, Pasir Mas, Pasir Puteh, Tanah Merah, Tumpat, Kuala Krai, Mukim Chiku";
+        assertEquals("Tn033", Weather.autoPlace("Kelantan", ktn, places, "Kota Bharu").id); // not Bachok
+        assertEquals("Tn037", Weather.autoPlace("Kelantan", ktn, places, null).id); // no stations yet: first area
+        assertEquals("Tn041", Weather.autoPlace("Perak", "Kuala Kangsar, Sg. Siput, Ipoh, Batu Gajah, Kampar",
+                places, "Pegoh Ipoh").id); // the station's town inside its name
+        assertEquals("Tn104", Weather.autoPlace("Negeri Sembilan", "Port Dickson, Seremban", places, "Seremban").id);
+        assertEquals("Tn181", Weather.autoPlace("Selangor", "Klang, Kuala Langat", places, "Klang").id);
+        // Kedah's station is "Alor Setar", not one of KDH01's areas: the first area as before.
+        assertEquals("Ds004", Weather.autoPlace("Kedah", "Kota Setar, Kubang Pasu, Pokok Sena (Daerah Kecil)",
+                places, "Alor Setar").id);
     }
 
     @Test

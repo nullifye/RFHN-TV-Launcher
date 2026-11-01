@@ -339,12 +339,27 @@ final class Weather {
      * {@code areas} and {@code state} as zones.xml has them ("Klang, Kuala Langat", "Selangor").
      */
     static Place autoPlace(String state, String areas, List<Place> places) {
-        for (String area : areas.split(",")) {
-            for (String type : new String[]{"Tn", "Ds", "Dv", "Rc"}) {
-                for (Place p : places) {
-                    if (p.id.startsWith(type) && norm(p.name).equals(norm(area))) return p;
-                }
+        return autoPlace(state, areas, places, null);
+    }
+
+    /**
+     * As above, but an area the zone's nearest APIMS station is in comes first ("Pegoh Ipoh" →
+     * Ipoh, not the zone's first area, Kuala Kangsar), so the forecast and the air readings are for
+     * the same town. {@code stationPlace}: that station's town, or null.
+     */
+    static Place autoPlace(String state, String areas, List<Place> places, String stationPlace) {
+        if (stationPlace != null) {
+            for (String area : areas.split(",")) {
+                String a = area.trim();
+                if (a.isEmpty() || !java.util.regex.Pattern.compile("\\b" + java.util.regex.Pattern.quote(a) + "\\b",
+                        java.util.regex.Pattern.CASE_INSENSITIVE).matcher(stationPlace).find()) continue;
+                Place p = town(a, places);
+                if (p != null) return p;
             }
+        }
+        for (String area : areas.split(",")) {
+            Place p = town(area, places);
+            if (p != null) return p;
         }
         String s = norm(state);
         for (Place p : places) {
@@ -352,6 +367,16 @@ final class Weather {
             String n = norm(p.name);
             // "Wilayah Persekutuan" zones: MET splits them into "WP Kuala Lumpur" and so on.
             if (n.equals(s) || (s.startsWith("wilayah") && n.startsWith("wp"))) return p;
+        }
+        return null;
+    }
+
+    /** MET's place for an area's name: a town, else a district, Sarawak division or recreation spot. */
+    private static Place town(String area, List<Place> places) {
+        for (String type : new String[]{"Tn", "Ds", "Dv", "Rc"}) {
+            for (Place p : places) {
+                if (p.id.startsWith(type) && norm(p.name).equals(norm(area))) return p;
+            }
         }
         return null;
     }

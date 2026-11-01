@@ -78,7 +78,7 @@ final class WeatherPanel {
     private final float dp;
     private final ImageView titleIcon, skyIcon;
     private final TextView title, outlook, temp, skyTime;
-    private final ImageView[] partIcons = new ImageView[3]; // morning, evening, night
+    private final ImageView[] partIcons = new ImageView[3]; // morning, afternoon, night
     private final Gauge api, aqi;
     private boolean fetching;
     private long lastAttempt;
@@ -109,8 +109,9 @@ final class WeatherPanel {
         rlp.topMargin = px(9);
         root.addView(row, rlp);
 
-        // Weather: the day's range, then morning / evening / night, then when MET's forecast came in.
-        LinearLayout sky = column(row, 1.55f);
+        // Weather: the day's range, then morning / afternoon / night (MET's pagi, petang, malam), then
+        // when MET's forecast came in.
+        LinearLayout sky = column(row, 1.65f);
         LinearLayout top = new LinearLayout(ctx);
         top.setGravity(Gravity.CENTER_VERTICAL);
         skyIcon = icon(R.drawable.ic_cloud, ICON);
@@ -122,12 +123,12 @@ final class WeatherPanel {
         sky.addView(top);
         LinearLayout parts = new LinearLayout(ctx);
         parts.setGravity(Gravity.CENTER_VERTICAL);
-        String[] names = {"MORNING", "EVENING", "NIGHT"};
+        String[] names = {"MORNING", "AFTERNOON", "NIGHT"};
         for (int i = 0; i < 3; i++) {
             partIcons[i] = icon(R.drawable.ic_cloud, ICON);
             LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(px(12), px(12));
-            ilp.setMarginEnd(px(3));
-            if (i > 0) ilp.setMarginStart(px(7));
+            ilp.setMarginEnd(px(2));
+            if (i > 0) ilp.setMarginStart(px(5));
             parts.addView(partIcons[i], ilp);
             parts.addView(small(names[i], DIM, 7.5f, 0.03f));
         }
@@ -313,7 +314,8 @@ final class WeatherPanel {
     /** Auto: the MET place matching the prayer zone's town (else its state). */
     static Weather.Place autoPlace(Context ctx, List<Weather.Place> places) {
         String[] z = RemoteSettings.zoneEntry(ctx, LauncherSettings.zone(ctx)); // state, code, areas
-        return z == null ? null : Weather.autoPlace(z[0], z[2], places);
+        Weather.Station near = nearestStation(ctx, stations(ctx)); // its town first: forecast and air for one place
+        return z == null ? null : Weather.autoPlace(z[0], z[2], places, near == null ? null : near.place);
     }
 
     /** The station set in Settings, or for Nearest the one closest to the prayer zone's town. */
