@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Vertical positions are set in MainActivity.layoutPage() from the real screen height.
      Nothing here is focusable: MainActivity drives focus itself so D-pad moves are deterministic. -->
+<!-- A FrameLayout rather than <merge>: MainActivity finds it by its id (the highlight's draw hook). -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MergeRootFrame"
     android:id="@+id/root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#000000">
+    android:layout_height="match_parent">
 
     <ImageView
         android:id="@+id/wallpaper"
@@ -130,7 +132,7 @@
                 android:clipToPadding="false">
 
                 <ImageView android:id="@+id/pillBell" style="@style/IconPill"
-                    android:layout_marginStart="0dp" android:contentDescription="Notifications"
+                    android:layout_marginStart="0dp" android:contentDescription="@string/notifications"
                     android:src="@drawable/ic_bell" />
 
             </FrameLayout>

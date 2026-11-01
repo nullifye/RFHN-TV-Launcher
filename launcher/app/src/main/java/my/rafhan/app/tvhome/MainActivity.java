@@ -289,17 +289,18 @@ public class MainActivity extends Activity {
                 findViewById(R.id.pillSettings)};
         bellBadge = findViewById(R.id.bellBadge);
         bellBadge.setTypeface(Fonts.outfit(this, 600));
-        LinearLayout weatherCard = findViewById(R.id.weatherPanel);
+        LinearLayout weatherCard = findViewById(R.id.weatherPanel), sysCard = findViewById(R.id.sysPanel),
+                prayerCard = findViewById(R.id.prayerPanel), usageCard = findViewById(R.id.usagePanel),
+                nowCard = findViewById(R.id.nowPlaying);
         homeViews = new View[] {findViewById(R.id.clockBlock), findViewById(R.id.pills), findViewById(R.id.dockBand),
-                findViewById(R.id.sysPanel), findViewById(R.id.prayerPanel), findViewById(R.id.usagePanel),
-                weatherCard, findViewById(R.id.peekFade), findViewById(R.id.nowPlaying)};
-        system = new SystemPanel(this, findViewById(R.id.sysPanel), worker);
-        nowPlaying = new NowPlayingPanel(this, findViewById(R.id.nowPlaying), worker, shown -> {
+                sysCard, prayerCard, usageCard, weatherCard, findViewById(R.id.peekFade), nowCard};
+        system = new SystemPanel(this, sysCard, worker);
+        nowPlaying = new NowPlayingPanel(this, nowCard, worker, shown -> {
             // Playback ended while its buttons had focus: back to the dock.
             if (!shown && section == NOW && !dock.isEmpty()) moveFocus(DOCK, dockIdx);
             showUsage(); // Now Playing takes the Most used card's spot while something plays
         });
-        prayer = new PrayerPanel(this, findViewById(R.id.prayerPanel), hijri, worker);
+        prayer = new PrayerPanel(this, prayerCard, hijri, worker);
         upPage = findViewById(R.id.upPage);
         upPage.setTranslationY(-screenH);
         up = new UpScreen(this, upPage, worker, () -> {
@@ -308,7 +309,7 @@ public class MainActivity extends Activity {
             else upIdx = clamp(upIdx, up.count());
             up.setFocused(upIdx);
         });
-        usage = new UsagePanel(this, findViewById(R.id.usagePanel));
+        usage = new UsagePanel(this, usageCard);
         weather = new WeatherPanel(this, weatherCard);
         alignSystemPanel();
         centreDatesOnClock();
@@ -586,6 +587,7 @@ public class MainActivity extends Activity {
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged") // the whole list is new: re-read and re-sorted
     private void applyApps(List<AppEntry> all, List<String> dockPkgs, UsageScores.Scores scores) {
         String focusedPkg = focusedPackage();
         Map<String, AppEntry> byPkg = new HashMap<>();
@@ -689,6 +691,7 @@ public class MainActivity extends Activity {
         });
     }
 
+    @SuppressLint("NotifyDataSetChanged") // the whole list re-sorted by the new usage
     private void applyUsage(UsageScores.Scores scores) {
         usageScores = scores;
         List<AppEntry> sorted = new ArrayList<>(apps);
@@ -853,6 +856,7 @@ public class MainActivity extends Activity {
     }
 
     /** Re-applies every focus visual without animation (after reloads / restore). */
+    @SuppressLint("NotifyDataSetChanged") // every tile's focused or unfocused look
     private void refreshFocusLook() {
         for (int i = 0; i < pills.length; i++) applyLook(TOP, i, section == TOP && i == topIdx, false);
         for (int i = 0; i < dockTiles.size(); i++) applyLook(DOCK, i, section == DOCK && i == dockIdx, false);

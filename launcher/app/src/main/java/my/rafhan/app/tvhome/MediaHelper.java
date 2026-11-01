@@ -1,5 +1,6 @@
 package my.rafhan.app.tvhome;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.media.MediaMetadata;
 import android.media.session.MediaSession;
@@ -26,6 +27,7 @@ import java.util.List;
  * artist, state, position, duration, and the cover art as a small base64 JPEG when it changes.
  * Uses hidden APIs through reflection; that's allowed for app_process programs.
  */
+@SuppressLint("PrivateApi") // run as the shell user (app_process), where these hidden APIs are open to it
 public final class MediaHelper {
     private MediaHelper() {}
 

@@ -5,3 +5,4 @@ backup/
 # The TV address saved by the scripts (TV=ip ...), different on every machine.
 .tv
 *.jks
+.vscode

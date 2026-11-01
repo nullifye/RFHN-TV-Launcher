@@ -53,7 +53,7 @@ final class UpdateCheck {
                 String name = a.optString("name");
                 if (!name.startsWith("tvhome-") || !name.endsWith(".apk")) continue;
                 String digest = a.optString("digest", "");
-                String sha = digest.startsWith("sha256:") ? digest.substring(7).toLowerCase() : null;
+                String sha = digest.startsWith("sha256:") ? digest.substring(7).toLowerCase(java.util.Locale.ROOT) : null;
                 return new Release(version, a.optString("browser_download_url"), a.optLong("size"), sha);
             }
         } catch (Exception ignored) {

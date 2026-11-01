@@ -4,6 +4,11 @@
 
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <!-- Used when there (the network name, the bell's Bluetooth alerts), not needed: a TV on
+         Ethernet, or without Bluetooth or GPS, can still install it. -->
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- TV Home updates from GitHub, installed with Android's installer after the user confirms. -->
@@ -101,6 +106,9 @@
         android:banner="@drawable/banner"
         android:theme="@style/HomeTheme"
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        tools:targetApi="31"
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="false">
 
@@ -110,7 +118,6 @@
             android:launchMode="singleTask"
             android:stateNotNeeded="true"
             android:excludeFromRecents="true"
-            android:screenOrientation="landscape"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

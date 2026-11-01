@@ -2,6 +2,7 @@
     <string name="app_name">Home</string>
     <string name="inputs">Inputs</string>
     <string name="settings">Settings</string>
+    <string name="notifications">Notifications</string>
     <string name="wifi">Wi-Fi</string>
     <string name="remote_a11y_label">Home phone remote</string>
     <string name="remote_a11y_description">Lets the phone remote press Back and Home in any app, and makes the remote\'s Input button open the input picker. It does not read the screen or any other key.</string>

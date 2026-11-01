@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- TV Home is English only and builds its texts in code on purpose (names, counts and times
+         joined as each screen needs them); translating it isn't planned. -->
+    <issue id="SetTextI18n" severity="ignore" />
+    <!-- dadb 2 is a major version of the loopback ADB client that the phone remote's D-pad, typing
+         and screenshots run on: staying on 1.2 until 2 has been tried with a phone. -->
+    <!-- androidx.core 1.19 needs Android Gradle plugin 9 (a major upgrade of the whole build);
+         it stays at the version RecyclerView picks until the build moves to AGP 9. -->
+    <issue id="GradleDependency">
+        <ignore regexp="androidx.core:core" />
+    </issue>
+    <issue id="NewerVersionAvailable">
+        <ignore regexp="dadb" />
+    </issue>
+</lint>

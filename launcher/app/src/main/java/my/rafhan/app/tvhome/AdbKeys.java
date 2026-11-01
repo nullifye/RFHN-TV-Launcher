@@ -1,5 +1,6 @@
 package my.rafhan.app.tvhome;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.os.Handler;
@@ -126,6 +127,7 @@ final class AdbKeys {
 
     private final ContentObserver adbSetting;
 
+    @SuppressLint("StaticFieldLeak") // holds only the application context (get()): nothing to leak
     private static AdbKeys instance;
 
     /** One loopback ADB connection per process, shared by the phone remote and Now Playing. */

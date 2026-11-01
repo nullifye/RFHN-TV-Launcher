@@ -1,19 +1,4 @@
 <resources>
-    <style name="Pill">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">40dp</item>
-        <item name="android:layout_marginStart">12dp</item>
-        <item name="android:background">@drawable/pill_bg</item>
-        <item name="android:drawablePadding">8dp</item>
-        <item name="android:gravity">center_vertical</item>
-        <item name="android:maxWidth">260dp</item>
-        <item name="android:ellipsize">end</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">18dp</item>
-        <item name="android:textColor">#E6FFFFFF</item>
-        <item name="android:textSize">15sp</item>
-    </style>
     <!-- Round icon-only top-bar button (bell, Inputs, Wi-Fi, Settings). -->
     <style name="IconPill">
         <item name="android:layout_width">44dp</item>
