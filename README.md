@@ -1,6 +1,8 @@
-# Mi TV debloat + Apple TV style launcher
+# RFHN TV Launcher
 
-A fast, minimal home screen for **Android TV and Google TV** (Android 8.0 or newer), with prayer times, a live system card, Now Playing, a running-apps screen, a phone remote and a live globe screen saver. It was built on a Xiaomi Mi TV, which was also [debloated](docs/xiaomi-debloat.md).
+RFHN TV Launcher is a fast, minimal home screen for **Android TV and Google TV** (Android 8.0 or newer), with prayer times, a live system card, Now Playing, a running-apps screen, a phone remote and a live globe screen saver. It was built on a Xiaomi Mi TV, which was also [debloated](docs/xiaomi-debloat.md).
+
+**Explore the launcher:** [Landing page source](docs/index.html) · [All features](docs/features.md)
 
 **Install it on your TV:** [Windows](docs/install-windows.md) · [macOS](docs/install-macos.md) · [Linux](docs/install-linux.md) · [with an AI agent](docs/install-with-ai-agent.md)
 
@@ -11,7 +13,7 @@ A fast, minimal home screen for **Android TV and Google TV** (Android 8.0 or new
   </tr>
   <tr>
     <td width="50%"><img src="docs/launcher-old.jpg" width="100%" alt="Stock Android TV home screen with Favorite Apps, Play Next and AirConsole rows"></td>
-    <td width="50%"><img src="docs/home.jpg" width="100%" alt="New launcher over the Stargazer wallpaper: clock, Hijri date, prayer times, most used apps, system card, Now Playing and an app dock"></td>
+    <td width="50%"><img src="docs/home.jpg" width="100%" alt="RFHN TV Launcher with Forest light wallpaper, clock, prayer times, weather, system status and Settings gear focused"></td>
   </tr>
   <tr>
     <td valign="top">Rows of recommendations and sponsored content, with your apps squeezed into one line.</td>
@@ -33,7 +35,7 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/home.jpg" width="100%" alt="Home screen"></td>
+    <td width="50%"><img src="docs/home.jpg" width="100%" alt="Home screen with Settings gear focused, Forest light wallpaper, weather, prayer times and system status"></td>
     <td width="50%"><img src="docs/app-grid.jpg" width="100%" alt="All apps grid"></td>
   </tr>
   <tr>
@@ -73,7 +75,7 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
     <td valign="top"><b>Screen saver: Live log</b>: the TV's log as it happens, errors in red and warnings in amber. All the screen savers are on black and keep moving so nothing burns in (<a href="docs/features.md#screen-savers-prayer-time-and-live-log">more</a>).</td>
   </tr>
   <tr>
-    <td colspan="2"><img src="docs/screensaver-globe.jpg" width="100%" alt="Globe screen saver: the Earth with day and night, the prayer lines, Makkah and your zone, live map edits and earthquakes, the space stations and Hubble, with a legend"></td>
+    <td colspan="2"><img src="docs/screensaver-globe.jpg" width="100%" alt="Globe screen saver with about two-thirds of Earth in daylight over South America, the Atlantic and western Africa, with night across eastern Africa and Arabia"></td>
   </tr>
   <tr>
     <td colspan="2" valign="top"><b>Screen saver: Globe</b>: the Earth as it sits in space right now, lit by the real sun, turning once every 2 minutes. On it: where it's Maghrib and Fajr right now, Makkah and the qibla from your zone, city lights, the sun's glint on the sea, snow and sea ice, the aurora, map edits as people save them, the day's earthquakes, and the ISS, Tiangong and Hubble where they are now. Clouds and moving wind can be switched on too. The remote's arrows turn it (<a href="docs/features.md#globe">more</a>).</td>
@@ -96,9 +98,14 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
 
 <table>
   <tr>
-    <td align="center" width="33%"><img src="docs/tvremote.jpg" alt="Phone remote, Remote tab: touchpad, Back, Home, Play/Pause, volume, screenshot, keyboard"></td>
-    <td align="center" width="33%"><img src="docs/tvremote-tv.jpg" alt="Phone remote, TV tab: Now Playing, prayer times, system, power and sleep timer, inputs, send to TV"></td>
-    <td align="center" width="33%"><img src="docs/tvremote-settings.jpg" alt="Phone remote, Settings tab: clock, cards, wallpaper dim and wallpaper thumbnails"></td>
+    <td align="center" width="33%"><a href="docs/remote-home.jpg"><img src="docs/remote-home.jpg" alt="Phone remote, Remote tab: swipe pad, Back, Home, playback, volume, screenshot and keyboard"></a></td>
+    <td align="center" width="33%"><a href="docs/remote-tv.jpg"><img src="docs/remote-tv.jpg" alt="Phone remote, TV tab: Now Playing, prayer times, system, power, inputs and Send to TV"></a></td>
+    <td align="center" width="33%"><a href="docs/remote-apps.jpg"><img src="docs/remote-apps.jpg" alt="Phone remote, Apps tab: dock and all apps, most used first"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/remote-files.jpg"><img src="docs/remote-files.jpg" alt="Phone remote, Files tab: internal storage and Wallpapers folder"></a></td>
+    <td align="center"><a href="docs/remote-settings.jpg"><img src="docs/remote-settings.jpg" alt="Phone remote, Settings tab: clock, cards, wallpaper dim and wallpaper choices"></a></td>
+    <td></td>
   </tr>
   <tr>
     <td colspan="3" align="center"><b>Phone remote</b> in the phone's browser, no app to install: swipe to move, type into any app, open and manage apps, see what's playing, prayer times and the bell, send a message or a link to the TV, change Settings and the wallpaper, a sleep timer, and send files to the TV. See <a href="docs/features.md#phone-remote">Phone remote</a>.</td>

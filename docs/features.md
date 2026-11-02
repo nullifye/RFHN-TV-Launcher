@@ -240,9 +240,9 @@ Open **http://\<TV IP\>:8486** on your phone, on the same Wi-Fi (Settings → Ph
 
 <table>
   <tr>
-    <td align="center" width="33%"><img src="tvremote.jpg" alt="Remote tab: touchpad, Back, Home, Play/Pause, volume, screenshot, keyboard"></td>
-    <td align="center" width="33%"><img src="tvremote-tv.jpg" alt="TV tab: Now Playing, prayer times, system, power, inputs, send to TV"></td>
-    <td align="center" width="33%"><img src="tvremote-applist.jpg" alt="Apps tab: running apps with Hide and Close, then the dock"></td>
+    <td align="center" width="33%"><a href="remote-home.jpg"><img src="remote-home.jpg" alt="Remote tab: swipe pad, Back, Home, playback, volume, screenshot and keyboard"></a></td>
+    <td align="center" width="33%"><a href="remote-tv.jpg"><img src="remote-tv.jpg" alt="TV tab: Now Playing, prayer times, system, power, inputs and Send to TV"></a></td>
+    <td align="center" width="33%"><a href="remote-apps.jpg"><img src="remote-apps.jpg" alt="Apps tab: dock editing and all apps, most used first"></a></td>
   </tr>
   <tr>
     <td align="center"><b>Remote</b>: swipe to move, double-tap for OK, plus Back, Home, media, volume, typing and screenshots</td>
@@ -250,8 +250,8 @@ Open **http://\<TV IP\>:8486** on your phone, on the same Wi-Fi (Settings → Ph
     <td align="center"><b>Apps</b>: running apps, the dock, then every app with the most used first. Hold one for more</td>
   </tr>
   <tr>
-    <td align="center"><img src="tvremote-sendfile.jpg" alt="Files tab: TV storage and the Wallpapers shortcut"></td>
-    <td align="center"><img src="tvremote-settings.jpg" alt="Settings tab: clock, cards, wallpaper dim and wallpaper thumbnails"></td>
+    <td align="center"><a href="remote-files.jpg"><img src="remote-files.jpg" alt="Files tab: TV storage and the Wallpapers folder"></a></td>
+    <td align="center"><a href="remote-settings.jpg"><img src="remote-settings.jpg" alt="Settings tab: clock, cards, wallpaper dim and wallpaper choices"></a></td>
     <td></td>
   </tr>
   <tr>
