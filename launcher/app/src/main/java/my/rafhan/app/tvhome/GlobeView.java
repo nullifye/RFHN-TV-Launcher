@@ -1497,7 +1497,7 @@ final class GlobeView extends GLSurfaceView {
             small.setTextSize(8 * sd);
             cell = Math.round(text.getTextSize() * 1.5f);
             icons = icons(cell);
-            zone = zoneName(ctx, LauncherSettings.zone(ctx));
+            zone = "Your zone: " + LauncherSettings.zone(ctx); // the code (SGR03): a zone's first place can be long
             hint.setTypeface(Fonts.outfit(ctx, 400));
             hint.setTextSize(12 * sd);
             hint.setColor(DIM);
@@ -1506,15 +1506,6 @@ final class GlobeView extends GLSurfaceView {
             popupName.setTextSize(14 * sd);
             popupSub.setTypeface(Fonts.outfit(ctx, 400));
             popupSub.setTextSize(10 * sd);
-        }
-
-        /** "Your zone: Klang" for SGR03: the first place in the prayer zone list's entry. */
-        private static String zoneName(Context ctx, String code) {
-            for (String e : ctx.getResources().getStringArray(R.array.prayer_zones)) {
-                String[] f = e.split("\\|");
-                if (f.length >= 3 && f[1].equals(code)) return "Your zone: " + f[2].split(",")[0].trim();
-            }
-            return "Your zone";
         }
 
         /** The globe can't be drawn on this TV: say so in the middle, the rest stays as it is. */
