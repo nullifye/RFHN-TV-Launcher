@@ -11,7 +11,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -87,6 +86,11 @@ final class WeatherPanel {
     private final WeatherEffects effects; // the home screen's rain, lightning and haze, or null
     private boolean fetching;
     private long lastAttempt;
+    private final WeatherFileCache<Weather.Day> forecastCache = new WeatherFileCache<>();
+    private final WeatherFileCache<List<Weather.Warning>> warningCache = new WeatherFileCache<>();
+    private final WeatherFileCache<Weather.Now> nowCache = new WeatherFileCache<>();
+    private final WeatherFileCache<List<Weather.Reading>> trendCache = new WeatherFileCache<>();
+    private final WeatherFileCache<Weather.Air> airCache = new WeatherFileCache<>();
 
     WeatherPanel(Context ctx, LinearLayout root, WeatherEffects effects) {
         this.ctx = ctx;
@@ -200,39 +204,42 @@ final class WeatherPanel {
         List<Weather.Place> places = places(ctx);
         Weather.Place place = place(ctx, places);
         File ff = place == null ? null : file(ctx, forecastName(place.id));
-        Weather.Day day = ff == null ? null : Weather.parseForecast(read(ff), place.id, LocalDate.now());
-        title.setText(place != null ? "WEATHER · " + place.name.toUpperCase(Locale.ROOT) : "WEATHER");
+        LocalDate today = LocalDate.now();
+        Weather.Day day = ff == null ? null : forecastCache.get(ff, today.toString(),
+                json -> Weather.parseForecast(json, place.id, today));
+        setText(title, place != null ? "WEATHER · " + place.name.toUpperCase(Locale.ROOT) : "WEATHER");
         Weather.Warning warning = place == null ? null : Weather.activeWarning(
-                Weather.parseWarnings(read(file(ctx, "warnings.json"))), LocalDateTime.now(), warningPlaces(place));
+                warningCache.get(file(ctx, "warnings.json"), "", Weather::parseWarnings),
+                LocalDateTime.now(), warningPlaces(place));
         if (warning != null) {
             String w = "⚠ " + Weather.warningName(warning) + " until " + clock(warning.to);
-            outlook.setText(w);
+            setText(outlook, w);
             outlook.setTextColor(WARN);
         } else {
-            outlook.setText(day != null ? Weather.outlook(day) : "");
+            setText(outlook, day != null ? Weather.outlook(day) : "");
             outlook.setTextColor(DIM);
         }
         if (day != null) {
             int kind = Weather.kind(day.summary);
-            skyIcon.setImageResource(kindIcon(kind));
+            setIcon(skyIcon, kindIcon(kind));
             String range = day.min + "–" + day.max + "°C";
-            temp.setText(range);
+            setText(temp, range);
             temp.setTextColor(TEXT);
             String[] p = {day.morning, day.afternoon, day.night};
-            for (int i = 0; i < 3; i++) partIcons[i].setImageResource(kindIcon(Weather.kind(p[i])));
+            for (int i = 0; i < 3; i++) setIcon(partIcons[i], kindIcon(Weather.kind(p[i])));
             String at = "MET · " + clock(ff.lastModified());
-            skyTime.setText(at);
+            setText(skyTime, at);
         } else {
-            skyIcon.setImageResource(R.drawable.ic_cloud);
-            temp.setText(NONE);
+            setIcon(skyIcon, R.drawable.ic_cloud);
+            setText(temp, NONE);
             temp.setTextColor(DIM);
-            for (ImageView v : partIcons) v.setImageResource(R.drawable.ic_cloud);
-            skyTime.setText(MET_NAME);
+            for (ImageView v : partIcons) setIcon(v, R.drawable.ic_cloud);
+            setText(skyTime, MET_NAME);
         }
 
         Weather.Station st = station(ctx, stations(ctx));
         File nf = st == null ? null : file(ctx, nowName(st.id));
-        Weather.Now now = nf == null ? null : Weather.parseNow(read(nf));
+        Weather.Now now = nf == null ? null : nowCache.get(nf, "", Weather::parseNow);
         boolean nowOld = now != null && System.currentTimeMillis() - nf.lastModified() > OLD_MS;
         degrees(feelsTemp, feelsLabel, now == null ? Double.NaN : now.feels, nowOld);
         boolean apiOld = st == null || st.time == null
@@ -248,7 +255,8 @@ final class WeatherPanel {
             boolean old = apiOld;
             int b = Weather.band(st.api, Weather.API_TOP);
             // Rising or falling: this station's last few hours (APIMS's hourly table).
-            Integer change = Weather.change(Weather.parseHourly(read(file(ctx, trendName(st.id))), st.id), st.time,
+            Integer change = Weather.change(trendCache.get(file(ctx, trendName(st.id)), st.id,
+                    json -> Weather.parseHourly(json, st.id)), st.time,
                     TREND_HOURS);
             int trendColor = change == null || Math.abs(change) < 2 ? DIM : change > 0 ? WARN : FALLING;
             api.set("API " + st.api, Weather.API_BANDS[b], Weather.API_COLORS[b], Weather.trend(change, TREND_HOURS),
@@ -258,7 +266,7 @@ final class WeatherPanel {
         }
 
         File af = st == null ? null : file(ctx, airName(st.id));
-        Weather.Air air = af == null ? null : Weather.parseAir(read(af));
+        Weather.Air air = af == null ? null : airCache.get(af, "", Weather::parseAir);
         if (air != null) {
             boolean old = System.currentTimeMillis() - af.lastModified() > OLD_MS;
             int b = Weather.band(air.aqi, Weather.US_TOP);
@@ -278,7 +286,7 @@ final class WeatherPanel {
         number.setVisibility(show);
         word.setVisibility(show);
         if (Double.isNaN(value)) return;
-        number.setText(Math.round(value) + "°C");
+        setText(number, Math.round(value) + "°C");
         number.setTextColor(old ? DIM : TEXT);
     }
 
@@ -386,20 +394,24 @@ final class WeatherPanel {
         });
     }
 
-    private static boolean stale(Context ctx) {
+    private boolean stale(Context ctx) {
         long now = System.currentTimeMillis();
         List<Weather.Place> places = places(ctx);
         if (places.isEmpty() || now - file(ctx, "places.json").lastModified() > PLACES_EVERY_MS) return true;
         Weather.Place p = place(ctx, places);
         if (p != null) {
             File f = file(ctx, forecastName(p.id));
+            LocalDate today = LocalDate.now();
             if (now - f.lastModified() > FORECAST_EVERY_MS
-                    || Weather.parseForecast(read(f), p.id, LocalDate.now()) == null) return true;
+                    || forecastCache.get(f, today.toString(),
+                    json -> Weather.parseForecast(json, p.id, today)) == null) return true;
         }
         if (stationsDue(ctx, now)) return true;
         if (now - file(ctx, "warnings.json").lastModified() > WARNINGS_EVERY_MS) return true;
         Weather.Station s = station(ctx, stations(ctx));
-        return s != null && (airDue(ctx, s, now) || trendDue(ctx, s) || nowDue(ctx, s, now));
+        return s != null && (airDue(ctx, s, now,
+                airCache.get(file(ctx, airName(s.id)), "", Weather::parseAir))
+                || trendDue(ctx, s) || nowDue(ctx, s, now));
     }
 
     /** The APIMS readings: the shown station's newer hour should be out (from :10 past the hour). */
@@ -418,7 +430,11 @@ final class WeatherPanel {
     /** Copernicus's values for the station's spot: a new hour has begun (or there's no haze yet). */
     private static boolean airDue(Context ctx, Weather.Station s, long now) {
         File f = file(ctx, airName(s.id));
-        Weather.Air a = Weather.parseAir(read(f));
+        return airDue(ctx, s, now, Weather.parseAir(read(f)));
+    }
+
+    private static boolean airDue(Context ctx, Weather.Station s, long now, Weather.Air a) {
+        File f = file(ctx, airName(s.id));
         LocalDateTime have = a == null || Double.isNaN(a.haze) ? null : a.time;
         return Weather.hourlyDue(have, LocalDateTime.now(), CAMS_MINUTE, now - f.lastModified(), HOURLY_RETRY_MS);
     }
@@ -520,21 +536,18 @@ final class WeatherPanel {
             c.setRequestProperty("User-Agent", Wallpapers.UA);
             c.setRequestProperty("Accept", "application/json");
             if (c.getResponseCode() != 200) throw new IOException("HTTP " + c.getResponseCode());
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            try (InputStream in = c.getInputStream()) {
+            int total = 0;
+            try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(tmp)) {
                 byte[] b = new byte[16 * 1024];
                 for (int n; (n = in.read(b)) > 0; ) {
-                    buf.write(b, 0, n);
-                    if (buf.size() > MAX_BYTES) throw new IOException("too big");
+                    if (total == 0 && b[0] != '[' && b[0] != '{') throw new IOException("not JSON");
+                    total += n;
+                    if (total > MAX_BYTES) throw new IOException("too big");
+                    out.write(b, 0, n);
                 }
             }
-            byte[] body = buf.toByteArray();
-            if (body.length == 0 || (body[0] != '[' && body[0] != '{')) throw new IOException("not JSON");
-            try (FileOutputStream out = new FileOutputStream(tmp)) {
-                out.write(body);
-            }
-            //noinspection ResultOfMethodCallIgnored
-            tmp.renameTo(new File(dir, name));
+            if (total == 0) throw new IOException("empty reply");
+            if (!tmp.renameTo(new File(dir, name))) throw new IOException("couldn't replace cache");
         } catch (Exception e) {
             android.util.Log.w("TvHome", "weather: " + name + " failed: " + e);
         } finally {
@@ -545,6 +558,16 @@ final class WeatherPanel {
     }
 
     // ---------------------------------------------------------------- views
+
+    private static void setText(TextView view, String text) {
+        if (!text.contentEquals(view.getText())) view.setText(text);
+    }
+
+    private static void setIcon(ImageView view, int resource) {
+        if (Integer.valueOf(resource).equals(view.getTag())) return;
+        view.setImageResource(resource);
+        view.setTag(resource);
+    }
 
     private int px(float dps) {
         return Math.round(dps * dp);
@@ -627,21 +650,21 @@ final class WeatherPanel {
         }
 
         void set(String v, String bandName, int bandColor, String d, int detailColor, String l, boolean old) {
-            value.setText(v);
+            setText(value, v);
             value.setTextColor(old ? DIM : TEXT);
-            band.setText(bandName.toUpperCase(Locale.ROOT));
+            setText(band, bandName.toUpperCase(Locale.ROOT));
             band.setTextColor(old ? DIM : bandColor);
-            detail.setText(d);
+            setText(detail, d);
             detail.setTextColor(old ? DIM : detailColor);
-            label.setText(l);
+            setText(label, l);
         }
 
         void none(String v, String l) {
-            value.setText(v);
+            setText(value, v);
             value.setTextColor(DIM);
-            band.setText("");
-            detail.setText("");
-            label.setText(l);
+            setText(band, "");
+            setText(detail, "");
+            setText(label, l);
         }
     }
 }
