@@ -83,8 +83,7 @@ section[id] { scroll-margin-top: 24px; }
 .showcase { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(32px, 5vw, 72px); align-items: center; }
 .showcase.reverse { grid-template-columns: .95fr 1.05fr; }
 .showcase .media { min-width: 0; margin: 0; }
-.media img, .media video { width: 100%; border-radius: 9px; border: 1px solid var(--line); box-shadow: 0 16px 40px #17271a24; }
-.media video { display: block; height: auto; aspect-ratio: 16 / 9; object-fit: contain; background: #000; }
+.media img { width: 100%; border-radius: 9px; border: 1px solid var(--line); box-shadow: 0 16px 40px #17271a24; }
 .media figcaption { color: var(--muted); font-size: 12px; margin-top: 11px; }
 .showcase h2 { max-width: 550px; }
 .text-link { color: var(--green); font-weight: 760; text-underline-offset: 4px; }
