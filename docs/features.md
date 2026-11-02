@@ -183,7 +183,7 @@ The gear at the end of the top bar opens the launcher's Settings: categories on 
 | Info overlay | Show over apps on/off (off by default), what the left, centre and right show (network speed / uptime / clock / elapsed time / nothing), position (top / bottom), text size (small / medium / large), background on/off |
 | Phone remote | Remote on/off (the banner and bell keep working when it's off), its address, forget all paired phones (press OK twice), and each paired phone with when it was last used and its own Forget (OK twice) |
 | Running apps | Apps hidden from the running-apps screen; OK shows one again |
-| About | Version, install time, APK size, TV settings |
+| About | Version, install time, APK size, Check for updates (shows the last check's answer, from here or the bell's 6-hourly check: "You have the latest version", or the row becomes "Update to x.y.z" to download and install it, settings kept), TV settings |
 
 ## Weather
 

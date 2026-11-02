@@ -633,10 +633,61 @@ final class SettingsScreen {
         out.add(info("Version", version));
         out.add(info("Installed", installed));
         out.add(info("APK size", (new File(ctx.getPackageCodePath()).length() / 1024) + " KB"));
+        out.add(updateRow());
         Row tv = new Row(ACTION, "TV settings");
         tv.sub = "Android Settings: network, display, sound, apps";
         tv.action = host::openTvSettings;
         out.add(tv);
+    }
+
+    // Settings → About → Check for updates: a check running from here (the result is UpdateCheck's,
+    // shared with the bell's 6-hourly check).
+    private boolean updChecking;
+
+    /** Check for updates, showing the last check's answer; once one is found, the same row installs it. */
+    private Row updateRow() {
+        UpdateCheck.Release found = UpdateCheck.lastFound();
+        if (!updChecking && found != null) {
+            Row u = new Row(ACTION, "Update to " + found.version);
+            u.sub = "Download and install it" + (found.size > 0 ? " (" + size(found.size) + ")" : "") + ". Your settings are kept";
+            u.action = () -> {
+                try {
+                    ctx.startActivity(UpdateActivity.intent(ctx, found).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+                } catch (RuntimeException e) {
+                    android.widget.Toast.makeText(ctx, "Couldn't start the update", android.widget.Toast.LENGTH_SHORT).show();
+                }
+            };
+            return u;
+        }
+        Row u = new Row(ACTION, "Check for updates");
+        long at = UpdateCheck.lastCheckedAt();
+        String when = at == 0 ? "" : " · " + DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date(at));
+        if (updChecking) u.sub = "Checking…";
+        else if (at != 0) u.sub = UpdateCheck.lastFailed() ? "Couldn't check. Try again" + when : "You have the latest version" + when;
+        u.action = this::checkForUpdate;
+        return u;
+    }
+
+    /** "540 KB" under a megabyte, else "1.2 MB". */
+    private static String size(long bytes) {
+        return bytes < 1_000_000 ? Math.max(1, Math.round(bytes / 1024.0)) + " KB"
+                : String.format(Locale.ROOT, "%.1f MB", bytes / 1048576.0);
+    }
+
+    private void checkForUpdate() {
+        if (updChecking) return;
+        updChecking = true;
+        refreshRows();
+        worker.execute(() -> {
+            try {
+                UpdateCheck.check(ctx);
+            } catch (Exception ignored) { // shown from UpdateCheck.lastFailed()
+            }
+            main.post(() -> {
+                updChecking = false;
+                refreshRows();
+            });
+        });
     }
 
     // ---------------------------------------------------------------- pickers

@@ -38,27 +38,74 @@ final class UpdateCheck {
 
     private UpdateCheck() {}
 
+    // The last check's answer, whichever ran it (the bell's 6-hourly one or Settings → About), so
+    // About shows it. In memory only: a launcher restart forgets it until the next check.
+    private static volatile Release lastFound;
+    private static volatile long lastAt;
+    private static volatile boolean lastFailed;
+
+    /** The newer release the last check found, or null. */
+    static Release lastFound() {
+        return lastFound;
+    }
+
+    /** When the last check finished (epoch ms), or 0 if none has since the launcher started. */
+    static long lastCheckedAt() {
+        return lastAt;
+    }
+
+    /** The last check couldn't reach GitHub. */
+    static boolean lastFailed() {
+        return lastFailed;
+    }
+
     /** The newer release, or null (up to date, offline, a debug build, or no APK in it). Blocks. */
     static Release newer(Context ctx) {
-        if ((ctx.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) return null;
-        String current = installedVersion(ctx);
-        if (current == null) return null;
         try {
-            JSONObject r = new JSONObject(get(LATEST));
-            String version = r.optString("tag_name").replaceFirst("^[vV]", "");
-            if (version.isEmpty() || compare(version, current) <= 0) return null;
-            JSONArray assets = r.optJSONArray("assets");
-            for (int i = 0; assets != null && i < assets.length(); i++) {
-                JSONObject a = assets.getJSONObject(i);
-                String name = a.optString("name");
-                if (!name.startsWith("tvhome-") || !name.endsWith(".apk")) continue;
-                String digest = a.optString("digest", "");
-                String sha = digest.startsWith("sha256:") ? digest.substring(7).toLowerCase(java.util.Locale.ROOT) : null;
-                return new Release(version, a.optString("browser_download_url"), a.optLong("size"), sha);
-            }
-        } catch (Exception ignored) {
+            return check(ctx);
+        } catch (Exception e) {
+            return null;
         }
-        return null;
+    }
+
+    /**
+     * Settings → About → Check for updates: the newer release, or null when this is the latest;
+     * throws when GitHub can't be reached (or for a debug build, which couldn't take it). Blocks.
+     */
+    static Release check(Context ctx) throws Exception {
+        try {
+            Release r = fetch(ctx);
+            lastFound = r;
+            lastFailed = false;
+            return r;
+        } catch (Exception e) {
+            lastFailed = true; // the last one found (if any) stays: it's still out there
+            throw e;
+        } finally {
+            lastAt = System.currentTimeMillis();
+        }
+    }
+
+    private static Release fetch(Context ctx) throws Exception {
+        if ((ctx.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            throw new IllegalStateException("a debug build can't take updates");
+        }
+        String current = installedVersion(ctx);
+        if (current == null) throw new IllegalStateException("no version");
+        JSONObject r = new JSONObject(get(LATEST));
+        String version = r.optString("tag_name").replaceFirst("^[vV]", "");
+        if (version.isEmpty()) throw new IllegalStateException("no release");
+        if (compare(version, current) <= 0) return null;
+        JSONArray assets = r.optJSONArray("assets");
+        for (int i = 0; assets != null && i < assets.length(); i++) {
+            JSONObject a = assets.getJSONObject(i);
+            String name = a.optString("name");
+            if (!name.startsWith("tvhome-") || !name.endsWith(".apk")) continue;
+            String digest = a.optString("digest", "");
+            String sha = digest.startsWith("sha256:") ? digest.substring(7).toLowerCase(java.util.Locale.ROOT) : null;
+            return new Release(version, a.optString("browser_download_url"), a.optLong("size"), sha);
+        }
+        return null; // a newer release without its APK yet (CI still building): nothing to install
     }
 
     static String installedVersion(Context ctx) {

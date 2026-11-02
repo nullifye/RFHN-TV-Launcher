@@ -89,7 +89,7 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
       <ul>
         <li><b>Azan</b> at each prayer time with a banner over any app, plus a silent reminder a few minutes before (you choose how early).</li>
         <li><b>Wallpapers</b>: Bing's photo of the day (scenery only, no people), seven photos from Wikimedia Commons, previewed as you move through the list, plus your own pictures from a <code>Wallpapers</code> folder.</li>
-        <li><b>Notifications bell</b>: new TV Home versions (update from the bell in one click), Play Store updates, new HDMI devices, Bluetooth devices and low memory.</li>
+        <li><b>Notifications bell</b>: new TV Home versions (update from the bell in one click, or check any time in Settings → About), Play Store updates, new HDMI devices, Bluetooth devices and low memory.</li>
         <li><b>Connection status</b>: a banner over any app when Wi-Fi drops or loses internet.</li>
         <li><b>Info overlay</b> over apps (optional): network speed, uptime, a clock with seconds and time since you left the home screen; hidden on the home screen.</li>
         <li><b>Inputs</b> menu for HDMI 1–3, AV and Live TV.</li>
