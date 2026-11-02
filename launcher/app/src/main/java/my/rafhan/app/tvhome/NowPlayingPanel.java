@@ -140,11 +140,12 @@ final class NowPlayingPanel {
         // The cover fills the card's left side edge to edge; the card's rounded outline clips it.
         card.setPadding(0, 0, px(12), 0);
         card.setClipToOutline(true);
+        // One continuous glass sheen and border across the cover and controls.
+        card.setForeground(ctx.getDrawable(R.drawable.np_gloss));
 
         cover = new ImageView(ctx);
         cover.setBackgroundColor(0xFF1C1C1E);
         cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        cover.setForeground(ctx.getDrawable(R.drawable.np_gloss)); // glossy sheen, drawn over the art
         card.addView(cover, new LinearLayout.LayoutParams(px(COVER), px(COVER)));
 
         LinearLayout col = new LinearLayout(ctx);
