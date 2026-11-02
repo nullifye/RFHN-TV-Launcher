@@ -6,6 +6,13 @@ Other guides: [Windows](install-windows.md) · [Linux](install-linux.md) · [wit
 
 **Prefer an app that guides you?** The [setup app](tui.md) finds the TV, installs TV Home, cleans up the TV and can undo everything. One download, nothing else to install.
 
+To run the Mac TUI, unpack the build from [Releases](https://github.com/nullifye/RFHN-TV-Launcher/releases/latest), open Terminal in the folder containing `tvhome-tui`, and run `./tvhome-tui`. If macOS blocks a download you trust, remove the quarantine attribute from **that executable only**, then try again:
+
+```bash
+xattr -d com.apple.quarantine ./tvhome-tui
+./tvhome-tui
+```
+
 **No build tools?** Skip the building and [install the ready-made APK](#install-the-ready-made-apk-instead-no-building) from GitHub Releases instead: only adb is needed.
 
 ## 1. Prepare the TV
