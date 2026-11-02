@@ -81,7 +81,7 @@ final class NowPlayingPanel {
     private final AdbKeys adb;
     private final AudioManager audio;
 
-    private final ImageView cover;
+    private final ArtCoverView cover;
     private final TextView source, title, artist, time;
     private final Bar bar;
     private final ImageView[] buttons = new ImageView[BUTTONS];
@@ -140,11 +140,12 @@ final class NowPlayingPanel {
         // The cover fills the card's left side edge to edge; the card's rounded outline clips it.
         card.setPadding(0, 0, px(12), 0);
         card.setClipToOutline(true);
-        // One continuous glass sheen and border across the cover and controls.
+        // Use the same neutral glass base as the other cards, without an artwork color wash.
+        card.setBackgroundResource(R.drawable.sys_bg);
+        // Carry the shared card border across the edge-to-edge artwork as well.
         card.setForeground(ctx.getDrawable(R.drawable.np_gloss));
 
-        cover = new ImageView(ctx);
-        cover.setBackgroundColor(0xFF1C1C1E);
+        cover = new ArtCoverView(ctx);
         cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
         card.addView(cover, new LinearLayout.LayoutParams(px(COVER), px(COVER)));
 
@@ -528,11 +529,13 @@ final class NowPlayingPanel {
             cover.setImageResource(R.drawable.ic_music);
             cover.setScaleType(ImageView.ScaleType.CENTER);
         }
+        cover.artworkChanged();
     }
 
     private void setCover(Bitmap bmp) {
         cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
         cover.setImageBitmap(bmp);
+        cover.artworkChanged();
     }
 
     private static Bitmap download(String uri, int size) {
