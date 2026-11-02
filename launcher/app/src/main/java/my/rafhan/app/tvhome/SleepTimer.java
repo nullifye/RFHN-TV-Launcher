@@ -1,13 +1,14 @@
 package my.rafhan.app.tvhome;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
 /**
- * Sleep timer set from the phone remote: a banner a minute before, then the TV goes to standby
- * (`input keyevent KEYCODE_SLEEP` over the loopback ADB connection, so USB debugging must still
- * be on). Kept in memory by RemoteService; a restart of the launcher cancels it.
+ * Sleep timer set from the phone remote or the home screen's quick actions: a banner a minute
+ * before, then the TV goes to standby (Power.sleep: TV Home's accessibility service, else ADB).
+ * Kept in memory by RemoteService; a restart of the launcher cancels it.
  */
 final class SleepTimer {
     private final Context ctx;
@@ -15,9 +16,19 @@ final class SleepTimer {
     private final Handler main = new Handler(Looper.getMainLooper());
     private volatile long endsAt;
 
+    /** The one RemoteService keeps (also for the home screen's quick actions), or null before it starts. */
+    // Holds only the application context (and the service's banner), and RemoteService clears it on destroy.
+    @SuppressLint("StaticFieldLeak")
+    private static volatile SleepTimer current;
+
     SleepTimer(Context ctx, NetBanner banner) {
-        this.ctx = ctx;
+        this.ctx = ctx.getApplicationContext();
         this.banner = banner;
+        current = this;
+    }
+
+    static SleepTimer current() {
+        return current;
     }
 
     /** When the TV will sleep (epoch ms), or 0 when no timer is set. */
@@ -41,6 +52,7 @@ final class SleepTimer {
     }
 
     void stop() {
+        if (current == this) current = null;
         main.post(this::cancelNow);
     }
 
@@ -60,9 +72,9 @@ final class SleepTimer {
     private void fireNow() {
         endsAt = 0;
         new Thread(() -> {
-            if (AppManager.run(ctx, "input keyevent KEYCODE_SLEEP") == null) {
+            if (!Power.sleep(ctx)) {
                 banner.showMessage(R.drawable.ic_uptime, 0xFFFF6B6B,
-                        "Sleep timer couldn't turn the TV off: USB debugging is off", 8000);
+                        "Sleep timer couldn't turn the TV off: turn on TV Home's accessibility service or USB debugging", 8000);
             }
         }, "sleep-timer").start();
     }

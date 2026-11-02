@@ -59,12 +59,15 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
     <td valign="top"><b>Hide apps you never close</b>: hold OK on a running app and choose <b>Hide from this list</b>. Hidden apps wait under a "Hidden apps" row at the bottom, and Settings → Running apps brings them back.</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/wallpapers.jpg" width="100%" alt="Wallpaper list"></td>
+    <td width="50%"><img src="docs/quick-actions.jpg" width="100%" alt="Hold OK on the Settings gear: start screen saver, sleep timer, sleep now, restart, shut down"></td>
     <td width="50%"><img src="docs/settings-screensaver.jpg" width="100%" alt="Settings → Screen saver: on/off, Show, Start now"></td>
   </tr>
   <tr>
-    <td valign="top"><b>Wallpapers</b>: move to preview, OK to set. Add your own from the phone remote: Settings → Wallpaper → Your photo.</td>
+    <td valign="top"><b>Quick actions</b>: hold OK on the Settings gear (or press Menu on it) to <b>Start screen saver</b>, set a <b>Sleep timer</b> (30 to 120 min), <b>Sleep now</b>, <b>Restart</b> or <b>Shut down</b>. Restart and Shut down ask first, with Cancel focused. Sleep and the timer work with USB debugging off; Restart and Shut down need it, and without it open the TV's own power menu.</td>
     <td valign="top"><b>Settings → Screen saver</b>: switch it on or off, choose Prayer time, Live log, Globe or any other screen saver on the TV, and preview it with Start now. With Globe chosen, each of its layers has a switch.</td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><img src="docs/wallpapers.jpg" width="50%" alt="Wallpaper list"><br><b>Wallpapers</b>: move to preview, OK to set. Add your own from the phone remote: Settings → Wallpaper → Your photo.</td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/screensaver-prayer.jpg" width="100%" alt="Prayer time screen saver: big clock, date, Hijri date and today's prayer times"></td>
@@ -132,6 +135,7 @@ You need an Android TV or Google TV running Android 8.0 or newer, and a computer
 | Up from the top bar | Running apps: OK force-closes, hold OK for options |
 | Hold OK on an app | Move, add or remove dock apps, or open |
 | The gear | Settings: wallpaper, prayer zone, azan, cards, screen saver, notifications, phone remote |
+| Hold OK on the gear | Quick actions: start screen saver, sleep timer, sleep now, restart, shut down |
 | Back / Home | Back to the dock |
 
 **Phone remote:** open `http://<TV IP>:8486` in your phone's browser on the same Wi-Fi and pair with the PIN shown on the TV. Settings → Phone remote shows the exact address. Five tabs:

@@ -331,12 +331,13 @@
         <div class="card-h"><span>Power</span></div>
         <div id="powerOn" class="hidden">
           <div class="grid2"><button id="sleepNow">Sleep</button><button id="rebootNow">Restart</button></div>
+          <div id="rebootOff" class="muted hidden">Restart needs USB debugging on the TV.</div>
           <div class="mini-h"><span>Timer</span><b id="sleepLeft"></b></div>
           <div class="grid2" id="sleepChips">
             <button data-min="30">30 min</button><button data-min="60">60 min</button><button data-min="90">90 min</button><button data-min="0">Off</button>
           </div>
         </div>
-        <div id="powerOff" class="muted">Turn on USB debugging on the TV for sleep, restart and a sleep timer.</div>
+        <div id="powerOff" class="muted">Turn on USB debugging (or TV Home's accessibility service) on the TV for sleep, restart and a sleep timer.</div>
       </div>
       <div class="card">
         <div class="card-h"><span>Inputs</span></div>
@@ -930,10 +931,12 @@ async function loadDashboard() {
     [s.network === "LAN" ? "LAN" : "Wi-Fi", s.network === "Offline" ? "Offline" : s.rssi != null ? s.rssi + " dBm" : "On"],
     ["Up", up],
   ].map(([l, v]) => `<div><span>${esc(l)}</span><b>${esc(v)}</b></div>`).join("");
-  // Power and sleep timer (USB debugging)
-  const ready = d.adb === "ready";
-  $("powerOn").classList.toggle("hidden", !ready);
-  $("powerOff").classList.toggle("hidden", ready);
+  // Power and sleep timer: sleep works through the accessibility service too; restart needs USB debugging
+  const ready = d.adb === "ready", sleeps = ready || d.a11y === true;
+  $("powerOn").classList.toggle("hidden", !sleeps);
+  $("powerOff").classList.toggle("hidden", sleeps);
+  $("rebootNow").classList.toggle("hidden", !ready);
+  $("rebootOff").classList.toggle("hidden", ready);
   sleepAt = d.sleepAt || 0;
   tickSleep();
   // Bell

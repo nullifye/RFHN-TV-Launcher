@@ -156,6 +156,20 @@ Press **Up** on the top bar and the home screen slides away. A screen with three
 
 ## Settings (gear)
 
+**Quick actions:** hold OK (or press Menu) on the gear for a short menu under it:
+
+| Action | What it does |
+|---|---|
+| Start screen saver | Starts the chosen screen saver now |
+| Sleep timer | Turns the TV off in 30, 60, 90 or 120 min, or Off when one is set; the menu shows the minutes left. The same timer as the phone remote's |
+| Sleep now | Standby, like the remote's power button |
+| Restart… | Asks first ("Restart the TV?", Cancel focused), then restarts the TV. Without USB debugging: opens the TV's own power menu (Sleep mode, Restart, Power off) to choose there |
+| Shut down… | Asks first ("Turn the TV off completely?", Cancel focused), then turns it fully off; the remote's power button starts it again (a full start, slower than from standby). Without USB debugging: the TV's own power menu, as above |
+
+**What needs USB debugging:** nothing to sleep. An app can't put the TV to sleep, restart it or turn it off by itself, so:
+- **Sleep now and the sleep timer** use TV Home's accessibility service (the one that gives the phone remote Back and Home): its "lock screen" action turns the screen off like the power button. It stays on with USB debugging off. If it's off too, they use the loopback ADB connection instead.
+- **Restart and Shut down** run `reboot` / `reboot -p` as the TV's shell over the loopback ADB connection, so they need USB debugging on. Without it, the accessibility service opens the TV's own power menu instead, and the TV's Restart and Power off do it from there.
+
 The gear at the end of the top bar opens the launcher's Settings: categories on the left, their options on the right. Left/Right switch sides, OK changes the focused option (switches flip, choices cycle, ›-rows open a list), Back steps out (list → options → categories → home). Changes apply straight away and are kept in the launcher's `settings` prefs. Everything starts as the launcher behaved before Settings existed.
 
 | Category | Options |
@@ -282,7 +296,7 @@ Open **http://\<TV IP\>:8486** on your phone, on the same Wi-Fi (Settings → Ph
 | TV | **Prayer times**: today's five, the next one highlighted with a countdown | Everywhere |
 | TV | **System**: CPU clock, RAM, storage, IP and network, Wi-Fi signal, uptime | Everywhere |
 | TV | **Notifications** (only when there are some): what the bell shows. Tap one to open it on the TV; **Clear all** | Everywhere |
-| TV | **Power**: Sleep now, Restart (asks first), and a sleep timer (30, 60 or 90 min, or Off) | **USB debugging on** |
+| TV | **Power**: Sleep now, Restart (asks first), and a sleep timer (30, 60 or 90 min, or Off) | Sleep and the timer: TV Home's accessibility service **or** USB debugging on. Restart: **USB debugging on** |
 | TV | **Send to TV → Message**: up to 120 characters, in a box over any app (like the pairing PIN) that stays until someone presses **OK** or **Back**, on the TV remote or the phone. Volume still works while it shows | Everywhere |
 | TV | **Send to TV → Link**: YouTube links open in the YouTube app, Netflix links in Netflix, other links in a browser if the TV has one | Everywhere |
 | TV | **Inputs**: HDMI 1–3, AV, Live TV | Everywhere |
@@ -315,7 +329,7 @@ Open **http://\<TV IP\>:8486** on your phone, on the same Wi-Fi (Settings → Ph
 - **Security:** while debugging is on the launcher has ADB shell access, the same power network ADB already gives anyone on your Wi-Fi. Only paired phones can use it.
 
 **Power and sleep timer:**
-- **Sleep** presses the TV's own sleep key (`input keyevent KEYCODE_SLEEP`); **Restart** runs `reboot`. Both go through the launcher's ADB connection, so they only show while USB debugging is on.
+- **Sleep** uses TV Home's accessibility service (its "lock screen" action, like the power button), else the TV's sleep key over the launcher's ADB connection (`input keyevent KEYCODE_SLEEP`), so Sleep and the timer show while either is on. **Restart** runs `reboot` over the ADB connection, so it only shows while USB debugging is on.
 - **Sleep timer:** a banner on the TV when it's set and one minute before, then the TV sleeps. Setting a new time replaces the old one; it's forgotten if the launcher restarts.
 
 **App manager (USB debugging on):**

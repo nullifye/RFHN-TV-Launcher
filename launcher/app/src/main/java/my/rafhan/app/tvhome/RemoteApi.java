@@ -663,11 +663,10 @@ final class RemoteApi {
 
     /** TV tab: Sleep now / Restart (ADB). Restart answers first: the TV drops off the network. */
     private Object[] power(String a) {
-        if (adbKeys.state() != AdbKeys.State.READY) return adbReason();
-        if ("sleep".equals(a)) {
-            AppManager.run(ctx, "input keyevent KEYCODE_SLEEP");
-            return new Object[] {200, Http.ok()};
+        if ("sleep".equals(a)) { // the accessibility service first: no USB debugging needed
+            return Power.sleep(ctx) ? new Object[] {200, Http.ok()} : adbReason();
         }
+        if (adbKeys.state() != AdbKeys.State.READY) return adbReason();
         if ("reboot".equals(a)) {
             new Thread(() -> {
                 SystemClock.sleep(800);

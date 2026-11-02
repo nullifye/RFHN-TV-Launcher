@@ -31,7 +31,8 @@ final class RemoteDashboard {
                 .put("prayer", prayer(ctx))
                 .put("system", system(ctx))
                 .put("alerts", alerts())
-                .put("adb", adb.state().name().toLowerCase(Locale.ROOT));
+                .put("adb", adb.state().name().toLowerCase(Locale.ROOT))
+                .put("a11y", RemoteAccessibilityService.isOn()); // sleep and the timer work with it alone
     }
 
     /** The playing (or paused) media session, or null. Also used to open its app. */
