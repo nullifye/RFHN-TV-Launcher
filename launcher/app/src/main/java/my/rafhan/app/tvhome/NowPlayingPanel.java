@@ -212,6 +212,7 @@ final class NowPlayingPanel {
     /** Settings → Now Playing card off: stop watching and take the card down. */
     void disable() {
         stop();
+        clearCover();
         if (shown) {
             shown = false;
             card.setVisibility(View.GONE);
@@ -454,6 +455,8 @@ final class NowPlayingPanel {
             buttons[PLAY_PAUSE].setImageResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
             showCover(i);
             updateProgress();
+        } else {
+            clearCover();
         }
         if (visible != shown) {
             shown = visible;
@@ -466,7 +469,9 @@ final class NowPlayingPanel {
 
     private boolean needsTick() {
         Info i = info;
-        return started && visibleOnScreen && i != null && i.state == PlaybackState.STATE_PLAYING;
+        // A live stream's label is static; the helper already reports track/state changes.
+        return started && visibleOnScreen && i != null && i.state == PlaybackState.STATE_PLAYING
+                && (i.duration > 0 || helper == null);
     }
 
     private void updateProgress() {
@@ -493,6 +498,15 @@ final class NowPlayingPanel {
         }
     }
 
+    private void clearCover() {
+        // No hidden artwork or session bitmap retained after playback ends.
+        coverKey = null;
+        helperArt = null;
+        helperArtId = 0;
+        cover.setImageDrawable(null);
+        cover.artworkChanged();
+    }
+
     /** Helper's cover art, else an http(s) art URI, else the app's icon. */
     private void showCover(Info i) {
         String key;
@@ -514,7 +528,7 @@ final class NowPlayingPanel {
         worker.execute(() -> {
             Bitmap loaded = download(uri, size);
             if (loaded != null) main.post(() -> {
-                if (key.equals(coverKey)) setCover(loaded);
+                if (started && key.equals(coverKey)) setCover(loaded);
             });
         });
     }

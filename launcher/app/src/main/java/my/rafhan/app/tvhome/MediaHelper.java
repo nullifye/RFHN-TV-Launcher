@@ -23,7 +23,7 @@ import java.util.List;
  *
  * This low-RAM TV refuses notification-listener access, so the launcher itself can't read other
  * apps' media sessions. The shell user can (it holds STATUS_BAR_SERVICE), so this prints the
- * current session as one JSON line whenever it changes (checked every second): app, title,
+ * current session as one JSON line whenever it changes (checked every two seconds): app, title,
  * artist, state, position, duration, and the cover art as a small base64 JPEG when it changes.
  * Uses hidden APIs through reflection; that's allowed for app_process programs.
  */
@@ -63,14 +63,16 @@ public final class MediaHelper {
                             ? MediaSession.Token.class.getMethod("getBinder").invoke(s)
                             : controllerStub.getMethod("asInterface", IBinder.class).invoke(null, s);
                     if (c == null) continue;
-                    MediaMetadata meta = (MediaMetadata) c.getClass().getMethod("getMetadata").invoke(c);
-                    if (meta == null) continue;
                     PlaybackState st = (PlaybackState) c.getClass().getMethod("getPlaybackState").invoke(c);
                     int state = st == null ? PlaybackState.STATE_NONE : st.getState();
                     int rank = state == PlaybackState.STATE_PLAYING ? 3
                             : state == PlaybackState.STATE_BUFFERING || state == PlaybackState.STATE_CONNECTING ? 2
                             : state == PlaybackState.STATE_PAUSED ? 1 : 0;
                     if (rank > bestRank) {
+                        // Metadata can contain large bitmaps: don't fetch it for inactive/lower
+                        // priority sessions on every poll.
+                        MediaMetadata meta = (MediaMetadata) c.getClass().getMethod("getMetadata").invoke(c);
+                        if (meta == null) continue;
                         best = c;
                         bestRank = rank;
                         bestState = st;
@@ -147,7 +149,11 @@ public final class MediaHelper {
         Bitmap small = scale < 1f ? Bitmap.createScaledBitmap(art, Math.round(art.getWidth() * scale),
                 Math.round(art.getHeight() * scale), true) : art;
         ByteArrayOutputStream jpg = new ByteArrayOutputStream();
-        small.compress(Bitmap.CompressFormat.JPEG, 85, jpg);
+        try {
+            small.compress(Bitmap.CompressFormat.JPEG, 85, jpg);
+        } finally {
+            if (small != art) small.recycle();
+        }
         return Base64.encodeToString(jpg.toByteArray(), Base64.NO_WRAP);
     }
 }

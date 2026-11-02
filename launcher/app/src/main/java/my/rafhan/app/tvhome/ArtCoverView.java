@@ -18,6 +18,7 @@ final class ArtCoverView extends ImageView {
     private final Paint mask = new Paint();
     private final Rect bounds = new Rect();
     private Bitmap blurred;
+    private Bitmap rendered;
     private boolean dirty = true;
     private final float edge;
     private Shader blurMask, fadeMask;
@@ -31,6 +32,10 @@ final class ArtCoverView extends ImageView {
 
     void artworkChanged() {
         dirty = true;
+        if (getDrawable() == null) {
+            rendered = null;
+            blurred = null;
+        }
         invalidate();
     }
 
@@ -61,6 +66,11 @@ final class ArtCoverView extends ImageView {
     protected void onDraw(Canvas canvas) {
         int w = getWidth(), h = getHeight();
         if (w <= 0 || h <= 0) return;
+        if (getDrawable() == null) {
+            rendered = null;
+            blurred = null;
+            return;
+        }
         if (dirty) {
             // A tiny filtered copy provides a cheap soft blur on Android 8+, without RenderEffect.
             // Rebuild only when the artwork or dimensions change, not on progress updates.
@@ -70,9 +80,18 @@ final class ArtCoverView extends ImageView {
             small.scale(16f / w, 16f / h);
             small.drawColor(0xFF1C1C1E);
             super.onDraw(small);
+            if (rendered == null || rendered.getWidth() != w || rendered.getHeight() != h) {
+                rendered = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            }
+            rendered.eraseColor(Color.TRANSPARENT);
+            renderCover(new Canvas(rendered), w, h);
             dirty = false;
         }
-        int artLayer = canvas.saveLayer(0, 0, w, h, null);
+        // Ordinary redraws need just one bitmap, with no temporary GPU compositing layers.
+        canvas.drawBitmap(rendered, 0, 0, blurPaint);
+    }
+
+    private void renderCover(Canvas canvas, int w, int h) {
         canvas.drawColor(0xFF1C1C1E);
         super.onDraw(canvas);
 
@@ -86,6 +105,5 @@ final class ArtCoverView extends ImageView {
         // Fade both sharp and blurred art to the card underneath; the shared sheen stays intact.
         mask.setShader(fadeMask);
         canvas.drawRect(0, 0, w, h, mask);
-        canvas.restoreToCount(artLayer);
     }
 }
