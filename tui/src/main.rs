@@ -35,7 +35,7 @@ Usage: tvhome-tui [options]
 Options:
   --tv <ip[:port]>     connect to this TV at start (else the last one used)
   --adb <path>         the adb executable (else found on PATH or in the Android SDK)
-  --repo <owner/name>  GitHub repository for releases (default: nullifye/MiTV-Debloat)
+  --repo <owner/name>  GitHub repository for releases (default: nullifye/RFHN-TV-Launcher)
   --data-dir <path>    where downloads, the log and settings go
   --dry-run            show every plan and log it, but change nothing on the TV
   --ascii              plain symbols (automatic in Windows' classic console; --unicode: never)
@@ -43,7 +43,7 @@ Options:
   -h, --help           this help
   -V, --version        the version
 
-Inside the MiTV-Debloat folder it shares backup/ and .tv with the bash scripts.";
+Inside the repository folder it shares backup/ and .tv with the bash scripts.";
 
 #[derive(Default)]
 struct Args {

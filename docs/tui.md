@@ -17,7 +17,7 @@ You don't need to install anything else first. If your computer doesn't have Goo
 
 ## 1. Get the app
 
-From [Releases](https://github.com/nullifye/MiTV-Debloat/releases/latest), under **Assets**, download the file for your computer:
+From [Releases](https://github.com/nullifye/RFHN-TV-Launcher/releases/latest), under **Assets**, download the file for your computer:
 
 | Your computer | File |
 |---|---|
@@ -53,9 +53,9 @@ No computer? The app also runs on an Android phone, in [Termux](https://termux.d
    pkg install android-tools
    termux-setup-storage
    ```
-2. Get the app. Replace `<version>` with the newest version on [Releases](https://github.com/nullifye/MiTV-Debloat/releases/latest), for example `1.10.3`. In Termux, `uname -m` says `aarch64` on most phones (use the `aarch64-linux-android` file) or `armv7l` on older ones (`armv7-linux-androideabi`):
+2. Get the app. Replace `<version>` with the newest version on [Releases](https://github.com/nullifye/RFHN-TV-Launcher/releases/latest), for example `1.10.3`. In Termux, `uname -m` says `aarch64` on most phones (use the `aarch64-linux-android` file) or `armv7l` on older ones (`armv7-linux-androideabi`):
    ```bash
-   curl -LO https://github.com/nullifye/MiTV-Debloat/releases/latest/download/tvhome-tui-<version>-aarch64-linux-android.tar.gz
+   curl -LO https://github.com/nullifye/RFHN-TV-Launcher/releases/latest/download/tvhome-tui-<version>-aarch64-linux-android.tar.gz
    tar -xzf tvhome-tui-*.tar.gz
    ./tvhome-tui
    ```
@@ -167,5 +167,5 @@ The Clean up suggestions use the per-model debloat lists from [cleanyourtv](http
 - **Google TV's Home button:** Android sends Home to the Home app with the highest priority, and only between equals to the one chosen as default. Installed launchers get 0, Google TV's launcher 2 and its setup app 1. So on a Google TV (detected by its launcher, `com.google.android.apps.tv.launcherx`, being installed) installing also switches off every Home app above 0, the setup app first. There's nothing to tick. On Sony (Realtek) TVs that's also what stops a Sony system app from starting Google TV's home screen on every Home press. While Google TV's home screen is off, casting from a phone (Chromecast built-in) doesn't work; *Undo all changes* turns it back on.
 - **The Home check:** after installing it presses Home and waits up to 12 s for TV Home to be in front (`dumpsys window`). After turning apps off it checks Home still resolves to a real home screen. If the check fails, it runs `pm enable` for what that plan disabled and, after an install, makes the old launcher Home again.
 - **Turning USB debugging off** runs `settings put global adb_wifi_enabled 0; settings put global adb_enabled 0` in one shell command, because the connection drops as soon as the first one lands.
-- **Shared with the scripts:** started from the MiTV-Debloat folder, it uses the same `backup/<serial>/` folders and `.tv` file as the bash scripts. `scripts/restore.sh` undoes what the app did, and the app's *Undo* undoes what the scripts did.
+- **Shared with the scripts:** started from the repository folder, it uses the same `backup/<serial>/` folders and `.tv` file as the bash scripts. `scripts/restore.sh` undoes what the app did, and the app's *Undo* undoes what the scripts did.
 - **Building it:** the source is in `tui/` (Rust, [ratatui](https://ratatui.rs)). Run `cd tui && cargo run --release`, and `cargo test` for the tests.

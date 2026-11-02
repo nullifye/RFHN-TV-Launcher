@@ -5,7 +5,7 @@ Notes for changing and rebuilding the launcher. To install it, see the [install 
 ## Folder structure
 
 ```
-MiTV-Debloat/
+RFHN-TV-Launcher/
 ├── README.md
 ├── PROMPT.md                    paste into an AI coding agent to repeat the whole setup (debloat + launcher) on another TV
 ├── docs/                        install guides (install-*.md), features.md, xiaomi-debloat.md, development.md, screenshots

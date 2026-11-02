@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
  * Debug builds don't look: they're signed with another key and couldn't take the update.
  */
 final class UpdateCheck {
-    static final String REPO = "nullifye/MiTV-Debloat";
+    static final String REPO = "nullifye/RFHN-TV-Launcher";
     private static final String LATEST = "https://api.github.com/repos/" + REPO + "/releases/latest";
 
     /** A release newer than the installed app. */

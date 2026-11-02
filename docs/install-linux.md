@@ -61,8 +61,8 @@ adb version && java -version && echo "$ANDROID_HOME"
 ## 3. Get the code
 
 ```bash
-git clone https://github.com/nullifye/MiTV-Debloat.git
-cd MiTV-Debloat
+git clone https://github.com/nullifye/RFHN-TV-Launcher.git
+cd RFHN-TV-Launcher
 ```
 
 ## 4. Connect to the TV
@@ -119,7 +119,7 @@ adb version
 
 ### Step 2. Download the APK
 
-1. Open [github.com/nullifye/MiTV-Debloat/releases/latest](https://github.com/nullifye/MiTV-Debloat/releases/latest). No GitHub account needed.
+1. Open [github.com/nullifye/RFHN-TV-Launcher/releases/latest](https://github.com/nullifye/RFHN-TV-Launcher/releases/latest). No GitHub account needed.
 2. Under **Assets**, click **`tvhome-<version>.apk`** (for example `tvhome-1.9.apk`). It downloads to your **Downloads** folder.
 
 ### Step 3. Go to the APK

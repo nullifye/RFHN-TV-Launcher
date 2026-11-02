@@ -2,7 +2,7 @@
 
 RFHN TV Launcher is a fast, minimal home screen for **Android TV and Google TV** (Android 8.0 or newer), with prayer times, a live system card, Now Playing, a running-apps screen, a phone remote and a live globe screen saver. It was built on a Xiaomi Mi TV, which was also [debloated](docs/xiaomi-debloat.md).
 
-**Explore the launcher:** [Landing page source](docs/index.html) · [All features](docs/features.md)
+**Explore the launcher:** [Landing page](https://nullifye.github.io/RFHN-TV-Launcher/) · [Bahasa Melayu](https://nullifye.github.io/RFHN-TV-Launcher/ms.html) · [All features](docs/features.md)
 
 **Install it on your TV:** [Windows](docs/install-windows.md) · [macOS](docs/install-macos.md) · [Linux](docs/install-linux.md) · [with an AI agent](docs/install-with-ai-agent.md)
 
@@ -118,7 +118,7 @@ You need an Android TV or Google TV running Android 8.0 or newer, and a computer
 
 - Easiest: the **setup app** ([docs/tui.md](docs/tui.md)). One download for Windows, macOS, Linux or an Android phone (in Termux), nothing else to install. It finds your TV on the Wi-Fi, installs TV Home, cleans up the TV and can undo everything, explaining each step before it runs.
 - Step by step: [Windows](docs/install-windows.md) · [macOS](docs/install-macos.md) · [Linux](docs/install-linux.md)
-- No build tools? Download the ready-made APK from [Releases](https://github.com/nullifye/MiTV-Debloat/releases/latest) and install it with only adb: [Windows](docs/install-windows.md#install-the-ready-made-apk-instead-no-building) · [macOS](docs/install-macos.md#install-the-ready-made-apk-instead-no-building) · [Linux](docs/install-linux.md#install-the-ready-made-apk-instead-no-building)
+- No build tools? Download the ready-made APK from [Releases](https://github.com/nullifye/RFHN-TV-Launcher/releases/latest) and install it with only adb: [Windows](docs/install-windows.md#install-the-ready-made-apk-instead-no-building) · [macOS](docs/install-macos.md#install-the-ready-made-apk-instead-no-building) · [Linux](docs/install-linux.md#install-the-ready-made-apk-instead-no-building)
 - Let an AI coding agent do it: [Install with an AI agent](docs/install-with-ai-agent.md)
 - Debloat the TV too, from scratch: give an AI agent [PROMPT.md](PROMPT.md)
 

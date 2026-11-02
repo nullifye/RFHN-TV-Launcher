@@ -14,8 +14,8 @@ Manual guides: [Windows](install-windows.md) · [macOS](install-macos.md) · [Li
 
 Uses this repository's scripts. Takes about 20–30 minutes, mostly downloads.
 
-1. Get the repository: clone `https://github.com/nullifye/MiTV-Debloat`, or ask the agent to clone it for you.
-2. Start the agent in the `MiTV-Debloat` folder.
+1. Get the repository: clone `https://github.com/nullifye/RFHN-TV-Launcher`, or ask the agent to clone it for you.
+2. Start the agent in the `RFHN-TV-Launcher` folder.
 3. Fill in the placeholders and paste this:
 
 ```text

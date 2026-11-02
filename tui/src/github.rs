@@ -10,7 +10,7 @@ use std::io::{Read, Write};
 use std::path::Path;
 use std::time::Duration;
 
-pub const DEFAULT_REPO: &str = "nullifye/MiTV-Debloat";
+pub const DEFAULT_REPO: &str = "nullifye/RFHN-TV-Launcher";
 const UA: &str = concat!("tvhome-tui/", env!("CARGO_PKG_VERSION"));
 
 #[derive(Debug, Clone, PartialEq)]
