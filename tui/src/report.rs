@@ -113,6 +113,13 @@ pub fn build(status: Option<&Status>, store: &Store, dry_run: bool, log: &[&LogE
                 if t.a11y_on { "on" } else { "off" }
             );
             let _ = writeln!(r, "  Google TV {}", if t.google_tv { "yes" } else { "no" });
+            if !t.home_ahead.is_empty() {
+                let _ = writeln!(
+                    r,
+                    "  Home apps ahead of TV Home {}",
+                    t.home_ahead.join(", ")
+                );
+            }
         }
     } else {
         let _ = writeln!(r, "\nNot connected to a TV.");

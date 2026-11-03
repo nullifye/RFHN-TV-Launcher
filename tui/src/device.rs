@@ -136,6 +136,19 @@ pub fn parse_home_priorities(out: &str) -> Vec<(String, i32)> {
     v
 }
 
+/// The packages of the Home apps above TV Home (priority > 0), from the same output: the ones
+/// a handover has to switch off before Home can open TV Home.
+pub fn homes_ahead(out: &str) -> Vec<String> {
+    let mut v: Vec<String> = Vec::new();
+    for (c, prio) in parse_home_priorities(out) {
+        let pkg = package_of(&c).to_string();
+        if prio > 0 && pkg != PKG && !v.contains(&pkg) {
+            v.push(pkg);
+        }
+    }
+    v
+}
+
 /// Components listed by `cmd package query-activities --brief …` (lines containing `/`).
 pub fn parse_components(out: &str) -> Vec<String> {
     out.lines()
@@ -417,6 +430,10 @@ pub struct TvInfo {
     pub focused: Option<String>,
     pub a11y_on: bool,
     pub google_tv: bool,
+    /// Enabled Home apps that outrank TV Home (priority above 0), so `set-home-activity` alone
+    /// can't make TV Home open on Home: Google TV's launcher and setup app, or Android TV's own
+    /// launcher on some sets (Xiaomi's MiTV-MOOQ0 ships `com.google.android.tvlauncher` at 2).
+    pub home_ahead: Vec<String>,
 }
 
 impl TvInfo {
@@ -699,6 +716,18 @@ mod tests {
         );
         // Plain lists (older Android): priority unknown, taken as 0.
         assert_eq!(parse_home_priorities("com.a/.Home\n")[0].1, 0);
+    }
+
+    #[test]
+    fn homes_ahead_of_tv_home() {
+        // The friend's MiTV-MOOQ0: Android TV's own launcher at priority 2, so Home never
+        // reached TV Home until it was switched off.
+        let mooq0 = "4 activities found:\n  Activity #0:\n    priority=2 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true\n    com.google.android.tvlauncher/.MainActivity\n  Activity #1:\n    priority=0 preferredOrder=0\n    com.duokan.factorytest/.FactoryLauncher\n  Activity #2:\n    priority=0 preferredOrder=0\n    my.rafhan.app.tvhome/.MainActivity\n  Activity #3:\n    priority=-1000 preferredOrder=0\n    com.android.tv.settings/.system.FallbackHome\n";
+        assert_eq!(homes_ahead(mooq0), vec!["com.google.android.tvlauncher"]);
+        // Once it's off, nothing outranks TV Home.
+        let after = "priority=0 preferredOrder=0\nmy.rafhan.app.tvhome/.MainActivity\npriority=-1000\ncom.android.tv.settings/.system.FallbackHome\n";
+        assert!(homes_ahead(after).is_empty());
+        assert!(homes_ahead("").is_empty());
     }
 
     #[test]

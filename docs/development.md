@@ -49,7 +49,7 @@ The scripts need ADB debugging switched on; the [install guides](../README.md#in
 
 ```bash
 scripts/build-and-install.sh                 # build, install, set as home
-scripts/build-and-install.sh --disable-stock # same, and disable the TV's own launcher (needed on Google TV)
+scripts/build-and-install.sh --disable-stock # same, and disable the TV's own launcher (needed on Google TV, and wherever the TV's own launcher outranks TV Home for Home)
 ```
 Notes on the install:
 - It uses `pm install` over the shell, not `adb install`.

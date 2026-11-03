@@ -990,7 +990,9 @@ impl App {
         if let Some(t) = &s.tv
             && t.state == "device"
         {
-            self.handover = t.google_tv;
+            // Google TV, or any TV whose own launcher outranks TV Home for Home (Android TV's
+            // launcher on some Xiaomi sets): set-home-activity alone can't win there.
+            self.handover = t.google_tv || !t.home_ahead.is_empty();
         }
         self.status = Some(s);
         let waiting_for_tv = matches!(self.screen, Screen::Connecting | Screen::Allow);

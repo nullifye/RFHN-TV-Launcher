@@ -1520,6 +1520,36 @@ mod tests {
         );
     }
 
+    /// A Xiaomi MiTV-MOOQ0 on Android TV (not Google TV) whose own launcher,
+    /// com.google.android.tvlauncher, answers Home at priority 2: a friend's TV where Home kept
+    /// opening it and the install rolled back. The handover switches it off, and no Google TV note.
+    #[test]
+    fn handover_switches_off_android_tv_launcher_above_tv_home() {
+        let d = tmp("atvprio");
+        let store = Store::at(&d);
+        let homes = "4 activities found:\n  Activity #0:\n    priority=2 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true\n    com.google.android.tvlauncher/.MainActivity\n  Activity #1:\n    priority=0 preferredOrder=0\n    com.duokan.factorytest/.FactoryLauncher\n  Activity #2:\n    priority=0 preferredOrder=0\n    my.rafhan.app.tvhome/.MainActivity\n  Activity #3:\n    priority=-1000 preferredOrder=0\n    com.android.tv.settings/.system.FallbackHome\n";
+        let r = FakeRunner::new()
+            .on("getprop ro.build.version.sdk", "29\n")
+            .on("resolve-activity", "com.google.android.tvlauncher/.MainActivity\n")
+            .on("query-activities", homes)
+            .on("pm list packages -e", "package:com.google.android.tvlauncher\npackage:com.duokan.factorytest\npackage:com.android.tv.settings\n");
+        let mut emit = |_e: EngineEvent| {};
+        let mut env = Env {
+            adb: &adb(),
+            runner: &r,
+            store: &store,
+            emit: &mut emit,
+        };
+        let plan = install(&mut env, &local_apk(&d), true).unwrap();
+        let l = lines(&plan);
+        let off: Vec<&str> = l
+            .iter()
+            .filter_map(|x| x.split("disable-user --user 0 ").nth(1))
+            .collect();
+        assert_eq!(off, vec!["com.google.android.tvlauncher"]);
+        assert!(!plan.notes.iter().any(|n| n.contains("Google TV")));
+    }
+
     #[test]
     fn handover_switches_off_every_home_app_above_tv_home() {
         let d = tmp("gtvprio");

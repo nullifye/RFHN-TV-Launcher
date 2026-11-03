@@ -731,6 +731,16 @@ impl Worker {
                 GTV_LAUNCHER,
             ]))
             .is_empty();
+            tv.home_ahead = device::homes_ahead(&self.shell_text(&[
+                "cmd",
+                "package",
+                "query-activities",
+                "--brief",
+                "-a",
+                "android.intent.action.MAIN",
+                "-c",
+                "android.intent.category.HOME",
+            ]));
         }
         st.tv = Some(tv);
         st

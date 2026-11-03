@@ -688,7 +688,14 @@ impl App {
             v.say("  • blocks ads on the whole TV");
         }
         if self.handover {
-            v.say("  • switches off Google TV's own home screen, so Home opens TV Home (casting from a phone stops until you undo it)");
+            if self.tv().is_some_and(|t| t.google_tv) {
+                v.say("  • switches off Google TV's own home screen, so Home opens TV Home (casting from a phone stops until you undo it)");
+            } else {
+                v.say(format!(
+                    "  • switches off {}, which Android opens ahead of TV Home, so Home opens TV Home",
+                    self.homes_ahead_words()
+                ));
+            }
         }
         v.say("  • checks Home works at the end; if it doesn't, it puts everything back");
         v.gap();
@@ -745,7 +752,14 @@ impl App {
             None => v.say("TV Home isn't on this TV yet."),
         }
         if self.handover {
-            v.dim("Google TV: its own home screen is switched off too, so Home opens TV Home. Casting from a phone stops until you undo it.");
+            if self.tv().is_some_and(|t| t.google_tv) {
+                v.dim("Google TV: its own home screen is switched off too, so Home opens TV Home. Casting from a phone stops until you undo it.");
+            } else {
+                v.dim(format!(
+                    "Android opens {} ahead of TV Home, so it's switched off too. Undo all changes turns it back on.",
+                    self.homes_ahead_words()
+                ));
+            }
         }
         v.gap();
         let latest = flows::latest_with_apk(&self.releases);
@@ -1759,6 +1773,24 @@ impl App {
     }
 
     // ---------------------------------------------------------------- plans
+
+    /// "Android TV home": the Home apps that outrank TV Home, by name.
+    fn homes_ahead_words(&self) -> String {
+        let names: Vec<String> = self
+            .tv()
+            .map(|t| {
+                t.home_ahead
+                    .iter()
+                    .map(|p| device::friendly_app_name(p))
+                    .collect()
+            })
+            .unwrap_or_default();
+        if names.is_empty() {
+            "the TV's own home screen".into()
+        } else {
+            names.join(" and ")
+        }
+    }
 
     fn confirm(&self) -> View {
         let Some(p) = &self.plan else {
