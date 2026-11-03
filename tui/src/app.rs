@@ -5,7 +5,7 @@ use crate::adb::{self, Adb};
 use crate::backup::{Config, Store};
 use crate::catalog::{self, Catalog, Guard};
 use crate::device::{self, Found, FoundKind};
-use crate::flows::{self, ApkSource};
+use crate::flows::{self, ApkSource, SettingChange};
 use crate::github::Release;
 use crate::log::{Level, Log, LogEntry};
 use crate::plan::{self, Outcome, Plan};
@@ -38,6 +38,10 @@ pub enum Screen {
     Cleanup,
     CleanupAll,
     Tweaks,
+    /// Read-only: what the TV is, how it's doing, what it can play.
+    Overview,
+    Health,
+    Playback,
     Undo,
     Tools,
     Power,
@@ -85,6 +89,9 @@ pub struct App {
     back: Vec<Screen>,
     /// Selected item; `None`: the screen's default.
     pub focus: Option<usize>,
+    /// The item last chosen on each screen, so coming back selects it again rather than the
+    /// screen's default (the main menu would otherwise always land on Install).
+    remembered: Vec<(Screen, Act)>,
     /// Where each item was drawn (for clicks), filled by ui.rs.
     pub item_rects: Vec<(usize, Rect)>,
     /// Lines scrolled in the area under the choices (commands, logcat).
@@ -162,6 +169,11 @@ pub struct App {
     pair_addr: Option<String>,
     pub power_state: Option<(State, String, Instant)>,
     pub pending_wake: Option<WakeKind>,
+    /// The Overview / Health / Playback readings and Tweaks' current values (None = reading).
+    pub overview: Option<crate::device::Overview>,
+    pub health: Option<crate::health::Health>,
+    pub playback: Option<crate::media::Playback>,
+    pub tweak_values: Option<std::collections::BTreeMap<String, Option<String>>>,
 }
 
 impl App {
@@ -177,6 +189,7 @@ impl App {
             screen: Screen::FindTv,
             back: Vec::new(),
             focus: None,
+            remembered: Vec::new(),
             item_rects: Vec::new(),
             after_scroll: 0,
             flow_active: false,
@@ -234,6 +247,10 @@ impl App {
             pair_addr: None,
             power_state: None,
             pending_wake: None,
+            overview: None,
+            health: None,
+            playback: None,
+            tweak_values: None,
         }
     }
 
@@ -308,8 +325,9 @@ impl App {
     }
 
     fn enter(&mut self, s: Screen) {
+        self.remember_focus();
         self.screen = s;
-        self.focus = None;
+        self.focus = self.recalled_focus();
         self.after_scroll = 0;
         self.flow_up = 0;
         self.searching = false;
@@ -333,6 +351,19 @@ impl App {
                     self.send(Job::LoadPackages);
                 }
             }
+            Screen::Overview => {
+                self.overview = None;
+                self.send(Job::Overview);
+            }
+            Screen::Health => {
+                self.health = None;
+                self.send(Job::Health);
+            }
+            Screen::Playback => {
+                self.playback = None;
+                self.send(Job::Playback);
+            }
+            Screen::Tweaks => self.send(Job::ReadTweaks),
             Screen::Power => {
                 if let Some(addr) = self.power_target().map(str::to_string) {
                     self.power_state = Some((State::Unknown, "Checking…".into(), Instant::now()));
@@ -341,6 +372,31 @@ impl App {
             }
             _ => {}
         }
+    }
+
+    /// Notes the selected item of the screen being left. The confirmation and progress pages
+    /// always open on their own default (Start, OK), so they're not remembered.
+    fn remember_focus(&mut self) {
+        if matches!(self.screen, Screen::Confirm | Screen::Running) {
+            return;
+        }
+        let Some(f) = self.focus else { return };
+        let Some(act) = self.view().items.get(f).map(|i| i.act.clone()) else {
+            return;
+        };
+        let screen = self.screen.clone();
+        self.remembered.retain(|(s, _)| *s != screen);
+        self.remembered.push((screen, act));
+    }
+
+    /// Where the item last chosen on this screen is now (found by what it does, so it still works
+    /// if the list changed), or `None` for the screen's default.
+    fn recalled_focus(&self) -> Option<usize> {
+        let (_, act) = self.remembered.iter().find(|(s, _)| *s == self.screen)?;
+        self.view()
+            .items
+            .iter()
+            .position(|i| i.selectable() && i.act == *act)
     }
 
     fn go_back(&mut self) {
@@ -585,6 +641,56 @@ impl App {
             Act::Tweak(0) => self.request(Request::WifiScanOff),
             Act::Tweak(2) => self.request(Request::RestrictRecommended),
             Act::Tweak(_) => self.request(Request::PrivateDns),
+            Act::Animations(n) => {
+                let (scale, name) = match n {
+                    0 => ("0", "off"),
+                    1 => ("0.5", "faster (half)"),
+                    _ => ("1.0", "normal"),
+                };
+                let changes = ["window_animation_scale", "transition_animation_scale", "animator_duration_scale"]
+                    .iter()
+                    .map(|k| SettingChange::new(&format!("Animations ({k})"), "global", k, scale))
+                    .collect();
+                self.request(Request::SetSettings {
+                    title: format!("Set animations to {name}"),
+                    done: format!("Done: animations are {name}. Menus change speed straight away."),
+                    changes,
+                });
+            }
+            Act::Cec(i) => {
+                if let Some((key, title, _)) = crate::screens::CEC.get(i) {
+                    // Unset means Android's default, which is on.
+                    let on = self
+                        .tweak_values
+                        .as_ref()
+                        .and_then(|m| m.get(&format!("global {key}")).cloned().flatten())
+                        .is_none_or(|v| v != "0");
+                    let (to, word) = if on { ("0", "off") } else { ("1", "on") };
+                    self.request(Request::SetSettings {
+                        title: format!("Turn {title} {word}"),
+                        done: format!("Done: {title} is {word}."),
+                        changes: vec![SettingChange::new(title, "global", key, to)],
+                    });
+                }
+            }
+            Act::Passthrough(n) => {
+                let name = crate::media::passthrough_name(Some(n));
+                self.request(Request::SetSettings {
+                    title: format!("Set surround sound to {name}"),
+                    done: format!("Done: surround passthrough is {name}."),
+                    changes: vec![SettingChange::new(
+                        "Surround passthrough",
+                        "global",
+                        "encoded_surround_output",
+                        &n.to_string(),
+                    )],
+                });
+            }
+            Act::Refresh => {
+                let s = self.screen.clone();
+                self.enter(s);
+            }
+            Act::TrimCaches => self.request(Request::TrimCaches),
             Act::UndoAll => self.request(Request::Restore { remove_launcher: self.remove_launcher }),
             Act::ToggleRemoveLauncher => self.remove_launcher = !self.remove_launcher,
             Act::Screenshot => self.send(Job::Screenshot),
@@ -799,6 +905,10 @@ impl App {
                 "Pairing didn't work: {e}\n\nCheck the code and address, and try again."
             )),
             Event::PowerStatus(s, why) => self.power_state = Some((s, why, Instant::now())),
+            Event::Overview(o) => self.overview = Some(*o),
+            Event::Health(h) => self.health = Some(*h),
+            Event::Playback(p) => self.playback = Some(*p),
+            Event::TweakValues(v) => self.tweak_values = Some(v),
             Event::PowerActionResult(msg) => self.notice(msg),
             Event::Packages(rows, guard) => {
                 self.pkgs = rows;

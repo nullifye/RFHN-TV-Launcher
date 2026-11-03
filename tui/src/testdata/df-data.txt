@@ -1,0 +1,2 @@
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/block/mmcblk0p36  11G  4.2G  7.0G  38% /data

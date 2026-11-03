@@ -1,0 +1,912 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright (C) 2012 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!--
+<!DOCTYPE MediaCodecs [
+<!ELEMENT MediaCodecs (Decoders,Encoders)>
+<!ELEMENT Decoders (MediaCodec*)>
+<!ELEMENT Encoders (MediaCodec*)>
+<!ELEMENT MediaCodec (Type*,Quirk*)>
+<!ATTLIST MediaCodec name CDATA #REQUIRED>
+<!ATTLIST MediaCodec type CDATA>
+<!ELEMENT Type EMPTY>
+<!ATTLIST Type name CDATA #REQUIRED>
+<!ELEMENT Quirk EMPTY>
+<!ATTLIST Quirk name CDATA #REQUIRED>
+]>
+
+There's a simple and a complex syntax to declare the availability of a
+media codec:
+
+A codec that properly follows the OpenMax spec and therefore doesn't have any
+quirks and that only supports a single content type can be declared like so:
+
+    <MediaCodec name="OMX.foo.bar" type="something/interesting" />
+
+If a codec has quirks OR supports multiple content types, the following syntax
+can be used:
+
+    <MediaCodec name="OMX.foo.bar" >
+        <Type name="something/interesting" />
+        <Type name="something/else" />
+        ...
+        <Quirk name="requires-allocate-on-input-ports" />
+        <Quirk name="requires-allocate-on-output-ports" />
+        <Quirk name="output-buffers-are-unreadable" />
+    </MediaCodec>
+
+Only the three quirks included above are recognized at this point:
+
+"requires-allocate-on-input-ports"
+    must be advertised if the component does not properly support specification
+    of input buffers using the OMX_UseBuffer(...) API but instead requires
+    OMX_AllocateBuffer to be used.
+
+"requires-allocate-on-output-ports"
+    must be advertised if the component does not properly support specification
+    of output buffers using the OMX_UseBuffer(...) API but instead requires
+    OMX_AllocateBuffer to be used.
+
+"output-buffers-are-unreadable"
+    must be advertised if the emitted output buffers of a decoder component
+    are not readable, i.e. use a custom format even though abusing one of
+    the official OMX colorspace constants.
+    Clients of such decoders will not be able to access the decoded data,
+    naturally making the component much less useful. The only use for
+    a component with this quirk is to render the output to the screen.
+    Audio decoders MUST NOT advertise this quirk.
+    Video decoders that advertise this quirk must be accompanied by a
+    corresponding color space converter for thumbnail extraction,
+    matching surfaceflinger support that can render the custom format to
+    a texture and possibly other code, so just DON'T USE THIS QUIRK.
+
+-->
+
+<MediaCodecs>
+    <Include href="media_codecs_google_audio.xml" />
+    <Settings>
+        <Setting name="max-video-encoder-input-buffers" value="1" />
+        <Setting name="supports-multiple-secure-codecs" value="false" />
+        <Setting name="supports-secure-with-non-secure-codec" value="true" />
+    </Settings>
+
+    <Decoders>
+        <MediaCodec name="OMX.MS.M4V.Decoder" type="video/mp4v-es" >
+            <Limit name="concurrent-instances" max="2" />
+            <Limit name="size" min="32x32" max="1920x1080" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.H263.Decoder" type="video/3gpp" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AVC.Decoder" type="video/avc" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation" />
+            <Limit name="size" min="64x64" max="4096x2160" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AVC.Decoder.secure" type="video/avc" >
+            <Limit name="concurrent-instances" max="1" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation" />
+            <Limit name="size" min="64x64" max="4096x2160" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.HEVC.Decoder" type="video/hevc" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.HEVC.Decoder.secure" type="video/hevc" >
+            <Limit name="concurrent-instances" max="1" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.HEVCDV.Decoder" type="video/hevcdv" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DOLBY_VISION.DVHE.STN.Decoder" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+         <MediaCodec name="OMX.MS.DOLBY_VISION.DVHE.STN.Decoder.secure" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="1" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DOLBY_VISION.DVHE.DTR.Decoder" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+         <MediaCodec name="OMX.MS.DOLBY_VISION.DVHE.DTR.Decoder.secure" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="1" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DOLBY_VISION.DVHE.ST.Decoder" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+         <MediaCodec name="OMX.MS.DOLBY_VISION.DVHE.ST.Decoder.secure" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="1" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DOLBY_VISION.Decoder" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+         <MediaCodec name="OMX.MS.DOLBY_VISION.Decoder.secure" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="1" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DOLBY_VISION.DVAV.SE.Decoder" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DOLBY_VISION.DVAV.SE.Decoder.secure" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="1" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AVC.DOLBY_VISION.Decoder" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+         <MediaCodec name="OMX.MS.AVC.DOLBY_VISION.Decoder.secure" type="video/dolby-vision" >
+            <Limit name="concurrent-instances" max="1" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.MPEG2.Decoder" type="video/mpeg2" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.VP8.Decoder" type="video/x-vnd.on2.vp8" >
+            <Limit name="concurrent-instances" max="1" />
+            <Limit name="size" min="128x128" max="1920x1080" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.VP9.Decoder" type="video/x-vnd.on2.vp9" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="concurrent-instances" max="2" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="tunneled-playback" />
+            <Feature name="adaptive-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.VP9.Decoder.secure" type="video/x-vnd.on2.vp9" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="concurrent-instances" max="1" />
+            <Limit name="size" min="64x64" max="4096x2176" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="tunneled-playback" />
+            <Feature name="adaptive-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DOLBY_VISION.DVAV1.Decoder" type="video/dolby-vision" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="concurrent-instances" max="2" />
+            <Limit name="size" min="64x64" max="4096x2160" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="tunneled-playback" />
+            <Feature name="adaptive-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DOLBY_VISION.DVAV1.Decoder.secure" type="video/dolby-vision" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="concurrent-instances" max="1" />
+            <Limit name="size" min="64x64" max="4096x2160" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="tunneled-playback" />
+            <Feature name="adaptive-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+       <MediaCodec name="OMX.MS.AV1.DOLBY_VISION.Decoder" type="video/dolby-vision" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="concurrent-instances" max="2" />
+            <Limit name="size" min="64x64" max="4096x2160" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="tunneled-playback" />
+            <Feature name="adaptive-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AV1.DOLBY_VISION.Decoder.secure" type="video/dolby-vision" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="concurrent-instances" max="1" />
+            <Limit name="size" min="64x64" max="4096x2160" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="tunneled-playback" />
+            <Feature name="adaptive-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AV1.Decoder" type="video/av01" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="concurrent-instances" max="2" />
+            <Limit name="size" min="64x64" max="4096x2160" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="tunneled-playback" />
+            <Feature name="adaptive-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AV1.Decoder.secure" type="video/av01" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="concurrent-instances" max="1" />
+            <Limit name="size" min="64x64" max="4096x2160" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="tunneled-playback" />
+            <Feature name="adaptive-playback" />
+            <Feature name="secure-playback" required="true" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AVS2.Decoder" type="video/avs2" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Limit name="size" min="64x64" max="4096x2160" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Feature name="adaptive-playback" />
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-3840x2160" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DIVX311.Decoder" type="video/divx3" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DIVX412.Decoder" type="video/divx4" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.FLV.Decoder" type="video/flv" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DIVX5.Decoder" type="video/divx5" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.VC1.Decoder" type="video/VC1">
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.WMV3.Decoder" type="video/x-ms-wmv" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.MJPG.Decoder" type="video/x-motion-jpeg" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AVS.Decoder" type="video/avs" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.RV.Decoder" type="video/vnd.rn-realvideo" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="requires-loaded-to-idle-after-allocation"/>
+            <Feature name="tunneled-playback" />
+            <Limit name="performance-point-1920x1088" value="60" />
+        </MediaCodec>
+
+        <MediaCodec name="OMX.MS.MP1.Decoder" >
+            <Type name="audio/mpeg-L1">
+            <Limit name="concurrent-instances" max="2" />
+            </Type>
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+
+        <MediaCodec name="OMX.MS.MP2.Decoder" >
+            <Type name="audio/mpeg-L2">
+            <Limit name="concurrent-instances" max="2" />
+            </Type>
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+
+        <MediaCodec name="OMX.MS.MP3.Decoder" >
+            <Type name="audio/mpeg">
+            <Limit name="concurrent-instances" max="2" />
+            </Type>
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+
+        <MediaCodec name="OMX.MS.AAC.Decoder" type="audio/mp4a-latm-hw" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.VORBIS.Decoder" type="audio/vorbis" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.ADPCM.Decoder">
+            <Type name="audio/adpcm" />
+            <Type name="audio/x-adpcm-ms" />
+            <Type name="audio/x-adpcm-ima" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.LPCM.Decoder" type="audio/lpcm" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.RA.Decoder" type="audio/vnd.rn-realaudio" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.WMA.Decoder" >
+            <Type name="audio/x-ms-wma" />
+            <Type name="audio/x-ms-wmapro" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AC3.Decoder" >
+            <Type name="audio/ac3">
+            <Limit name="channel-count" max="6" />
+            <Limit name="sample-rate" ranges="8000-48000" />
+            <Limit name="concurrent-instances" max="2" />
+            </Type>
+            <Type name="audio/eac3">
+            <Limit name="channel-count" max="6" />
+            <Limit name="sample-rate" ranges="8000-48000" />
+            <Limit name="concurrent-instances" max="2" />
+            </Type>
+            <Type name="audio/ac3p">
+            <Limit name="concurrent-instances" max="2" />
+            </Type>
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DTS.Decoder" >
+            <Type name="audio/dts" />
+            <Type name="audio/dts-hd" />
+            <Type name="audio/dts-lbr" />
+            <Type name="audio/vnd.dts" />
+            <Type name="audio/vnd.dts.hd" />
+            <Type name="audio/vnd.dts.hd;profile=lbr" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.DRA.Decoder" type="audio/dra" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.FLAC.Decoder" type="audio/flac" >
+            <Limit name="concurrent-instances" max="2" />
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+        </MediaCodec>
+
+    </Decoders>
+
+    <Include href="media_codecs_google_video_le.xml" />
+</MediaCodecs>
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright (C) 2014 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<Included>
+    <Decoders>
+        <MediaCodec name="OMX.google.mp3.decoder" type="audio/mpeg">
+            <Limit name="channel-count" max="2" />
+            <Limit name="sample-rate" ranges="8000,11025,12000,16000,22050,24000,32000,44100,48000" />
+            <Limit name="bitrate" range="8000-320000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.amrnb.decoder" type="audio/3gpp">
+            <Limit name="channel-count" max="1" />
+            <Limit name="sample-rate" ranges="8000" />
+            <Limit name="bitrate" range="4750-12200" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.amrwb.decoder" type="audio/amr-wb">
+            <Limit name="channel-count" max="1" />
+            <Limit name="sample-rate" ranges="16000" />
+            <Limit name="bitrate" range="6600-23850" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.aac.decoder" type="audio/mp4a-latm">
+            <Limit name="channel-count" max="8" />
+            <Limit name="sample-rate" ranges="7350,8000,11025,12000,16000,22050,24000,32000,44100,48000" />
+            <Limit name="bitrate" range="8000-960000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.g711.alaw.decoder" type="audio/g711-alaw">
+            <Limit name="channel-count" max="1" />
+            <Limit name="sample-rate" ranges="8000-48000" />
+            <Limit name="bitrate" range="64000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.g711.mlaw.decoder" type="audio/g711-mlaw">
+            <Limit name="channel-count" max="1" />
+            <Limit name="sample-rate" ranges="8000-48000" />
+            <Limit name="bitrate" range="64000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.vorbis.decoder" type="audio/vorbis">
+            <Limit name="channel-count" max="8" />
+            <Limit name="sample-rate" ranges="8000-96000" />
+            <Limit name="bitrate" range="32000-500000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.opus.decoder" type="audio/opus">
+            <Limit name="channel-count" max="8" />
+            <Limit name="sample-rate" ranges="48000" />
+            <Limit name="bitrate" range="6000-510000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.raw.decoder" type="audio/raw">
+            <Limit name="channel-count" max="8" />
+            <Limit name="sample-rate" ranges="8000-192000" />
+            <Limit name="bitrate" range="1-10000000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.flac.decoder" type="audio/flac">
+            <Limit name="channel-count" max="8" />
+            <Limit name="sample-rate" ranges="1-655350" />
+            <Limit name="bitrate" range="1-21000000" />
+        </MediaCodec>
+    </Decoders>
+    <Encoders>
+        <MediaCodec name="OMX.google.aac.encoder" type="audio/mp4a-latm">
+            <Limit name="channel-count" max="6" />
+            <Limit name="sample-rate" ranges="8000,11025,12000,16000,22050,24000,32000,44100,48000" />
+            <!-- also may support 64000, 88200  and 96000 Hz -->
+            <Limit name="bitrate" range="8000-960000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.amrnb.encoder" type="audio/3gpp">
+            <Limit name="channel-count" max="1" />
+            <Limit name="sample-rate" ranges="8000" />
+            <Limit name="bitrate" range="4750-12200" />
+            <Feature name="bitrate-modes" value="CBR" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.amrwb.encoder" type="audio/amr-wb">
+            <Limit name="channel-count" max="1" />
+            <Limit name="sample-rate" ranges="16000" />
+            <Limit name="bitrate" range="6600-23850" />
+            <Feature name="bitrate-modes" value="CBR" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.flac.encoder" type="audio/flac">
+            <Limit name="channel-count" max="2" />
+            <Limit name="sample-rate" ranges="1-655350" />
+            <Limit name="bitrate" range="1-21000000" />
+            <Limit name="complexity" range="0-8"  default="5" />
+            <Feature name="bitrate-modes" value="CQ" />
+        </MediaCodec>
+    </Encoders>
+</Included>
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright (C) 2015 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<Included>
+    <Decoders>
+        <MediaCodec name="OMX.google.mpeg4.decoder" type="video/mp4v-es">
+            <!-- profiles and levels:  ProfileSimple : Level3 -->
+            <Limit name="size" min="2x2" max="352x288" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Limit name="blocks-per-second" range="12-11880" />
+            <Limit name="bitrate" range="1-384000" />
+            <Feature name="adaptive-playback" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.h263.decoder" type="video/3gpp">
+            <!-- profiles and levels:  ProfileBaseline : Level30, ProfileBaseline : Level45
+                    ProfileISWV2 : Level30, ProfileISWV2 : Level45 -->
+            <Limit name="size" min="2x2" max="352x288" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="bitrate" range="1-384000" />
+            <Feature name="adaptive-playback" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.h264.decoder" type="video/avc">
+            <!-- profiles and levels:  ProfileHigh : Level51 -->
+            <Limit name="size" min="2x2" max="1920x1088" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Limit name="block-count" range="1-16384" />
+            <Limit name="blocks-per-second" range="1-491520" />
+            <Limit name="bitrate" range="1-40000000" />
+            <Feature name="adaptive-playback" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.hevc.decoder" type="video/hevc">
+            <!-- profiles and levels:  ProfileMain : MainTierLevel51 -->
+            <Limit name="size" min="2x2" max="2048x2048" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="8x8" />
+            <Limit name="block-count" range="1-65536" />
+            <Limit name="blocks-per-second" range="1-491520" />
+            <Limit name="bitrate" range="1-5000000" />
+            <Feature name="adaptive-playback" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.vp8.decoder" type="video/x-vnd.on2.vp8">
+            <Limit name="size" min="2x2" max="2048x2048" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Limit name="block-count" range="1-8192" /> <!-- max 2048x1024 -->
+            <Limit name="blocks-per-second" range="1-500000" />
+            <Limit name="bitrate" range="1-40000000" />
+            <Feature name="adaptive-playback" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.vp9.decoder" type="video/x-vnd.on2.vp9">
+            <Limit name="size" min="2x2" max="1280x1280" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Limit name="block-count" range="1-3600" /> <!-- max 1280x720 -->
+            <Limit name="blocks-per-second" range="1-108000" />
+            <Limit name="bitrate" range="1-5000000" />
+            <Feature name="adaptive-playback" />
+        </MediaCodec>
+    </Decoders>
+
+    <Encoders>
+        <MediaCodec name="OMX.google.h263.encoder" type="video/3gpp">
+            <!-- profiles and levels:  ProfileBaseline : Level45 -->
+            <Limit name="size" min="176x144" max="176x144" />
+            <Limit name="alignment" value="16x16" />
+            <Limit name="bitrate" range="1-128000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.h264.encoder" type="video/avc">
+            <!-- profiles and levels:  ProfileBaseline : Level3 -->
+            <Limit name="size" min="16x16" max="1808x1808" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Limit name="block-count" range="1-1620" />
+            <Limit name="blocks-per-second" range="1-40500" />
+            <Limit name="bitrate" range="1-2000000" />
+            <Feature name="intra-refresh" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.mpeg4.encoder" type="video/mp4v-es">
+            <!-- profiles and levels:  ProfileCore : Level2 -->
+            <Limit name="size" min="16x16" max="176x144" />
+            <Limit name="alignment" value="16x16" />
+            <Limit name="block-size" value="16x16" />
+            <Limit name="blocks-per-second" range="12-1485" />
+            <Limit name="bitrate" range="1-64000" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.vp8.encoder" type="video/x-vnd.on2.vp8">
+            <!-- profiles and levels:  ProfileMain : Level_Version0-3 -->
+            <Limit name="size" min="2x2" max="1280x1280" />
+            <Limit name="alignment" value="2x2" />
+            <Limit name="block-size" value="16x16" />
+            <Limit name="block-count" range="1-3600" /> <!-- max 1280x720 -->
+            <Limit name="bitrate" range="1-20000000" />
+            <Feature name="bitrate-modes" value="VBR,CBR" />
+        </MediaCodec>
+    </Encoders>
+</Included>
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2015 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<MediaCodecs>
+    <Encoders>
+        <MediaCodec name="OMX.google.h263.encoder" type="video/3gpp" update="true">
+            <Limit name="measured-frame-rate-176x144" range="455-455" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.h264.encoder" type="video/avc" update="true">
+            <Limit name="measured-frame-rate-320x240" range="274-274" />
+            <Limit name="measured-frame-rate-720x480" range="104-104" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.mpeg4.encoder" type="video/mp4v-es" update="true">
+            <Limit name="measured-frame-rate-176x144" range="525-525" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.vp8.encoder" type="video/x-vnd.on2.vp8" update="true">
+            <Limit name="measured-frame-rate-320x180" range="135-135" />
+            <Limit name="measured-frame-rate-640x360" range="56-56" />
+            <Limit name="measured-frame-rate-1280x720" range="29-29" />
+        </MediaCodec>
+    </Encoders>
+
+    <Decoders>
+        <MediaCodec name="OMX.MS.H263.Decoder" type="video/3gpp" update="true">
+            <Limit name="measured-frame-rate-176x144" range="770-770" />
+            <Limit name="measured-frame-rate-352x288" range="760-760" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.AVC.Decoder" type="video/avc" update="true">
+            <Limit name="measured-frame-rate-320x240" range="199-199" />
+            <Limit name="measured-frame-rate-720x480" range="198-198" />
+            <Limit name="measured-frame-rate-1280x720" range="105-105" />
+            <Limit name="measured-frame-rate-1920x1088" range="105-105" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.HEVC.Decoder" type="video/hevc" update="true">
+            <Limit name="measured-frame-rate-352x288" range="554-554" />
+            <Limit name="measured-frame-rate-640x360" range="476-476" />
+            <Limit name="measured-frame-rate-720x480" range="470-470" />
+            <Limit name="measured-frame-rate-1280x720" range="532-532" />
+            <Limit name="measured-frame-rate-1920x1080" range="392-392" />
+            <Limit name="measured-frame-rate-3840x2160" range="92-92" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.M4V.Decoder" type="video/mp4v-es" update="true">
+            <Limit name="measured-frame-rate-176x144" range="761-761" />
+            <Limit name="measured-frame-rate-480x360" range="764-764" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.VP8.Decoder" type="video/x-vnd.on2.vp8" update="true">
+            <Limit name="measured-frame-rate-320x180" range="771-771" />
+            <Limit name="measured-frame-rate-640x360" range="760-760" />
+            <Limit name="measured-frame-rate-1280x720" range="254-254" />
+            <Limit name="measured-frame-rate-1920x1080" range="254-254" />
+        </MediaCodec>
+        <MediaCodec name="OMX.MS.VP9.Decoder" type="video/x-vnd.on2.vp9" update="true">
+            <Limit name="measured-frame-rate-320x184" range="628-628" />
+            <Limit name="measured-frame-rate-640x360" range="206-206" />
+            <Limit name="measured-frame-rate-1280x720" range="173-173" />
+            <Limit name="measured-frame-rate-1920x1080" range="188-188" />
+            <Limit name="measured-frame-rate-3840x2160" range="68-68" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.h263.decoder" type="video/3gpp" update="true">
+            <Limit name="measured-frame-rate-176x144" range="679-679" />
+            <Limit name="measured-frame-rate-352x288" range="559-559" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.h264.decoder" type="video/avc" update="true">
+            <Limit name="measured-frame-rate-320x240" range="402-402" />
+            <Limit name="measured-frame-rate-720x480" range="140-140" />
+            <Limit name="measured-frame-rate-1280x720" range="46-46" />
+            <Limit name="measured-frame-rate-1920x1088" range="19-19" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.hevc.decoder" type="video/hevc" update="true">
+            <Limit name="measured-frame-rate-352x288" range="336-336" />
+            <Limit name="measured-frame-rate-640x360" range="152-152" />
+            <Limit name="measured-frame-rate-720x480" range="142-142" />
+            <Limit name="measured-frame-rate-1280x720" range="67-67" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.mpeg4.decoder" type="video/mp4v-es" update="true">
+            <Limit name="measured-frame-rate-176x144" range="861-861" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.vp8.decoder" type="video/x-vnd.on2.vp8" update="true">
+            <Limit name="measured-frame-rate-320x180" range="486-486" />
+            <Limit name="measured-frame-rate-640x360" range="158-158" />
+            <Limit name="measured-frame-rate-1280x720" range="254-254" />
+            <Limit name="measured-frame-rate-1920x1080" range="14-14" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.vp9.decoder" type="video/x-vnd.on2.vp9" update="true">
+            <Limit name="measured-frame-rate-320x180" range="369-369" />
+            <Limit name="measured-frame-rate-640x360" range="172-172" />
+            <Limit name="measured-frame-rate-1280x720" range="84-84" />
+        </MediaCodec>
+    </Decoders>
+</MediaCodecs>

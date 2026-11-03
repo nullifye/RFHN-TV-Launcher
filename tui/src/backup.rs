@@ -19,6 +19,8 @@ pub const A11Y_BEFORE: &str = "accessibility-enabled-before.txt";
 pub const BG_RESTRICTED: &str = "bg-restricted.txt";
 pub const SPEED_TWEAKS: &str = "speed-tweaks-before.txt";
 pub const PRIVATE_DNS: &str = "private-dns-before.txt";
+/// Tweaks' settings as they were before the first change: `<namespace> <key> <value|null>` a line.
+pub const SETTINGS_BEFORE: &str = "settings-before.txt";
 
 /// A serial number as a folder name: letters, digits, `-` and `_` (the scripts use the same rule).
 pub fn safe_id(id: &str) -> String {
@@ -283,6 +285,35 @@ impl Store {
             .find_map(|l| l.strip_prefix("before: ").map(str::to_string))?;
         let (m, s) = line.split_once(" / ")?;
         Some((m.trim().to_string(), s.trim().to_string()))
+    }
+
+    /// Every `(namespace, key, value)` remembered in settings-before.txt; `None` = it wasn't set.
+    pub fn settings_before(&self) -> Vec<(String, String, Option<String>)> {
+        self.lines(SETTINGS_BEFORE)
+            .iter()
+            .filter_map(|l| {
+                let mut f = l.splitn(3, ' ');
+                let (ns, key, v) = (f.next()?, f.next()?, f.next()?);
+                let v = v.trim();
+                Some((
+                    ns.to_string(),
+                    key.to_string(),
+                    (v != "null").then(|| v.to_string()),
+                ))
+            })
+            .collect()
+    }
+
+    /// Remembers a setting's value before the first change to it (later changes keep the first).
+    pub fn record_setting_before(&self, ns: &str, key: &str, value: &str) -> Result<bool> {
+        if self
+            .settings_before()
+            .iter()
+            .any(|(n, k, _)| n == ns && k == key)
+        {
+            return Ok(false);
+        }
+        self.append_unique(SETTINGS_BEFORE, &format!("{ns} {key} {value}"))
     }
 
     pub fn record_private_dns_before(&self, mode: &str, spec: &str) -> Result<bool> {

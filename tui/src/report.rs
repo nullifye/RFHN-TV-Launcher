@@ -18,12 +18,15 @@ const OUTPUT_LINES: usize = 8;
 
 /// Writes the report to the Downloads folder (else the app's folder) and returns its path.
 pub fn save(app: &App) -> Result<PathBuf> {
-    let text = build(
+    let mut text = build(
         app.status.as_ref(),
         &app.store,
         app.dry_run,
         &app.log.entries(false),
     );
+    if let Some(o) = &app.overview {
+        text.push_str(&overview(o));
+    }
     let dir = dirs::download_dir()
         .filter(|d| d.is_dir())
         .or_else(crate::setup::phone_downloads)
@@ -33,6 +36,34 @@ pub fn save(app: &App) -> Result<PathBuf> {
     let path = dir.join(format!("tvhome-support-{time}.txt"));
     fs::write(&path, text).with_context(|| format!("writing {}", path.display()))?;
     Ok(path)
+}
+
+/// The Overview screen's details, when they were read ("Save these details to a file").
+pub fn overview(o: &crate::device::Overview) -> String {
+    let mut r = String::from("\nOverview:\n");
+    let mut row = |k: &str, v: &str| {
+        if !v.trim().is_empty() {
+            let _ = writeln!(r, "  {k:<12} {v}");
+        }
+    };
+    row("name", o.name.as_deref().unwrap_or(""));
+    row("brand", &o.brand);
+    row("model", &o.model);
+    row("codename", &o.codename);
+    row("maker", &o.manufacturer);
+    row("android", &format!("{} (SDK {})", o.android, o.sdk));
+    row("build", &o.build);
+    row("chip", &o.platform);
+    row("serial", &o.serial);
+    row("screen", o.screen.as_deref().unwrap_or(""));
+    row("density", o.density.as_deref().unwrap_or(""));
+    row(
+        "uptime",
+        &o.uptime_secs
+            .map(crate::device::uptime_words)
+            .unwrap_or_default(),
+    );
+    r
 }
 
 pub fn build(status: Option<&Status>, store: &Store, dry_run: bool, log: &[&LogEntry]) -> String {

@@ -19,6 +19,42 @@ pub const WARN: Color = Color::Yellow;
 pub const BAD: Color = Color::Red;
 pub const DIM: Color = Color::DarkGray;
 
+/// Tweaks' HDMI-CEC rows: (global setting, title, what it does). Android's default for each is on.
+pub const CEC: &[(&str, &str, &str)] = &[
+    (
+        "hdmi_control_enabled",
+        "HDMI-CEC",
+        "Lets devices on HDMI control each other (the main switch).",
+    ),
+    (
+        "hdmi_control_auto_wakeup_enabled",
+        "Wake with other devices",
+        "Turning on a box or console turns the TV on.",
+    ),
+    (
+        "hdmi_control_auto_device_off_enabled",
+        "Turn devices off with the TV",
+        "Turning the TV off turns HDMI devices off too.",
+    ),
+    (
+        "hdmi_system_audio_control_enabled",
+        "Soundbar volume",
+        "The TV remote's volume controls a soundbar on HDMI ARC.",
+    ),
+];
+
+/// Every setting the Tweaks screen shows or changes: (namespace, key).
+pub const TWEAK_KEYS: &[(&str, &str)] = &[
+    ("global", "window_animation_scale"),
+    ("global", "transition_animation_scale"),
+    ("global", "animator_duration_scale"),
+    ("global", "hdmi_control_enabled"),
+    ("global", "hdmi_control_auto_wakeup_enabled"),
+    ("global", "hdmi_control_auto_device_off_enabled"),
+    ("global", "hdmi_system_audio_control_enabled"),
+    ("global", "encoded_surround_output"),
+];
+
 /// What choosing an item does (handled in app.rs).
 #[derive(Debug, Clone, PartialEq)]
 pub enum Act {
@@ -58,6 +94,16 @@ pub enum Act {
     RestartAdb,
     // other actions
     Tweak(usize),
+    /// Tweaks: animation speed (0 off, 1 faster, 2 normal).
+    Animations(u8),
+    /// Tweaks: flip one HDMI-CEC setting (index into CEC).
+    Cec(usize),
+    /// Tweaks: sound output passthrough (0 auto, 1 never, 2 always).
+    Passthrough(u8),
+    /// Overview / Health / Playback: read again.
+    Refresh,
+    /// Health: clear app caches.
+    TrimCaches,
     UndoAll,
     ToggleRemoveLauncher,
     Screenshot,
@@ -219,6 +265,9 @@ impl App {
             Screen::Cleanup => self.cleanup(),
             Screen::CleanupAll => self.cleanup_all(),
             Screen::Tweaks => self.tweaks(),
+            Screen::Overview => self.overview_view(),
+            Screen::Health => self.health_view(),
+            Screen::Playback => self.playback_view(),
             Screen::Undo => self.undo(),
             Screen::Tools => self.tools(),
             Screen::Power => self.power_view(),
@@ -488,6 +537,7 @@ impl App {
         let latest = flows::latest_with_apk(&self.releases);
         let installed = tv.and_then(|t| t.launcher_version.clone());
         self.say_app_update(&mut v);
+        v.push(heading("Change the TV"));
         let setup = choice(
             "Set up my TV (recommended)",
             "All in one go: install TV Home, turn off ads and tracking, block ads.",
@@ -547,8 +597,8 @@ impl App {
             Act::Go(Screen::Cleanup),
         ));
         v.push(choice(
-            "Speed and privacy",
-            "Block ads on the whole TV; stop background Wi-Fi scans.",
+            "Tweaks",
+            "Block ads, faster menus, HDMI-CEC, sound output, Wi-Fi scans.",
             Act::Go(Screen::Tweaks),
         ));
         v.push(choice(
@@ -556,6 +606,23 @@ impl App {
             "Put the TV back the way it was.",
             Act::Go(Screen::Undo),
         ));
+        v.push(heading("Look at the TV"));
+        v.push(choice(
+            "Overview",
+            "What this TV is: model, Android version, screen, uptime, network.",
+            Act::Go(Screen::Overview),
+        ));
+        v.push(choice(
+            "Health",
+            "Memory, storage, CPU, network speed and the apps using the most memory.",
+            Act::Go(Screen::Health),
+        ));
+        v.push(choice(
+            "Playback",
+            "What it can play: video formats, screen modes, HDR, sound and Netflix/Widevine.",
+            Act::Go(Screen::Playback),
+        ));
+        v.push(heading("More"));
         v.push(choice(
             "More tools",
             "Screenshot, live log, restart the TV, install from a file…",
@@ -888,7 +955,7 @@ impl App {
     // ---------------------------------------------------------------- tweaks, undo, tools
 
     fn tweaks(&self) -> View {
-        let mut v = View::new("Speed and privacy");
+        let mut v = View::new("Tweaks");
         v.say("Each change remembers the old setting, so \"Undo all changes\" can put it back.");
         let dns = self.store.private_dns_before().is_some();
         let scan = self.store.wifi_scan_before().is_some();
@@ -922,6 +989,466 @@ impl App {
             "Xiaomi's PatchWall runs scheduled jobs while you watch, which can make 4K video stutter. It still opens (the Input button's picker).",
             Act::Tweak(2),
         ));
+
+        let now = |ns: &str, key: &str| -> Option<Option<String>> {
+            self.tweak_values
+                .as_ref()
+                .map(|m| m.get(&format!("{ns} {key}")).cloned().flatten())
+        };
+        v.push(heading("Menus"));
+        let anim = match now("global", "window_animation_scale") {
+            None => "reading…".to_string(),
+            Some(None) => "Normal".to_string(),
+            Some(Some(x)) => match x.parse::<f32>().unwrap_or(1.0) {
+                0.0 => "Off".to_string(),
+                1.0 => "Normal".to_string(),
+                a if a < 1.0 => format!("Faster ({a}×)"),
+                a => format!("Slower ({a}×)"),
+            },
+        };
+        v.push(choice(
+            "Animations: off",
+            format!("Menus snap instantly. Now: {anim}."),
+            Act::Animations(0),
+        ));
+        v.push(choice(
+            "Animations: faster (half)",
+            "Menus still slide, twice as fast. A good middle ground.",
+            Act::Animations(1),
+        ));
+        v.push(choice(
+            "Animations: normal",
+            "The TV's usual speed.",
+            Act::Animations(2),
+        ));
+
+        v.push(heading("HDMI-CEC (other devices on HDMI)"));
+        for (i, (key, title, desc)) in CEC.iter().enumerate() {
+            let state = match now("global", key) {
+                None => "reading…",
+                Some(None) => "On (TV default)",
+                Some(Some(x)) if x == "0" => "Off",
+                Some(Some(_)) => "On",
+            };
+            v.push(choice(
+                format!("{title}: {state}"),
+                format!("{desc} OK switches it."),
+                Act::Cec(i),
+            ));
+        }
+
+        v.push(heading("Sound output (soundbar or receiver)"));
+        let pass = match now("global", "encoded_surround_output") {
+            None => "reading…".to_string(),
+            Some(v) => crate::media::passthrough_name(v.and_then(|x| x.parse().ok())).to_string(),
+        };
+        v.dim(format!("Surround passthrough now: {pass}."));
+        v.push(choice(
+            "Surround: Auto",
+            "The TV sends Dolby/DTS on when the soundbar says it can play them (Android's default).",
+            Act::Passthrough(0),
+        ));
+        v.push(choice(
+            "Surround: Always",
+            "Always send Dolby/DTS as-is to the soundbar or receiver over HDMI ARC.",
+            Act::Passthrough(2),
+        ));
+        v.push(choice(
+            "Surround: Never",
+            "The TV decodes surround itself and sends plain stereo (for soundbars without Dolby/DTS).",
+            Act::Passthrough(1),
+        ));
+        v.push(choice("Back", "", Act::Back));
+        v
+    }
+
+    fn overview_view(&self) -> View {
+        let mut v = View::new("Overview");
+        let Some(o) = &self.overview else {
+            v.dim("Reading the TV…");
+            v.push(first(choice("Back", "", Act::Back)));
+            return v;
+        };
+        let tv = self.tv();
+        let row = |v: &mut View, k: &str, val: String| {
+            if !val.trim().is_empty() {
+                v.body.push(Line::from(vec![
+                    Span::styled(format!("{k:<14}"), Style::new().fg(DIM)),
+                    Span::raw(val),
+                ]));
+            }
+        };
+        if let Some(t) = tv {
+            v.bold(t.name());
+        }
+        row(&mut v, "Name", o.name.clone().unwrap_or_default());
+        row(
+            &mut v,
+            "Model",
+            format!(
+                "{} {}{}",
+                o.brand,
+                o.model,
+                if o.codename.is_empty() {
+                    String::new()
+                } else {
+                    format!("  ({})", o.codename)
+                }
+            ),
+        );
+        row(&mut v, "Made by", o.manufacturer.clone());
+        row(&mut v, "Android", format!("{} (SDK {})", o.android, o.sdk));
+        row(&mut v, "Build", o.build.clone());
+        row(&mut v, "Chip", o.platform.clone());
+        row(&mut v, "Serial", o.serial.clone());
+        row(
+            &mut v,
+            "Screen",
+            match (&o.screen, &o.density) {
+                (Some(s), Some(d)) => format!("{s} · density {d}"),
+                (Some(s), None) => s.clone(),
+                _ => String::new(),
+            },
+        );
+        row(
+            &mut v,
+            "On for",
+            o.uptime_secs.map(device::uptime_words).unwrap_or_default(),
+        );
+        if let Some(t) = tv {
+            row(&mut v, "IP address", t.ip.clone().unwrap_or_default());
+            row(&mut v, "Wi-Fi MAC", t.wifi_mac.clone().unwrap_or_default());
+            row(
+                &mut v,
+                "Ethernet MAC",
+                t.ethernet_mac.clone().unwrap_or_default(),
+            );
+            row(
+                &mut v,
+                "TV Home",
+                match &t.launcher_version {
+                    Some(ver) => format!(
+                        "{ver}{}",
+                        if t.home_is_ours() {
+                            " · the home screen"
+                        } else {
+                            " · not the home screen"
+                        }
+                    ),
+                    None => "not installed".into(),
+                },
+            );
+        }
+        v.gap();
+        v.push(first(choice("Refresh", "Read the TV again", Act::Refresh)));
+        v.push(choice(
+            "Save these details to a file",
+            "A text report you can keep or send when asking for help.",
+            Act::SupportReport,
+        ));
+        v.push(choice("Back", "", Act::Back));
+        v
+    }
+
+    fn health_view(&self) -> View {
+        use crate::health::{self, Level};
+        let mut v = View::new("Health");
+        let Some(h) = &self.health else {
+            v.dim("Checking the TV… (about 2 seconds)");
+            v.push(first(choice("Back", "", Act::Back)));
+            return v;
+        };
+        let colour = |l: Level| match l {
+            Level::Fine => OK,
+            Level::High => WARN,
+            Level::VeryHigh => BAD,
+        };
+        let word = |l: Level| match l {
+            Level::Fine => "fine",
+            Level::High => "high",
+            Level::VeryHigh => "very high",
+        };
+        let line = |v: &mut View, k: &str, val: String, l: Option<Level>| {
+            let mut spans = vec![
+                Span::styled(format!("{k:<14}"), Style::new().fg(DIM)),
+                Span::raw(val),
+            ];
+            if let Some(l) = l {
+                spans.push(Span::styled(
+                    format!("  {}", word(l)),
+                    Style::new().fg(colour(l)),
+                ));
+            }
+            v.body.push(Line::from(spans));
+        };
+        let usage = |u: &health::Usage| {
+            format!(
+                "{} of {} ({:.0}%)",
+                health::bytes(u.used),
+                health::bytes(u.total),
+                u.percent()
+            )
+        };
+        match &h.ram {
+            Some(u) => line(
+                &mut v,
+                "Memory",
+                usage(u),
+                Some(Level::of_percent(u.percent())),
+            ),
+            None => line(&mut v, "Memory", "not reported".into(), None),
+        }
+        if let Some(u) = &h.swap {
+            // Swap (zram) is compressed memory: some use is normal on a 2 GB TV.
+            line(
+                &mut v,
+                "Swap (zram)",
+                usage(u),
+                Some(Level::of_percent(u.percent())),
+            );
+        }
+        match &h.storage {
+            Some(u) => line(
+                &mut v,
+                "Storage",
+                format!(
+                    "{} used of {} ({:.0}%)",
+                    health::bytes(u.used),
+                    health::bytes(u.total),
+                    u.percent()
+                ),
+                Some(Level::of_percent(u.percent())),
+            ),
+            None => line(&mut v, "Storage", "not reported".into(), None),
+        }
+        match h.cpu_percent {
+            Some(c) => line(
+                &mut v,
+                "CPU",
+                format!("{c:.0}% busy"),
+                Some(Level::of_percent(c)),
+            ),
+            None => line(&mut v, "CPU", "not reported".into(), None),
+        }
+        match &h.temperature {
+            Some(t) => line(
+                &mut v,
+                "Temperature",
+                format!("{:.0} °C ({})", t.celsius, t.sensor),
+                Some(Level::of_celsius(t.celsius)),
+            ),
+            None => line(
+                &mut v,
+                "Temperature",
+                "not reported by this TV".into(),
+                None,
+            ),
+        }
+        if h.net.is_empty() {
+            line(&mut v, "Network", "quiet (nothing moving)".into(), None);
+        }
+        for n in h.net.iter().take(3) {
+            line(
+                &mut v,
+                &format!("Network {}", n.iface),
+                format!("↓ {}/s  ↑ {}/s", health::bytes(n.down), health::bytes(n.up)),
+                None,
+            );
+        }
+        if !h.top_memory.is_empty() {
+            v.gap();
+            v.dim("Using the most memory:");
+            for m in &h.top_memory {
+                // Apps by name (package after it); processes that aren't apps as they are.
+                let shown = if m.process == "system" {
+                    "Android system".to_string()
+                } else if m.process.contains('.') {
+                    let base = m.process.split(':').next().unwrap_or(&m.process);
+                    format!("{} ({})", device::friendly_app_name(base), m.process)
+                } else {
+                    m.process.clone()
+                };
+                v.body.push(Line::from(vec![
+                    Span::styled(
+                        format!("  {:>8}  ", health::bytes(m.bytes)),
+                        Style::new().fg(DIM),
+                    ),
+                    Span::raw(shown),
+                ]));
+            }
+        }
+        v.gap();
+        v.push(first(choice("Refresh", "Check again", Act::Refresh)));
+        v.push(choice(
+            "Free up space",
+            "Empty every app's cache. Apps keep their settings and sign-ins; caches refill as you use them.",
+            Act::TrimCaches,
+        ));
+        v.push(choice("Back", "", Act::Back));
+        v
+    }
+
+    fn playback_view(&self) -> View {
+        use crate::media::{self, Decode};
+        let mut v = View::new("Playback");
+        let Some(p) = &self.playback else {
+            v.dim("Reading what the TV can play…");
+            v.push(first(choice("Back", "", Act::Back)));
+            return v;
+        };
+        v.dim("What the TV reports about itself, not a playback test.");
+        let line = |v: &mut View, k: &str, val: String, c: Option<Color>| {
+            let val = match c {
+                Some(c) => Span::styled(val, Style::new().fg(c)),
+                None => Span::raw(val),
+            };
+            v.body.push(Line::from(vec![
+                Span::styled(format!("{k:<16}"), Style::new().fg(DIM)),
+                val,
+            ]));
+        };
+        v.gap();
+        v.bold("Video");
+        for ((name, _), d) in media::VIDEO.iter().zip(&p.video) {
+            let (txt, c) = match d {
+                Decode::Hardware => ("hardware ✓", OK),
+                Decode::Software => ("software only (may stutter)", WARN),
+                Decode::NotListed => ("not supported", DIM),
+            };
+            line(&mut v, name, txt.into(), Some(c));
+        }
+        v.gap();
+        v.bold("Screen");
+        if let Some(m) = p
+            .modes
+            .iter()
+            .find(|m| Some(m.id) == p.active)
+            .or(p.modes.first())
+        {
+            line(
+                &mut v,
+                "Now",
+                format!("{} × {} at {:.0} Hz", m.width, m.height, m.fps),
+                None,
+            );
+        }
+        let others: Vec<String> = p
+            .modes
+            .iter()
+            .filter(|m| Some(m.id) != p.active)
+            .map(|m| format!("{}×{}@{:.0}", m.width, m.height, m.fps))
+            .collect();
+        if !others.is_empty() {
+            line(&mut v, "Other modes", others.join(", "), None);
+        }
+        line(
+            &mut v,
+            "HDR",
+            if p.hdr.is_empty() {
+                if p.video.get(4) == Some(&Decode::Hardware) {
+                    "not reported (a Dolby Vision decoder is listed)".into()
+                } else {
+                    "not reported".into()
+                }
+            } else {
+                p.hdr.join(", ")
+            },
+            None,
+        );
+        v.gap();
+        v.bold("Sound");
+        line(
+            &mut v,
+            "Output",
+            p.audio_device
+                .clone()
+                .unwrap_or_else(|| "not reported".into()),
+            None,
+        );
+        line(
+            &mut v,
+            "Surround",
+            media::passthrough_name(p.passthrough).into(),
+            None,
+        );
+        if !p.formats.is_empty() {
+            line(&mut v, "Formats", p.formats.join(", "), None);
+        }
+        v.gap();
+        v.bold("Streaming (DRM)");
+        let d = &p.drm;
+        // 4K only matters if the screen has a 4K mode.
+        let uhd = p.modes.iter().any(|m| m.width >= 3840);
+        if d.read {
+            let (wv, c) = match (d.widevine, d.level.as_deref()) {
+                (false, _) => ("not on this TV".to_string(), BAD),
+                (true, Some("L1")) => ("L1: HD streaming allowed ✓".to_string(), OK),
+                (true, Some(l)) => (format!("{l}: SD quality only in most apps"), WARN),
+                (true, None) => ("present (level not readable)".to_string(), DIM),
+            };
+            line(&mut v, "Widevine", wv, Some(c));
+            if let Some(ver) = &d.version {
+                line(
+                    &mut v,
+                    "  version",
+                    format!(
+                        "{ver}{}",
+                        d.system_id
+                            .as_ref()
+                            .map(|s| format!(" · system ID {s}"))
+                            .unwrap_or_default()
+                    ),
+                    None,
+                );
+            }
+            if let Some(hd) = d.max_hdcp.as_deref().or(d.hdcp.as_deref()) {
+                line(&mut v, "HDCP", media::hdcp_words(hd), None);
+            }
+            line(
+                &mut v,
+                "PlayReady",
+                if d.playready {
+                    "yes".into()
+                } else {
+                    "no".into()
+                },
+                None,
+            );
+        } else {
+            line(
+                &mut v,
+                "Widevine",
+                format!(
+                    "not readable on this TV{}",
+                    d.error
+                        .as_ref()
+                        .map(|e| format!(" ({e})"))
+                        .unwrap_or_default()
+                ),
+                Some(DIM),
+            );
+        }
+        let netflix = match (p.netflix_partner, &p.netflix_version) {
+            (true, Some(ver)) => format!("Netflix-partnered TV · app {ver}"),
+            (true, None) => "Netflix-partnered TV (Netflix's DRM is built in)".into(),
+            (false, Some(ver)) => format!("app {ver} installed"),
+            (false, None) => "not installed".into(),
+        };
+        line(&mut v, "Netflix", netflix, None);
+        if d.read && d.widevine && d.level.as_deref() == Some("L1") {
+            v.dim(if uhd {
+                "Ready for HD and 4K streaming. Netflix also needs its own approval of the TV model, your plan and, on HDMI, HDCP 2.2."
+            } else {
+                "Ready for full HD streaming (this screen is HD, so 4K doesn't apply). Netflix also needs its own approval of the TV model and your plan."
+            });
+        }
+        v.gap();
+        v.push(first(choice("Refresh", "Read the TV again", Act::Refresh)));
+        v.push(choice(
+            "Change the sound output…",
+            "Surround passthrough for a soundbar or receiver",
+            Act::Go(Screen::Tweaks),
+        ));
         v.push(choice("Back", "", Act::Back));
         v
     }
@@ -937,6 +1464,13 @@ impl App {
         ));
         if s.private_dns_before().is_some() || s.wifi_scan_before().is_some() {
             v.say("  • speed and privacy settings put back");
+        }
+        let tweaks = s.settings_before().len();
+        if tweaks > 0 {
+            v.say(format!(
+                "  • {tweaks} TV setting{} (animations, HDMI-CEC, sound) put back as they were",
+                if tweaks == 1 { "" } else { "s" }
+            ));
         }
         match s.stock_home() {
             Some(h) => v.say(format!(

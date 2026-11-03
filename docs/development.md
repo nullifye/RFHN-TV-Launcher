@@ -23,6 +23,7 @@ RFHN-TV-Launcher/
 │   ├── getprop.txt, settings-{global,secure,system}.txt
 │   ├── stock-home.txt           the TV's own launcher, recorded by build-and-install.sh (restore.sh returns to it)
 │   ├── home-default.txt, home-candidates.txt, accessibility.txt, accessibility-enabled-before.txt, private-dns-before.txt
+│   ├── settings-before.txt      settings the TUI's Tweaks changed, with their old values (`<ns> <key> <value|null>`)
 │   └── dumpsys/                 activities/services of every manufacturer package that was checked
 ├── launcher/                    the launcher source (Java, AndroidX RecyclerView, minSdk 26, targetSdk 36), incl. the phone remote
 │   ├── app/src/main/            the launcher, the phone remote page (assets/remote.html) and its resources
@@ -114,6 +115,9 @@ A Rust ([ratatui](https://ratatui.rs)) front end to everything the scripts do, w
   - It finds TVs from `adb mdns services` (Wireless debugging, including TVs waiting to pair) and by scanning the /24 network for port 5555. It waits for "Allow USB debugging?" by itself and supports pairing codes.
   - *Set up my TV* (`flows::setup_all`) is install, the recommended clean-up and optionally Private DNS, as one plan with one Home check at the end.
   - Quitting while connected offers `flows::debugging_off`.
+  - *Overview*, *Health* and *Playback* are read-only. Each is one batched `adb shell` read (`Worker::read_batch`, split on a marker line). The parsers are pure: `health.rs` (`/proc/meminfo`, `df`, `/proc/stat` and `/proc/net/dev` sampled 1 s apart, `thermalservice`, `hardware_properties`, `dumpsys meminfo`) and `media.rs` (codec XML, `dumpsys display`, `dumpsys audio`, surround settings, DRM). Their tests run on output captured from a Mi TV in `src/testdata/`.
+  - The shell can't read the Widevine level (`dumpsys media.drm` is empty on Android 10), so Playback runs a tiny Java reader as the shell user. Its source is `tui/drminfo/DrmInfo.java`; `tui/drminfo/build.sh` (JDK 17 + Android SDK) compiles it into `drminfo.jar` (2 KB, committed, embedded with `include_bytes!`, so building the app needs no Android SDK). The app pushes it to `/data/local/tmp`, runs `app_process -cp <jar> /system/bin tvhome.DrmInfo`, which prints `key=value` lines from `MediaDrm`, and deletes it. It works on any TV, with or without TV Home. After changing `DrmInfo.java`, run `build.sh` and commit both.
+  - *Tweaks* changes Android settings through `flows::set_settings`, which records each old value (`null` if unset) in `backup/<serial>/settings-before.txt` (first value wins), then runs `settings put`. Undo puts each back, or deletes it if it was unset; `restore.sh` reads the same file.
   - *Save a support report* (`report.rs`) writes the TV's details, its records and the end of the log (pairing codes masked) to Downloads.
   - `--ascii` (automatic in Windows' classic console) and `NO_COLOR`/`--no-color` rewrite the finished frame (`ui::plain`), so screens don't need to know about either. A test checks every non-ASCII symbol in the screens has a stand-in.
 - **Runs `adb` directly** (no shell), so Windows shells can't rewrite paths. Every call is pinned with `-s <serial>`.

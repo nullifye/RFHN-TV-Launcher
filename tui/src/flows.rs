@@ -949,6 +949,21 @@ pub fn restore(env: &mut Env, remove_launcher: bool) -> Plan {
         }
     }
 
+    // Tweaks: each setting as it was before the first change (deleted if it wasn't set).
+    for (ns, key, value) in store.settings_before() {
+        let step = match &value {
+            Some(v) => Step::adb(
+                format!("Setting {key} back to {v}"),
+                adb.shell(&["settings", "put", &ns, &key, v]),
+            ),
+            None => Step::adb(
+                format!("Setting {key} back to unset"),
+                adb.shell(&["settings", "delete", &ns, &key]),
+            ),
+        };
+        p.push(step.optional());
+    }
+
     match store.stock_home() {
         Some(s) => p.push(
             Step::adb(
@@ -991,6 +1006,12 @@ pub fn restore(env: &mut Env, remove_launcher: bool) -> Plan {
             p.summary
                 .push("Put Wi-Fi scanning and the DNS setting back as they were".into());
         }
+        let settings = count("Setting ");
+        if settings > 0 {
+            p.summary.push(format!(
+                "Put {settings} TV setting(s) back as they were (animations, HDMI-CEC, sound)"
+            ));
+        }
         p.summary
             .push("Remove the phone remote's Back/Home helper".into());
         if p.steps.iter().any(|s| s.label.starts_with("Home back to")) {
@@ -1026,6 +1047,56 @@ pub fn wifi_scan_off(env: &mut Env) -> Plan {
     p.say("Stop the TV scanning for Wi-Fi networks in the background");
     p.say("Remember the old setting, so \"Undo all changes\" can put it back");
     p.done = "Done: background Wi-Fi scanning is off.".into();
+    p
+}
+
+/// One setting to change: what it's called on screen, and its namespace, key and new value.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SettingChange {
+    pub label: String,
+    pub ns: String,
+    pub key: String,
+    pub value: String,
+}
+
+impl SettingChange {
+    pub fn new(label: &str, ns: &str, key: &str, value: &str) -> SettingChange {
+        SettingChange {
+            label: label.to_string(),
+            ns: ns.to_string(),
+            key: key.to_string(),
+            value: value.to_string(),
+        }
+    }
+}
+
+/// Tweaks (animations, HDMI-CEC, sound output): for each setting, the current value is read and
+/// remembered (the first time only, so Undo puts back the TV's own value), then the new one is put.
+pub fn set_settings(env: &mut Env, title: &str, done: &str, changes: &[SettingChange]) -> Plan {
+    let mut p = Plan::new(title);
+    for c in changes {
+        let before = env.setting(&c.ns, &c.key).unwrap_or_else(|| "null".into());
+        p.notes.push(format!(
+            "{}: now {}.",
+            c.label,
+            if before == "null" {
+                "not set (the TV's default)"
+            } else {
+                before.as_str()
+            }
+        ));
+        p.push(Step::record(
+            format!("Remember {}", c.key),
+            Record::SettingBefore(c.ns.clone(), c.key.clone(), before),
+        ));
+        p.push(Step::adb(
+            format!("{} → {}", c.label, c.value),
+            env.adb.shell(&["settings", "put", &c.ns, &c.key, &c.value]),
+        ));
+    }
+    p.say(title);
+    p.say("Remember the old setting, so \"Undo all changes\" can put it back");
+    p.done = done.to_string();
     p
 }
 
@@ -1117,6 +1188,20 @@ pub fn restrict_background(env: &mut Env, pkgs: &[String]) -> Plan {
         pkgs.len()
     ));
     p.done = "Done.".into();
+    p
+}
+
+/// Health → Free up space: Android empties every app's cache (they refill as apps are used).
+pub fn trim_caches(env: &mut Env) -> Plan {
+    let mut p = Plan::new("Free up space");
+    p.notes
+        .push("Only caches go: apps keep their settings, sign-ins and downloads.".into());
+    p.push(Step::adb(
+        "Clear every app's cache",
+        env.adb.shell(&["pm", "trim-caches", "999G"]),
+    ));
+    p.say("Empty every app's cache (they refill as you use the apps)");
+    p.done = "Done: app caches cleared. Choose Refresh to see the space now free.".into();
     p
 }
 
@@ -1523,6 +1608,12 @@ mod tests {
         store.record_a11y_before("null").unwrap();
         store.record_private_dns_before("null", "null").unwrap();
         store
+            .record_setting_before("global", "window_animation_scale", "1.0")
+            .unwrap();
+        store
+            .record_setting_before("global", "hdmi_system_audio_control_enabled", "null")
+            .unwrap();
+        store
             .record_stock_home("com.google.android.tvlauncher/.MainActivity")
             .unwrap();
         let r = FakeRunner::new().on("cat /sdcard", "com.mixplorer\n").on(
@@ -1549,6 +1640,8 @@ mod tests {
             "settings delete secure accessibility_enabled",
             "settings put global private_dns_mode opportunistic",
             "settings delete global private_dns_specifier",
+            "settings put global window_animation_scale 1.0",
+            "settings delete global hdmi_system_audio_control_enabled",
             "set-home-activity com.google.android.tvlauncher/.MainActivity",
             "uninstall my.rafhan.app.tvhome",
         ];
@@ -1610,6 +1703,84 @@ mod tests {
             p.steps[0].on_success,
             Some(Record::BgRestricted("iflix.play".into()))
         );
+    }
+
+    #[test]
+    fn settings_tweaks_remember_the_first_value() {
+        let d = tmp("settings-tweaks");
+        let store = Store::at(&d);
+        let r = FakeRunner::new()
+            .on("window_animation_scale", "1.0\n")
+            .on("hdmi_system_audio_control_enabled", "null\n");
+        let mut emit = |_e: EngineEvent| {};
+        let mut env = Env {
+            adb: &adb(),
+            runner: &r,
+            store: &store,
+            emit: &mut emit,
+        };
+        let changes = [
+            SettingChange::new("Animations", "global", "window_animation_scale", "0.5"),
+            SettingChange::new(
+                "Soundbar volume",
+                "global",
+                "hdmi_system_audio_control_enabled",
+                "0",
+            ),
+        ];
+        let p = set_settings(&mut env, "Test", "Done", &changes);
+        // Each change is preceded by recording the old value (null = not set).
+        assert!(matches!(&p.steps[0].action,
+            Action::Record(Record::SettingBefore(ns, k, v)) if ns == "global" && k == "window_animation_scale" && v == "1.0"));
+        assert!(lines(&p)[1].ends_with("settings put global window_animation_scale 0.5"));
+        assert!(matches!(&p.steps[2].action,
+            Action::Record(Record::SettingBefore(_, k, v)) if k == "hdmi_system_audio_control_enabled" && v == "null"));
+        assert!(lines(&p)[3].ends_with("settings put global hdmi_system_audio_control_enabled 0"));
+
+        // Run it twice with a different "current" value: Undo keeps the TV's original.
+        let mut emit = |_e: EngineEvent| {};
+        crate::plan::run(&p, &r, &store, false, &mut emit);
+        let r2 = FakeRunner::new().on("window_animation_scale", "0.5\n");
+        let mut env = Env {
+            adb: &adb(),
+            runner: &r2,
+            store: &store,
+            emit: &mut emit,
+        };
+        let p2 = set_settings(&mut env, "Again", "Done", &changes[..1]);
+        crate::plan::run(&p2, &r2, &store, false, &mut |_e: EngineEvent| {});
+        assert_eq!(
+            store.settings_before(),
+            vec![
+                (
+                    "global".into(),
+                    "window_animation_scale".into(),
+                    Some("1.0".into())
+                ),
+                (
+                    "global".into(),
+                    "hdmi_system_audio_control_enabled".into(),
+                    None
+                ),
+            ]
+        );
+    }
+
+    #[test]
+    fn free_up_space_is_one_cache_trim() {
+        let d = tmp("trim");
+        let store = Store::at(&d);
+        let r = FakeRunner::new();
+        let mut emit = |_e: EngineEvent| {};
+        let mut env = Env {
+            adb: &adb(),
+            runner: &r,
+            store: &store,
+            emit: &mut emit,
+        };
+        let p = trim_caches(&mut env);
+        assert_eq!(lines(&p).len(), 1);
+        assert!(lines(&p)[0].ends_with("pm trim-caches 999G"));
     }
 
     #[test]

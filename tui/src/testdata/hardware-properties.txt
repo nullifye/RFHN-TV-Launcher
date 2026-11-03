@@ -1,0 +1,20 @@
+****** Dump of HardwarePropertiesManagerService ******
+CPU temperatures: []
+CPU throttling temperatures: []
+CPU shutdown temperatures: []
+CPU vr throttling temperatures: []
+GPU temperatures: []
+GPU throttling temperatures: []
+GPU shutdown temperatures: []
+GPU vr throttling temperatures: []
+Battery temperatures: []
+Battery throttling temperatures: []
+Battery shutdown temperatures: []
+Battery vr throttling temperatures: []
+Skin temperatures: []
+Skin throttling temperatures: []
+Skin shutdown temperatures: []
+Skin vr throttling temperatures: []
+Fan speed: []
+
+****** End of HardwarePropertiesManagerService dump ******

@@ -42,6 +42,11 @@ pub enum Job {
     /// `adb pair <addr> <code>` (Wireless debugging on newer Google TV).
     Pair(String, String),
     PowerCheck(String),
+    /// The Overview, Health and Playback screens' readings, and Tweaks' current values.
+    Overview,
+    Health,
+    Playback,
+    ReadTweaks,
     Wake(String, WakeKind, TvPowerConfig),
     Standby(String),
 }
@@ -75,6 +80,14 @@ pub enum Request {
     /// The apps the notes mark `restrict` (PatchWall), if the TV has them.
     RestrictRecommended,
     Reboot,
+    /// Tweaks: put these settings (each one's old value is remembered for Undo).
+    SetSettings {
+        title: String,
+        done: String,
+        changes: Vec<crate::flows::SettingChange>,
+    },
+    /// Health: clear every app's cache (pm trim-caches).
+    TrimCaches,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -116,8 +129,17 @@ pub enum Event {
     ConnectFailed(String),
     Paired(Result<String, String>),
     PowerStatus(State, String),
+    Overview(Box<crate::device::Overview>),
+    Health(Box<crate::health::Health>),
+    Playback(Box<crate::media::Playback>),
+    /// "<ns> <key>" → current value (None = not set), for the Tweaks screen.
+    TweakValues(std::collections::BTreeMap<String, Option<String>>),
     PowerActionResult(String),
 }
+
+/// The Widevine reader: DrmInfo.java compiled by tui/drminfo/build.sh, run with app_process.
+const DRM_READER: &[u8] = include_bytes!("../drminfo/drminfo.jar");
+const DRM_JAR: &str = "/data/local/tmp/tvhome-drminfo.jar";
 
 pub struct Worker {
     adb: Adb,
@@ -310,6 +332,25 @@ impl Worker {
                 }
             }
             Job::PowerCheck(addr) => self.power_check(&addr),
+            Job::Overview => {
+                self.busy(Some("Reading the TV…"));
+                let o = self.overview();
+                self.send(Event::Overview(Box::new(o)));
+            }
+            Job::Health => {
+                self.busy(Some("Checking the TV's health…"));
+                let h = self.health();
+                self.send(Event::Health(Box::new(h)));
+            }
+            Job::Playback => {
+                self.busy(Some("Reading what the TV can play…"));
+                let p = self.playback();
+                self.send(Event::Playback(Box::new(p)));
+            }
+            Job::ReadTweaks => {
+                let v = self.tweak_values();
+                self.send(Event::TweakValues(v));
+            }
             Job::Wake(addr, kind, cfg) => self.wake(&addr, kind, &cfg),
             Job::Standby(addr) => self.standby(&addr),
         }
@@ -769,7 +810,195 @@ impl Worker {
             Request::RestrictBackground(p) => flows::restrict_background(&mut env, &p),
             Request::RestrictRecommended => flows::restrict_recommended(&mut env),
             Request::Reboot => flows::reboot(&mut env),
+            Request::SetSettings {
+                title,
+                done,
+                changes,
+            } => flows::set_settings(&mut env, &title, &done, &changes),
+            Request::TrimCaches => flows::trim_caches(&mut env),
         })
+    }
+
+    /// Runs several read-only commands in one `adb shell` call and returns each one's output.
+    /// The output isn't logged line by line (the codec lists alone are ~900 lines): one summary
+    /// line says what was read.
+    fn read_batch(&self, what: &str, cmds: &[&str], secs: u64) -> Vec<String> {
+        const SEP: &str = "__TVHOME_SEP__";
+        let joined = cmds.join(&format!("; echo {SEP}; "));
+        let argv = self.adb.shell(&[&joined]);
+        let out = self.runner.run(&argv, Duration::from_secs(secs));
+        let mut parts: Vec<String> = out
+            .stdout
+            .split(SEP)
+            .map(|p| p.trim_matches(['\r', '\n']).to_string())
+            .collect();
+        parts.resize(cmds.len(), String::new());
+        let lines = out.stdout.lines().count();
+        self.log(
+            if out.ok() { Level::Info } else { Level::Warn },
+            format!(
+                "$ adb shell <{what}: {} commands> ({} ms, {lines} lines read)",
+                cmds.len(),
+                out.millis
+            ),
+        );
+        parts
+    }
+
+    fn overview(&self) -> crate::device::Overview {
+        let p = self.read_batch(
+            "overview",
+            &[
+                "settings get global device_name",
+                "getprop ro.product.brand",
+                "getprop ro.product.model",
+                "getprop ro.product.device",
+                "getprop ro.product.manufacturer",
+                "getprop ro.build.version.release",
+                "getprop ro.build.version.sdk",
+                "getprop ro.build.id",
+                "getprop ro.board.platform",
+                "getprop ro.serialno",
+                "cat /proc/uptime",
+                "wm size",
+                "wm density",
+            ],
+            20,
+        );
+        let s = |i: usize| p[i].trim().to_string();
+        crate::device::Overview {
+            name: device::setting_value(&p[0]),
+            brand: s(1),
+            model: s(2),
+            codename: s(3),
+            manufacturer: s(4),
+            android: s(5),
+            sdk: s(6),
+            build: s(7),
+            platform: s(8),
+            serial: s(9),
+            uptime_secs: device::uptime_secs(&p[10]),
+            screen: device::wm_value(&p[11]),
+            density: device::wm_value(&p[12]),
+        }
+    }
+
+    fn health(&self) -> crate::health::Health {
+        use crate::health;
+        let p = self.read_batch(
+            "health",
+            &[
+                "cat /proc/meminfo",
+                "df -h /data",
+                "dumpsys meminfo",
+                "dumpsys thermalservice",
+                "dumpsys hardware_properties",
+                "cat /proc/stat; cat /proc/net/dev; sleep 1; cat /proc/stat; cat /proc/net/dev",
+            ],
+            40,
+        );
+        let (ram, swap) = health::parse_proc_meminfo(&p[0]);
+        let (cpu_percent, net) = health::parse_sample(&p[5], 1.0);
+        health::Health {
+            ram,
+            swap,
+            storage: health::parse_df_data(&p[1]),
+            cpu_percent,
+            net,
+            temperature: health::parse_thermal(&p[3])
+                .or_else(|| health::parse_hardware_properties(&p[4])),
+            top_memory: health::parse_top_memory(&p[2], 8),
+        }
+    }
+
+    fn playback(&self) -> crate::media::Playback {
+        use crate::media;
+        let drm_cmd = if self.push_drm_reader() {
+            format!(
+                "app_process -cp {DRM_JAR} /system/bin tvhome.DrmInfo 2>&1 | head -20; rm -f {DRM_JAR}"
+            )
+        } else {
+            ":".to_string()
+        };
+        let p = self.read_batch(
+            "playback",
+            &[
+                "dumpsys display",
+                "cat /vendor/etc/media_codecs*.xml /odm/etc/media_codecs*.xml /system/etc/media_codecs*.xml \
+                 /product/etc/media_codecs*.xml 2>/dev/null; :",
+                "settings get global encoded_surround_output",
+                "settings get global encoded_surround_output_enabled_formats",
+                "dumpsys audio | sed -n '/^Stream volumes/,/^- STREAM_ALARM/p'",
+                &drm_cmd,
+                "ls /vendor/lib/mediadrm /vendor/lib64/mediadrm /system/lib/mediadrm /system/lib64/mediadrm 2>/dev/null; :",
+                "getprop | grep -iE 'nrdp|netflix'; :",
+                "dumpsys package com.netflix.ninja | grep -m1 versionName; :",
+            ],
+            45,
+        );
+        let decoders = media::parse_decoders(&p[1]);
+        let (modes, active, hdr) = media::parse_display(&p[0]);
+        let mut drm = media::parse_drm(&p[5]);
+        if !drm.read && !p[5].trim().is_empty() {
+            drm.error = Some(p[5].lines().next().unwrap_or("").trim().to_string());
+        }
+        media::Playback {
+            video: media::VIDEO
+                .iter()
+                .map(|(_, m)| media::decode_for(&decoders, m))
+                .collect(),
+            modes,
+            active,
+            hdr,
+            audio_device: media::parse_audio_device(&p[4]),
+            passthrough: device::setting_value(&p[2]).and_then(|v| v.parse().ok()),
+            formats: device::setting_value(&p[3])
+                .map(|v| media::surround_formats(&v))
+                .unwrap_or_default(),
+            drm,
+            netflix_partner: media::netflix_partner(&p[6], &p[7]),
+            netflix_version: p[8].trim().strip_prefix("versionName=").map(str::to_string),
+        }
+    }
+
+    /// Copies the Widevine reader (tui/drminfo, built into this app) to the TV's temp folder for
+    /// the Playback read, which runs it and removes it again. It changes nothing on the TV, so it
+    /// runs in practice mode too.
+    fn push_drm_reader(&self) -> bool {
+        let local = std::env::temp_dir().join(format!("tvhome-drminfo-{}.jar", std::process::id()));
+        if let Err(e) = std::fs::write(&local, DRM_READER) {
+            self.log(
+                Level::Warn,
+                format!("couldn't write the Widevine reader: {e}"),
+            );
+            return false;
+        }
+        let path = local.to_string_lossy().to_string();
+        let out = self.runner.run(
+            &self.adb.cmd(&["push", &path, DRM_JAR]),
+            Duration::from_secs(20),
+        );
+        let _ = std::fs::remove_file(&local);
+        self.log(
+            if out.ok() { Level::Info } else { Level::Warn },
+            format!("$ adb push <Widevine reader> {DRM_JAR} ({} ms)", out.millis),
+        );
+        out.ok()
+    }
+
+    /// The current value of every setting the Tweaks screen can change.
+    fn tweak_values(&self) -> std::collections::BTreeMap<String, Option<String>> {
+        let keys = crate::screens::TWEAK_KEYS;
+        let cmds: Vec<String> = keys
+            .iter()
+            .map(|(ns, k)| format!("settings get {ns} {k}"))
+            .collect();
+        let refs: Vec<&str> = cmds.iter().map(String::as_str).collect();
+        let p = self.read_batch("tweak settings", &refs, 20);
+        keys.iter()
+            .zip(p)
+            .map(|((ns, k), v)| (format!("{ns} {k}"), device::setting_value(&v)))
+            .collect()
     }
 
     fn screenshot(&mut self) {
@@ -943,5 +1172,19 @@ mod power_tests {
                 );
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod drm_reader_tests {
+    use super::DRM_READER;
+
+    #[test]
+    fn the_widevine_reader_is_a_dex_jar_with_drminfo() {
+        // A zip holding classes.dex; the class name app_process is given must be inside it.
+        assert!(DRM_READER.starts_with(b"PK\x03\x04"));
+        assert!(DRM_READER.windows(11).any(|w| w == b"classes.dex"));
+        let src = include_str!("../drminfo/DrmInfo.java");
+        assert!(src.contains("package tvhome;") && src.contains("public final class DrmInfo"));
     }
 }

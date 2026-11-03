@@ -5,6 +5,8 @@
 #  - lets background-restricted apps run in the background again and puts Wi-Fi scanning back
 #    (only if those speed tweaks were made: bg-restricted.txt, speed-tweaks-before.txt)
 #  - puts Private DNS back as it was (only if it was changed: private-dns-before.txt)
+#  - puts the setup app's Tweaks (animations, HDMI-CEC, sound output) back as they were
+#    (settings-before.txt: "<namespace> <key> <value|null>" per line)
 #  - removes this launcher's accessibility service and, if nothing else uses it, the
 #    accessibility_enabled flag it turned on (accessibility-enabled-before.txt)
 #  - makes the TV's own launcher the home screen again (and optionally removes this launcher)
@@ -65,6 +67,15 @@ if [ -f "$B/private-dns-before.txt" ]; then
   else
     A shell settings put global private_dns_specifier "$SPEC"
   fi
+fi
+# Tweaks from the setup app, each as it was before the first change ("null" = it wasn't set).
+if [ -f "$B/settings-before.txt" ]; then
+  while read -r NS KEY VAL; do
+    [ -z "$NS" ] || [ -z "$KEY" ] && continue
+    VAL="$(printf '%s' "$VAL" | tr -d '\r')"
+    if [ "$VAL" = "null" ]; then A shell settings delete "$NS" "$KEY" >/dev/null 2>&1
+    else A shell settings put "$NS" "$KEY" "$VAL"; fi
+  done < "$B/settings-before.txt"
 fi
 # Home screen: the TV's own launcher, as recorded by build-and-install.sh (older setups:
 # home-default.txt). Unknown: let Android ask on the next Home press.

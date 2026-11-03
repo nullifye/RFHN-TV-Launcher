@@ -1,0 +1,40 @@
+Stream volumes (device: index)
+- STREAM_VOICE_CALL:
+   Muted: false
+   Min: 1
+   Max: 7
+   streamVolume:1
+   Current: 2 (speaker): 1, 80 (bt_a2dp): 3, 400 (hdmi): 7, 40000000 (default): 3
+   Devices: speaker
+- STREAM_SYSTEM:
+   Muted: false
+   Min: 0
+   Max: 7
+   streamVolume:7
+   Current: 400 (hdmi): 7, 40000000 (default): 7
+   Devices: speaker
+- STREAM_RING:
+   Muted: false
+   Min: 0
+   Max: 7
+   streamVolume:5
+   Current: 400 (hdmi): 5, 40000000 (default): 5
+   Devices: speaker
+- STREAM_MUSIC:
+   Muted: false
+   Min: 0
+   Max: 100
+   streamVolume:7
+   Current: 2 (speaker): 7, 80 (bt_a2dp): 38, 400 (hdmi): 100, 40000000 (default): 30
+   Devices: speaker
+- STREAM_ALARM:
+   Muted: false
+   Min: 1
+   Max: 7
+   streamVolume:1
+   Current: 2 (speaker): 1, 80 (bt_a2dp): 3, 400 (hdmi): 7, 40000000 (default): 3
+   Devices: speaker
+- STREAM_NOTIFICATION:
+   Muted: false
+   Min: 0
+   Max: 7

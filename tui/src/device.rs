@@ -307,6 +307,16 @@ pub fn friendly_app_name(pkg: &str) -> String {
         ("com.mediatek.wwtv.tvcenter", "Live TV"),
         ("com.android.tv", "Live TV"),
         ("com.android.tv.settings", "Settings"),
+        ("com.google.android.gms", "Google Play services"),
+        ("com.google.android.gsf", "Google services framework"),
+        ("com.android.vending", "Play Store"),
+        ("com.google.android.inputmethod.latin", "Keyboard (Gboard)"),
+        ("com.google.android.katniss", "Google Assistant"),
+        ("com.android.systemui", "System UI"),
+        ("com.android.bluetooth", "Bluetooth"),
+        ("com.xiaomi.mitv.updateservice", "Xiaomi updates"),
+        ("com.xiaomi.mitv.tvmanager", "TV Manager"),
+        ("com.mitv.tvhome.atv", "PatchWall"),
         ("com.google.android.apps.tv.launcherx", "Google TV home"),
         ("com.google.android.tvlauncher", "Android TV home"),
         (PKG, "TV Home"),
@@ -326,6 +336,60 @@ pub fn friendly_app_name(pkg: &str) -> String {
     match c.next() {
         Some(f) => f.to_uppercase().chain(c).collect(),
         None => pkg.to_string(),
+    }
+}
+
+/// The Overview screen's details (one batched read; see `Worker::overview`).
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Overview {
+    pub name: Option<String>,
+    pub brand: String,
+    pub model: String,
+    pub codename: String,
+    pub manufacturer: String,
+    pub android: String,
+    pub sdk: String,
+    pub build: String,
+    pub platform: String,
+    pub serial: String,
+    pub uptime_secs: Option<u64>,
+    pub screen: Option<String>,
+    pub density: Option<String>,
+}
+
+/// `wm size` / `wm density` output: the override if there is one, else the physical value.
+pub fn wm_value(text: &str) -> Option<String> {
+    let pick = |prefix: &str| {
+        text.lines()
+            .find_map(|l| l.trim().strip_prefix(prefix).map(|v| v.trim().to_string()))
+    };
+    pick("Override size:")
+        .or_else(|| pick("Override density:"))
+        .or_else(|| pick("Physical size:"))
+        .or_else(|| pick("Physical density:"))
+        .filter(|v| !v.is_empty())
+}
+
+/// `cat /proc/uptime` → whole seconds.
+pub fn uptime_secs(text: &str) -> Option<u64> {
+    text.split_whitespace()
+        .next()?
+        .split('.')
+        .next()?
+        .parse()
+        .ok()
+}
+
+/// "3 days 4 hours", "5 hours 12 min", "8 min".
+pub fn uptime_words(secs: u64) -> String {
+    let (d, h, m) = (secs / 86_400, secs % 86_400 / 3600, secs % 3600 / 60);
+    let unit = |n: u64, one: &str| format!("{n} {one}{}", if n == 1 { "" } else { "s" });
+    if d > 0 {
+        format!("{} {}", unit(d, "day"), unit(h, "hour"))
+    } else if h > 0 {
+        format!("{} {m} min", unit(h, "hour"))
+    } else {
+        format!("{m} min")
     }
 }
 
@@ -725,5 +789,24 @@ mod tests {
         assert_eq!(t.busy_with(), None);
         t.focused = Some("com.google.android.youtube.tv".into());
         assert_eq!(t.busy_with(), Some("com.google.android.youtube.tv"));
+    }
+
+    #[test]
+    fn overview_helpers() {
+        assert_eq!(
+            wm_value("Physical size: 1920x1080\n").as_deref(),
+            Some("1920x1080")
+        );
+        assert_eq!(
+            wm_value("Physical size: 3840x2160\nOverride size: 1920x1080\n").as_deref(),
+            Some("1920x1080")
+        );
+        assert_eq!(wm_value("Physical density: 320\n").as_deref(), Some("320"));
+        assert_eq!(wm_value(""), None);
+        assert_eq!(uptime_secs("158409.71 289213.40\n"), Some(158409));
+        assert_eq!(uptime_secs("x"), None);
+        assert_eq!(uptime_words(158_409), "1 day 20 hours");
+        assert_eq!(uptime_words(3_700), "1 hour 1 min");
+        assert_eq!(uptime_words(480), "8 min");
     }
 }

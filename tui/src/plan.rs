@@ -45,6 +45,8 @@ pub enum Record {
     PrivateDnsBefore(String, String),
     Disabled(String),
     BgRestricted(String),
+    /// A Tweaks setting's value before the change (namespace, key, value or "null").
+    SettingBefore(String, String, String),
 }
 
 impl Record {
@@ -61,6 +63,9 @@ impl Record {
             }
             Record::Disabled(p) => format!("backup/{}: + {p}", backup::DISABLED),
             Record::BgRestricted(p) => format!("backup/{}: + {p}", backup::BG_RESTRICTED),
+            Record::SettingBefore(ns, k, v) => {
+                format!("backup/{}: {ns} {k} {v}", backup::SETTINGS_BEFORE)
+            }
         }
     }
 
@@ -72,6 +77,7 @@ impl Record {
             Record::PrivateDnsBefore(m, s) => store.record_private_dns_before(m, s),
             Record::Disabled(p) => store.append_unique(backup::DISABLED, p),
             Record::BgRestricted(p) => store.append_unique(backup::BG_RESTRICTED, p),
+            Record::SettingBefore(ns, k, v) => store.record_setting_before(ns, k, v),
         }
     }
 }
