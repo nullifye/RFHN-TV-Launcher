@@ -378,7 +378,7 @@ Open **http://\<TV IP\>:8486** on your phone, on the same Wi-Fi (Settings → Ph
 **Set up by `scripts/build-and-install.sh`:**
 - Overlay permission (`appops … SYSTEM_ALERT_WINDOW allow`). It shows the PIN, and Android 10 needs it before the remote can open apps while another app is on screen.
 - Storage permissions for the Files tab. On Android 8–10 that's `READ`/`WRITE_EXTERNAL_STORAGE` (plus `requestLegacyExternalStorage`); on Android 11+ the script also grants **All files access** (`appops … MANAGE_EXTERNAL_STORAGE allow`), since scoped storage otherwise blocks the Files tab, the `Wallpapers` folder and reading screenshots.
-- The accessibility service, appended next to Button Mapper's. If the Back button says it needs the accessibility service, re-run the script or enable "Home phone remote" in Settings → Device Preferences → Accessibility.
+- The accessibility service, appended next to Button Mapper's. If the Back button says it needs the accessibility service, re-run the script or enable "TV Home phone remote" in Settings → Device Preferences → Accessibility.
 
 **Security:**
 - It's plain HTTP on your LAN, so treat it as trusted-network only: don't forward port 8486 through your router and turn USB debugging off when you're done. The PIN card shows which phone (its IP) asked for it.
