@@ -14,6 +14,30 @@ final class TrafficMonitor {
     static volatile List<Destination> destinations = Collections.emptyList();
     static volatile int unknown;
 
+    /** Starts capture (Android's VPN approval already given). Settings and Button Mapper. */
+    static void start(android.content.Context ctx) {
+        preparing = true; // the spinner shows now, not when the service gets going
+        status = "Starting…";
+        try {
+            ctx.startForegroundService(new android.content.Intent(ctx, TrafficVpnService.class));
+        } catch (RuntimeException e) {
+            preparing = false;
+            status = "The monitor couldn't start: " + e.getClass().getSimpleName();
+        }
+    }
+
+    /** Stops capture: the STOP command, not stopService() (Android keeps a running VPN's service bound). */
+    static void stop(android.content.Context ctx) {
+        if (stopping) return; // already on its way
+        stopping = true;
+        try {
+            ctx.startService(new android.content.Intent(ctx, TrafficVpnService.class).setAction(TrafficVpnService.STOP));
+        } catch (RuntimeException e) {
+            stopping = false;
+            status = "Couldn't stop it here: use Android's VPN settings";
+        }
+    }
+
     static final class Destination {
         final TrafficHistory.Entry entry;
         final Countries.Country country;

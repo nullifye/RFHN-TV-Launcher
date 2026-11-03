@@ -1185,6 +1185,8 @@ function renderDevices() {
     const b = document.createElement("button"); b.textContent = "Forget";
     b.onclick = async () => {
       buzz();
+      if (!confirm(d.current ? "Forget this phone? It has to pair again with the PIN shown on the TV."
+          : "Forget " + d.name + "? It has to pair again with the PIN shown on the TV.")) return;
       try {
         await post("/api/devices/revoke", { id: d.id });
         if (d.current) { token = ""; localStorage.removeItem("tvtoken"); show("pair"); }
@@ -1219,8 +1221,11 @@ function settingRow(r) {
     const b = document.createElement("button"); b.textContent = r.value; b.onclick = openZones;
     row.appendChild(b);
   } else if (r.type === "action") {
-    const b = document.createElement("button"); b.textContent = "Play";
-    b.onclick = async () => { if (await saveSetting(r.key, true)) flash("Playing the azan on the TV"); };
+    const b = document.createElement("button"); b.textContent = r.button || "Go";
+    b.onclick = async () => {
+      if (r.ask && !confirm(r.ask)) return; // a change that's hard to undo: asked first
+      if (await saveSetting(r.key, true)) flash(r.done || "Done");
+    };
     row.appendChild(b);
   } else if (r.type === "apps") {
     const n = document.createElement("b"); n.textContent = r.value.length === 1 ? "1 app" : r.value.length + " apps";

@@ -186,11 +186,13 @@ pub fn setting_value(out: &str) -> Option<String> {
 }
 
 /// `enabled_accessibility_services` with our service added (others kept, order kept). `None`
-/// when it's already there.
+/// when it's already there, in either spelling: Android rewrites the list in the short form
+/// (`pkg/.RemoteAccessibilityService`) when it drops an uninstalled app's service.
 pub fn a11y_with_ours(current: Option<&str>) -> Option<String> {
+    let short = format!("{PKG}/.RemoteAccessibilityService");
     match current {
         None => Some(A11Y_SERVICE.to_string()),
-        Some(c) if c.split(':').any(|s| s == A11Y_SERVICE) => None,
+        Some(c) if c.split(':').any(|s| s == A11Y_SERVICE || s == short) => None,
         Some(c) => Some(format!("{c}:{A11Y_SERVICE}")),
     }
 }
@@ -653,6 +655,11 @@ mod tests {
             format!("flar2.homebutton/a.i:{A11Y_SERVICE}")
         );
         assert_eq!(a11y_with_ours(Some(&format!("x/y:{A11Y_SERVICE}"))), None);
+        // Android's short spelling, after it dropped an uninstalled app's service: no duplicate.
+        assert_eq!(
+            a11y_with_ours(Some("my.rafhan.app.tvhome/.RemoteAccessibilityService")),
+            None
+        );
     }
 
     #[test]

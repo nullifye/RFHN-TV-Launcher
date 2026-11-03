@@ -40,6 +40,21 @@ final class ScreenSaver {
         return ctx.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED;
     }
 
+    /**
+     * SystemUI's "start screen saver now" (Somnambulator), which runs the chosen one while screen
+     * savers are on. False where the TV has no such screen (Google TV).
+     */
+    static boolean startSystem(Context ctx) {
+        try {
+            ctx.startActivity(new Intent(Intent.ACTION_MAIN)
+                    .setClassName("com.android.systemui", "com.android.systemui.Somnambulator")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            return true;
+        } catch (android.content.ActivityNotFoundException | SecurityException e) {
+            return false;
+        }
+    }
+
     /** Screen savers switched on (Android's default when it was never set: on). */
     static boolean enabled(Context ctx) {
         return Settings.Secure.getInt(ctx.getContentResolver(), ENABLED, 1) == 1;

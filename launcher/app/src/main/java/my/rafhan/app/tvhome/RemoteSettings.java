@@ -74,7 +74,8 @@ final class RemoteSettings {
                 choice(LauncherSettings.PRAYER_REMINDER, "Reminder before prayer",
                         "A banner over any app, without sound, while the TV is on",
                         new int[] {0, 5, 10, 15, 30}, new String[] {"Off", "5 min", "10 min", "15 min", "30 min"}),
-                row("action", LauncherSettings.AZAN_TEST, "Play azan now", "Hear it on the TV and check the volume")));
+                row("action", LauncherSettings.AZAN_TEST, "Play azan now", "Hear it on the TV and check the volume")
+                        .put("button", "Play").put("done", "Playing the azan on the TV")));
         cats.put(category("Weather", "Forecast and air quality",
                 toggle(LauncherSettings.SHOW_WEATHER, "Weather card",
                         "Today's forecast and air quality on the home screen")));
@@ -109,6 +110,15 @@ final class RemoteSettings {
                 choice(LauncherSettings.STATUS_SIZE, "Text size", "Tiny 10, Small 12, Medium 14, Large 18",
                         StatusOverlay.SIZE_VALUES, StatusOverlay.SIZE_NAMES),
                 toggle(LauncherSettings.STATUS_BG, "Background", "A dark see-through box behind the text")));
+        // Set up on the TV (press the button there); the phone can put them all back to normal,
+        // in case a remapping makes the TV hard to use.
+        int buttons = LauncherSettings.buttons(ctx).size();
+        cats.put(category("Button Mapper", "New actions for the remote's buttons",
+                row("action", LauncherSettings.BUTTONS, "Reset all buttons",
+                        buttons == 0 ? "None set up. Set them up in TV Home's Settings on the TV"
+                                : (buttons == 1 ? "1 button" : buttons + " buttons") + " with new actions: all back to normal")
+                        .put("button", "Reset").put("done", "Every button back to normal")
+                        .put("ask", "Put every remote button back to normal? Their new actions are removed.")));
         return new JSONObject().put("ok", true).put("categories", cats);
     }
 
@@ -153,7 +163,8 @@ final class RemoteSettings {
                 return "That wallpaper isn't on the TV.";
             }
             case "action":
-                LauncherSettings.playAzanNow();
+                if (LauncherSettings.BUTTONS.equals(key)) LauncherSettings.resetButtons(ctx);
+                else LauncherSettings.playAzanNow();
                 return null;
             case "apps": {
                 if (!(v instanceof String)) return "No app given.";

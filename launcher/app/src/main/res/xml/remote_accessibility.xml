@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Phone remote Back/Home, and the remote's Input button (the one key it filters; every
-     other key passes through untouched). No window content, no events of interest. -->
+<!-- Phone remote Back/Home, the remote's Input button, and the buttons remapped in Settings →
+     Button Mapper (every other key passes through untouched). No window content, no events of
+     interest. -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeAnnouncement"
     android:accessibilityFeedbackType="feedbackGeneric"

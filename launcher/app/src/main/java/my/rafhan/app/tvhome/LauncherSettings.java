@@ -41,6 +41,12 @@ final class LauncherSettings {
             GLOBE_HUBBLE = "globe_hubble", GLOBE_LEGEND = "globe_legend", GLOBE_WIND = "globe_wind",
             GLOBE_GLINT = "globe_glint", GLOBE_RIM = "globe_rim", GLOBE_SKY = "globe_sky",
             GLOBE_COUNTRIES = "globe_countries", GLOBE_TRAFFIC = "globe_traffic";
+    /**
+     * Settings → Button Mapper (ButtonMap): the buttons added (a set of keycodes), each press's
+     * action under ButtonMap.key(code, press), and the long-press and double-press times (ms).
+     * Every key starts with "btn_", which listeners match on.
+     */
+    static final String BUTTONS = "btn_keys", BUTTON_LONG_MS = "btn_long_ms", BUTTON_DOUBLE_MS = "btn_double_ms";
     /** How the Globe turns on its own (a choice): SPIN_TWO_MINUTES or SPIN_REAL_TIME. */
     static final String GLOBE_SPIN = "globe_spin";
     static final int SPIN_TWO_MINUTES = 0, SPIN_REAL_TIME = 1;
@@ -126,6 +132,8 @@ final class LauncherSettings {
             case STATUS_RIGHT: return SLOT_CLOCK;
             case STATUS_SIZE: return 12;  // sp: Small
             case APPS_PER_ROW: return 5;  // the dock and each app-list row
+            case BUTTON_LONG_MS: return 600;
+            case BUTTON_DOUBLE_MS: return 350;
             default: return 0;
         }
     }
@@ -214,5 +222,60 @@ final class LauncherSettings {
         else s.remove(pkg);
         prefs(ctx).edit().putStringSet(USAGE_EXCLUDED, s).apply();
         changed(USAGE_EXCLUDED);
+    }
+
+    // ---------------------------------------------------------------- remote buttons
+
+    /** The remote buttons added in Settings → Button Mapper, in the order they were added. */
+    static java.util.List<Integer> buttons(Context ctx) {
+        java.util.List<Integer> out = new java.util.ArrayList<>();
+        for (String s : prefs(ctx).getString(BUTTONS, "").split(",")) {
+            try {
+                if (!s.isEmpty()) out.add(Integer.parseInt(s));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return out;
+    }
+
+    static void addButton(Context ctx, int code) {
+        java.util.List<Integer> all = buttons(ctx);
+        if (all.contains(code)) return;
+        all.add(code);
+        saveButtons(ctx, all);
+    }
+
+    /** Removes the button and its actions. */
+    static void removeButton(Context ctx, int code) {
+        java.util.List<Integer> all = buttons(ctx);
+        all.remove(Integer.valueOf(code));
+        SharedPreferences.Editor e = prefs(ctx).edit();
+        for (int p = 0; p < ButtonMap.PRESS.length; p++) e.remove(ButtonMap.key(code, p));
+        e.apply();
+        saveButtons(ctx, all);
+    }
+
+    /** Every button back to normal (the phone remote's reset, an escape hatch). */
+    static void resetButtons(Context ctx) {
+        for (int code : buttons(ctx)) removeButton(ctx, code);
+    }
+
+    private static void saveButtons(Context ctx, java.util.List<Integer> all) {
+        StringBuilder sb = new StringBuilder();
+        for (int c : all) sb.append(sb.length() > 0 ? "," : "").append(c);
+        prefs(ctx).edit().putString(BUTTONS, sb.toString()).apply();
+        changed(BUTTONS);
+    }
+
+    /** A button's action for a press (ButtonMap): DEFAULT when it has none. */
+    static String buttonAction(Context ctx, int code, int press) {
+        return prefs(ctx).getString(ButtonMap.key(code, press), ButtonMap.DEFAULT);
+    }
+
+    static void setButtonAction(Context ctx, int code, int press, String action) {
+        String k = ButtonMap.key(code, press);
+        if (ButtonMap.DEFAULT.equals(action)) prefs(ctx).edit().remove(k).apply();
+        else prefs(ctx).edit().putString(k, action).apply();
+        changed(k);
     }
 }

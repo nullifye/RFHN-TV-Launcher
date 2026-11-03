@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
@@ -17,13 +18,42 @@ import android.view.accessibility.AccessibilityEvent;
  * Gives the phone remote Back and Home inside any app (performGlobalAction), and makes the
  * remote's Input button work: the TV's hotkey dispatcher opens one named screen of the stock
  * launcher for it (com.google.android.tvlauncher/.inputs.InputsPanelActivity), which is
- * disabled once TV Home replaces it, so the button did nothing. This catches that one key first
- * and opens InputsActivity instead; every other key passes through untouched. It doesn't read
- * window content (canRetrieveWindowContent=false) and ignores events.
- * Enabled by build-and-install.sh, next to Button Mapper's service.
+ * disabled once TV Home replaces it, so the button did nothing. This catches that key first and
+ * opens InputsActivity instead.
+ *
+ * It also runs Settings → Button Mapper: the buttons remapped there are taken (PressDetector
+ * tells their single, double and long presses apart) and do their action (ButtonActions); every
+ * other key passes through untouched. While Settings waits for "Press a button", the next key
+ * goes there instead. On TV Home's Button Mapper page every button works normally, so a
+ * remapping can always be undone there. It doesn't read window content and ignores events.
+ * Enabled by build-and-install.sh and the setup app.
  */
 public class RemoteAccessibilityService extends AccessibilityService {
     private static volatile RemoteAccessibilityService instance;
+    /** Settings waiting for "Press a button": gets the next key's code (on its release). */
+    private static volatile java.util.function.IntConsumer capture;
+    /** TV Home's Button Mapper page is on screen (with home in front): remapping is paused. */
+    static volatile boolean editing;
+
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private final java.util.List<PressDetector.Fire> fired = new java.util.ArrayList<>();
+    private final Runnable tick = this::tick;
+    private ButtonActions buttons;
+    private PressDetector presses;
+    private int captureDown = -1; // the key pressed while capturing: its release is the answer
+    private final LauncherSettings.Listener settingsChanged = key -> {
+        if (!key.startsWith("btn_") || buttons == null) return;
+        presses.flush(fired); // a press under way ends with the old settings
+        fire();
+        buttons.reload();
+        presses.setTimes(LauncherSettings.choice(this, LauncherSettings.BUTTON_LONG_MS),
+                LauncherSettings.choice(this, LauncherSettings.BUTTON_DOUBLE_MS));
+    };
+
+    /** The next key goes to l (its keycode, on release) instead of anywhere else; null stops. */
+    static void capture(java.util.function.IntConsumer l) {
+        capture = l;
+    }
 
     static boolean isOn() {
         return instance != null;
@@ -97,6 +127,12 @@ public class RemoteAccessibilityService extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         instance = this;
+        if (buttons == null) {
+            buttons = new ButtonActions(this);
+            presses = new PressDetector(buttons, LauncherSettings.choice(this, LauncherSettings.BUTTON_LONG_MS),
+                    LauncherSettings.choice(this, LauncherSettings.BUTTON_DOUBLE_MS));
+            LauncherSettings.addListener(settingsChanged);
+        }
         // Connected with an older version's abilities (no key filtering): reconnect once.
         android.accessibilityservice.AccessibilityServiceInfo info = getServiceInfo();
         if (info != null && (info.getCapabilities()
@@ -114,20 +150,64 @@ public class RemoteAccessibilityService extends AccessibilityService {
     @Override
     public void onDestroy() {
         instance = null;
+        LauncherSettings.removeListener(settingsChanged);
+        main.removeCallbacksAndMessages(null);
+        if (buttons != null) buttons.close();
         super.onDestroy();
     }
 
-    /** The Input button: taken (down and up), and the picker opened on its release. */
+    /**
+     * Settings capturing a button, then the remapped buttons, then the Input button (taken, and
+     * the picker opened on its release). Everything else passes through.
+     */
     @Override
     protected boolean onKeyEvent(KeyEvent e) {
-        if (e.getKeyCode() != KeyEvent.KEYCODE_TV_INPUT) return false;
-        if (e.getAction() == KeyEvent.ACTION_UP) {
+        int code = e.getKeyCode(), action = e.getAction();
+        java.util.function.IntConsumer cap = capture;
+        if (cap != null) {
+            if (action == KeyEvent.ACTION_DOWN) {
+                captureDown = code;
+            } else if (action == KeyEvent.ACTION_UP && code == captureDown) {
+                capture = null; // one key; the release of the OK that started it doesn't count
+                captureDown = -1;
+                main.post(() -> cap.accept(code));
+            }
+            return true;
+        }
+        if (presses != null && !(editing && RemoteBridge.isHome())) {
+            long now = SystemClock.uptimeMillis();
+            boolean taken = action == KeyEvent.ACTION_DOWN ? presses.down(code, now, fired)
+                    : action == KeyEvent.ACTION_UP && presses.up(code, now, fired);
+            fire();
+            schedule();
+            if (taken) return true;
+        }
+        if (code != KeyEvent.KEYCODE_TV_INPUT) return false;
+        if (action == KeyEvent.ACTION_UP) {
             try {
                 startActivity(new Intent(this, InputsActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             } catch (RuntimeException ignored) { // can't open from here: the key is lost, as before
             }
         }
         return true;
+    }
+
+    private void tick() {
+        presses.tick(SystemClock.uptimeMillis(), fired);
+        fire();
+        schedule();
+    }
+
+    private void schedule() {
+        main.removeCallbacks(tick);
+        long at = presses.deadline();
+        if (at >= 0) main.postAtTime(tick, at);
+    }
+
+    /** Runs the presses that finished. */
+    private void fire() {
+        for (PressDetector.Fire f : fired) buttons.run(f.code, f.press);
+        fired.clear();
     }
 
     @Override

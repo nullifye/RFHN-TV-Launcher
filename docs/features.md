@@ -8,7 +8,7 @@ Every feature in detail: what it shows, how to use it, and how it gets its data.
 - **Top bar** (round icon buttons):
   - **Bell** shows notifications (see below).
   - **Inputs** opens a dropdown with HDMI 1–3, AV and Live TV. It switches through the TV input framework.
-  - **The remote's Input button** works again. The TV's hotkey dispatcher opens one named screen of the stock TV launcher for it, so with that disabled the button did nothing. TV Home's accessibility service (the phone remote's, already on) now catches that one key, letting every other key through untouched, and opens the TV's own input picker when it has one (PatchWall's on Xiaomi), otherwise this dropdown (`InputsActivity`).
+  - **The remote's Input button** works again. The TV's hotkey dispatcher opens one named screen of the stock TV launcher for it, so with that disabled the button did nothing. TV Home's accessibility service (the phone remote's, already on) now catches that key (and any set up in [Button Mapper](#button-mapper)), letting every other key through untouched, and opens the TV's own input picker when it has one (PatchWall's on Xiaomi), otherwise this dropdown (`InputsActivity`).
   - **Wi-Fi** shows the connection state by colour and opens Wi-Fi settings.
   - **Settings** (gear) opens the launcher's own Settings (see below); its last row, **About → TV settings**, opens the TV's Settings.
 - **Remote:**
@@ -19,6 +19,7 @@ Every feature in detail: what it shows, how to use it, and how it gets its data.
   - Home while already home jumps back to the dock.
 - **Focus memory:** the last focused tile is remembered, even if the TV kills the launcher.
 - **Any screen size:** the layout is designed for 960 × 540 dp (1920 × 1080 at density 320). On other TVs the launcher picks the density that keeps those proportions, so a 720p box or a denser screen shows the same layout scaled to fit, not shrunk or overlapping (`UiScale.java`).
+- **Button Mapper** (Settings → Button Mapper, optional): new actions for the remote's buttons on a single, double or long press (see [Button Mapper](#button-mapper)).
 - **Net traffic** (Settings → Net traffic, optional): which app connects to which server and country, as a list with details and as routes on the Globe (see [Net traffic](#net-traffic-internet-connection-monitor)).
 - **Resource use:** about 45–75 MB of memory (see the benchmark). There is no blur, video or network polling; the clock updates from the system's minute tick. (The Globe screen saver fetches its live data only while it's on screen.)
 - **New apps:** they appear automatically; the grid lists your most used apps first, then the rest A–Z.
@@ -207,8 +208,38 @@ The gear at the end of the top bar opens the launcher's Settings: categories on 
 | Notifications | TV Home updates, Play Store updates, new HDMI devices, Bluetooth, connection status, low memory (each on/off), low-memory level 80/85/90 % |
 | Info overlay | Show over apps on/off (off by default), what the left, centre and right show (network speed / uptime / clock / elapsed time / nothing), position (top / bottom), text size (small / medium / large), background on/off |
 | Phone remote | Remote on/off (the banner and bell keep working when it's off), its address, forget all paired phones (press OK twice), and each paired phone with when it was last used and its own Forget (OK twice) |
+| Button Mapper | The buttons with new actions, Add a button (press it), Add the Back button, long-press time (Short / Medium / Long), double-press time (Fast / Medium / Slow); see [Button Mapper](#button-mapper) |
 | Running apps | Apps hidden from the running-apps screen; OK shows one again |
 | About | Version, install time, APK size, Check for updates (shows the last check's answer, from here or the bell's 6-hourly check: "You have the latest version", or the row becomes "Update to x.y.z" to download and install it, settings kept), TV settings |
+
+## Button Mapper
+
+<table>
+  <tr>
+    <td width="50%"><a href="button-mapper.jpg"><img src="button-mapper.jpg" width="100%" alt="Settings → Button Mapper: the Red (183) and Green (184) buttons with their actions, Add a button and timing"></a></td>
+    <td width="50%"><a href="button-mapper-button.jpg"><img src="button-mapper-button.jpg" width="100%" alt="The Red (183) button's page: single press opens an app, double and long press Normal, and Remove this button"></a></td>
+  </tr>
+</table>
+
+New in 1.16. **Settings → Button Mapper** gives the remote's buttons new actions, for a single press, a double press (two quick presses) or a long press (holding it). It works with USB debugging off.
+
+- **Add a button:** choose Add a button, then press the button on the remote. It's listed by name with its Android key code, e.g. "Red (183)". A button the TV keeps for itself, like Power, never arrives, so it can't be added. Back cancels, so Back has its own row, **Add the Back button**. The arrows and OK can't be added: they move around the TV.
+- **Actions:** Normal (what the button does), Nothing, Open an app (the list shows each app's icon), Home, Back, Recent apps, Android settings, Wi-Fi settings, Sound settings, App settings, TV Home settings, Power menu, Assistant, Inputs, Start the screen saver, Sleep, Quick menu, Take a screenshot (Android 9+, Android's own, saved where the TV keeps screenshots), Mute, Volume up, Volume down, Play / pause, Next track, Previous track, Info overlay on or off, Net traffic on or off.
+- **Only what the TV has:** a Settings page or the assistant that this TV doesn't have isn't listed (on the development Mi TV the assistant isn't; Take a screenshot needs Android 9).
+- **Normal:**
+  - A remapped button's presses are taken to tell single, double and long apart, so "Normal" has to be played back by TV Home. Without USB debugging, an app can do that only for some keys:
+    - Back, Home and Recent apps (the accessibility service);
+    - volume and media keys (Android's audio service);
+    - Input (TV Home's picker), Settings and Notifications.
+  - These buttons can have any press remapped and keep the others normal.
+  - Other buttons (Menu, colour keys, app buttons…) can have their single press remapped any time. They get a double or long press once their single press has an action too, and setting the single press back to Normal clears them.
+- **Timing:**
+  - A button with a double-press action waits a moment after one press (the double-press time) to see if a second comes. Buttons without one act at once.
+  - A long press fires after the long-press time, while the button is still held.
+  - A remapped button loses an app's own long press for that button.
+- **Fixing a mistake:** on the Button Mapper page every button works normally, so a mapping can always be changed there. The phone remote's Settings tab has **Reset all buttons**, which puts every button back to normal (it asks first).
+- **How:** TV Home's accessibility service (the phone remote's, already on) sees every key before apps do. It takes only the remapped buttons; every other key passes through untouched.
+- **Other remapping apps:** a button remapped both here and in another app (any app that catches keys through accessibility) does both. Remap each button in one place only.
 
 ## Weather
 

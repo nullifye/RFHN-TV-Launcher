@@ -108,8 +108,12 @@ public class MainActivity extends Activity {
     static final String ACTION_INPUTS = "my.rafhan.app.tvhome.action.INPUTS";
     /** The Net traffic monitor's notification: Settings, on Net traffic. */
     static final String ACTION_NET_TRAFFIC = "my.rafhan.app.tvhome.action.NET_TRAFFIC";
+    /** A remote button set to "Quick menu" (Settings → Button Mapper): home, with the quick menu open. */
+    static final String ACTION_QUICK_MENU = "my.rafhan.app.tvhome.action.QUICK_MENU";
+    /** A remote button set to "TV Home settings": home, with Settings open. */
+    static final String ACTION_SETTINGS = "my.rafhan.app.tvhome.action.SETTINGS";
     private static final int REQUEST_VPN = 72;
-    private boolean wantInputs, wantNetTraffic;
+    private boolean wantInputs, wantNetTraffic, wantQuickMenu, wantSettings;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Map<String, AppEntry> rendered = new HashMap<>();
     private final List<ImageView> dockTiles = new ArrayList<>();
@@ -267,6 +271,8 @@ public class MainActivity extends Activity {
         dp = getResources().getDisplayMetrics().density;
         wantInputs = ACTION_INPUTS.equals(getIntent().getAction());
         wantNetTraffic = ACTION_NET_TRAFFIC.equals(getIntent().getAction());
+        wantQuickMenu = ACTION_QUICK_MENU.equals(getIntent().getAction());
+        wantSettings = ACTION_SETTINGS.equals(getIntent().getAction());
         // After an update Android sometimes leaves the accessibility service unconnected.
         RemoteAccessibilityService.checkSoon(this);
         screenW = getResources().getDisplayMetrics().widthPixels;
@@ -826,6 +832,7 @@ public class MainActivity extends Activity {
                 settingsPage.setVisibility(View.VISIBLE);
                 settingsPage.animate().alpha(1f).setDuration(220).start();
             } else {
+                settingsScreen.hidden(); // Button Mapper works again
                 settingsPage.animate().alpha(0f).setDuration(180)
                         .withEndAction(() -> settingsPage.setVisibility(View.GONE)).start();
                 if (wallpaperPreview != null) { // left Settings mid-preview (Home): saved one back
@@ -1529,18 +1536,14 @@ public class MainActivity extends Activity {
         boolean wasOff = !ScreenSaver.enabled(ctx);
         if (!wasOff || ScreenSaver.canSet(ctx)) {
             if (wasOff) ScreenSaver.setEnabled(ctx, true);
-            try {
-                startActivity(new Intent(Intent.ACTION_MAIN)
-                        .setClassName("com.android.systemui", "com.android.systemui.Somnambulator")
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            if (ScreenSaver.startSystem(ctx)) {
                 // Switching them off again ends a running screen saver, so that waits until the
                 // preview is over and the launcher is back in front (onWindowFocusChanged).
                 if (wasOff) previewStartedAt = SystemClock.uptimeMillis();
                 return;
-            } catch (ActivityNotFoundException | SecurityException e) {
-                // Google TV has no such screen: TV Home shows its own screen savers itself.
-                if (wasOff) ScreenSaver.setEnabled(ctx, false);
             }
+            // Google TV has no such screen: TV Home shows its own screen savers itself.
+            if (wasOff) ScreenSaver.setEnabled(ctx, false);
         }
         Intent own = SaverActivity.intent(ctx, chosen);
         if (own != null) {
@@ -1649,14 +1652,7 @@ public class MainActivity extends Activity {
     }
 
     private void startNetCapture() {
-        TrafficMonitor.preparing = true; // the spinner shows now, not when the service gets going
-        TrafficMonitor.status = "Starting…";
-        try {
-            startForegroundService(new Intent(this, TrafficVpnService.class));
-        } catch (RuntimeException e) {
-            TrafficMonitor.preparing = false;
-            TrafficMonitor.status = "The monitor couldn't start: " + e.getClass().getSimpleName();
-        }
+        TrafficMonitor.start(this);
         settingsScreen.refreshRows();
     }
 
@@ -1988,6 +1984,23 @@ public class MainActivity extends Activity {
             wantInputs = false;
             main.postDelayed(this::openMenu, 400);
         }
+        if (wantQuickMenu) {
+            wantQuickMenu = false;
+            main.postDelayed(() -> {
+                if (section == MENU) closeMenu();
+                if (section == SETTINGS || section == UP) moveFocus(TOP, PILL_SETTINGS);
+                openQuickMenu();
+            }, 400);
+        }
+        if (wantSettings) {
+            wantSettings = false;
+            main.postDelayed(() -> {
+                if (section == MENU) closeMenu();
+                if (section == SETTINGS) return; // already open
+                settingsScreen.open();
+                moveFocus(SETTINGS, 0);
+            }, 400);
+        }
         if (wantNetTraffic) {
             wantNetTraffic = false;
             main.postDelayed(() -> {
@@ -2097,6 +2110,14 @@ public class MainActivity extends Activity {
         }
         if (ACTION_NET_TRAFFIC.equals(intent.getAction())) {
             wantNetTraffic = true;
+            return;
+        }
+        if (ACTION_QUICK_MENU.equals(intent.getAction())) {
+            wantQuickMenu = true;
+            return;
+        }
+        if (ACTION_SETTINGS.equals(intent.getAction())) {
+            wantSettings = true;
             return;
         }
         // Home pressed while already home: close the menu and go back to the dock.

@@ -81,6 +81,14 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
     <td colspan="2" valign="top"><b>Net traffic on the Globe</b>: each connection arcs from your prayer zone to its country, a glowing dot hopping along the newest ones; older routes fade in steps over 30 minutes. The Globe's <b>Internet connections</b> layer (Settings → Screen saver) turns them on or off.</td>
   </tr>
   <tr>
+    <td width="50%"><img src="docs/button-mapper.jpg" width="100%" alt="Settings → Button Mapper: the Red (183) and Green (184) buttons with their actions, Add a button and timing"></td>
+    <td width="50%"><img src="docs/button-mapper-actions.jpg" width="100%" alt="Actions for a press: Inputs, Start the screen saver, Sleep, Quick menu, Take a screenshot and more"></td>
+  </tr>
+  <tr>
+    <td valign="top"><b>Button Mapper</b> (new in 1.16): Settings → Button Mapper → <b>Add a button</b>, press it on the remote, and give it a new <b>single</b>, <b>double</b> or <b>long press</b>. Each button shows its Android key code, e.g. Red (183). On this page every button works normally, so a mistake is always easy to undo; the phone remote's Settings tab can reset them all.</td>
+    <td valign="top"><b>Actions</b>: open an app, Home, Back, Recent apps, Android / Wi-Fi / Sound / App settings, TV Home settings, the power menu, Inputs, the screen saver, sleep, the quick menu, a screenshot, mute, volume up/down, media keys, the info overlay or Net traffic. All work with USB debugging off. The arrows and OK can't be remapped, and a button whose own press Android can't replay (Menu, colour keys) gets a double or long press once its single press has an action.</td>
+  </tr>
+  <tr>
     <td colspan="2" align="center"><img src="docs/wallpapers.jpg" width="50%" alt="Wallpaper list"><br><b>Wallpapers</b>: move to preview, OK to set. Add your own from the phone remote: Settings → Wallpaper → Your photo.</td>
   </tr>
   <tr>
@@ -107,6 +115,7 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
         <li><b>Connection status</b>: a banner over any app when Wi-Fi drops or loses internet.</li>
         <li><b>Info overlay</b> over apps (optional): network speed, uptime, a clock with seconds and time since you left the home screen; hidden on the home screen.</li>
         <li><b>Inputs</b> menu for HDMI 1–3, AV and Live TV.</li>
+        <li><b>Button Mapper</b>: give any remote button a new single, double or long press (open an app, the screen saver, sleep, the quick menu, mute, media keys and more), with USB debugging off.</li>
         <li>Light: a 0.51 MB app that starts about 3× faster than the stock launcher, uses about a third less memory after navigating, and has a quarter of its janky frames (<a href="#benchmark">benchmark</a>).</li>
       </ul>
     </td>
