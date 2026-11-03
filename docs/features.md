@@ -21,7 +21,7 @@ Every feature in detail: what it shows, how to use it, and how it gets its data.
 - **Any screen size:** the layout is designed for 960 × 540 dp (1920 × 1080 at density 320). On other TVs the launcher picks the density that keeps those proportions, so a 720p box or a denser screen shows the same layout scaled to fit, not shrunk or overlapping (`UiScale.java`).
 - **Button Mapper** (Settings → Button Mapper, optional): new actions for the remote's buttons on a single, double or long press (see [Button Mapper](#button-mapper)).
 - **Net traffic** (Settings → Net traffic, optional): which app connects to which server and country, as a list with details and as routes on the Globe (see [Net traffic](#net-traffic-internet-connection-monitor)).
-- **Resource use:** about 45–75 MB of memory (see the benchmark). There is no blur, video or network polling; the clock updates from the system's minute tick. (The Globe screen saver fetches its live data only while it's on screen.)
+- **Resource use:** about 85–115 MB of memory, idle to after navigating (see the benchmark). There is no blur, video or network polling; the clock updates from the system's minute tick. (The Globe screen saver fetches its live data only while it's on screen.)
 - **New apps:** they appear automatically; the grid lists your most used apps first, then the rest A–Z.
 
 ## Date, Hijri date and prayer times

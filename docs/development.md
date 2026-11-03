@@ -179,23 +179,25 @@ Gradle needs Java 17+: `export JAVA_HOME="$(/usr/libexec/java_home -v 17+)"` on 
 
 ## Benchmark
 
-Measured on 2026-10-25 with `scripts/benchmark.sh <home component> <label>`, using the optimised R8 release build of launcher 1.8. Conditions:
+Measured on 2026-11-04 with `scripts/benchmark.sh <home component> <label>`, using the optimised R8 release build of TV Home 1.16.0. Conditions:
 - Nothing was playing, and USB debugging was on.
 - The stock launcher ran without its recommendation services, which this setup disables. It was enabled only for its own run (with it enabled, Home keeps going to it), then disabled again before this launcher's run.
 
-| | This launcher (1.8) | Stock Android TV launcher |
+| | TV Home 1.16.0 | Stock Android TV launcher |
 |---|---|---|
-| Memory, idle / after navigating (PSS) | 88 / **83 MB** | 87 / 122 MB |
-| CPU, idle, 60 s | 0.15 s | 0.11 s |
-| Cold start (process killed → first frame) | **0.51–0.57 s** | 1.49–1.59 s |
-| Back to home from an app (wait time) | 22–24 ms | 17–20 ms |
-| Janky frames while navigating | **5.8 % (33/567)** | 22.4 % (74/331) |
-| Frame time p50 / p90 / p99 | 7 / **8** / 61 ms | 5 / 22 / 40 ms |
-| APK size (TV Home 1.11.0) | **0.51 MB** | 12.7 MB |
+| Memory, idle / after navigating (PSS) | 87 / **115 MB** | 90 / 178 MB |
+| CPU, idle, 60 s | 0.18–0.27 s settled (0.71 s while the weather effects play) | 0.08 s |
+| Cold start (process killed → first frame) | **0.76–0.81 s** | 1.47–2.34 s |
+| Back to home from an app (wait time) | 18–20 ms | 15–17 ms |
+| Janky frames while navigating | **4.8 % (59/1240)** | 29.4 % (109/371) |
+| Frame time p50 / p90 / p99 | 9 / **12** / **38** ms | 7 / 28 / 150 ms |
+| APK size | **0.53 MB** | 12.7 MB |
 
 **Notes:**
 - **Idle memory depends on the graphics buffers.** About 45 MB of this launcher's PSS is GPU memory (`GL mtrack`: the window's buffers, the wallpaper and the tile textures). Whether they're all allocated when the idle sample is taken changes the idle figure a lot: earlier runs measured 44–51 MB idle, this one 88 MB, settling at 82 MB a few minutes later. The after-navigating figure, when everything is drawn, is steady across runs (75–83 MB) and is the fairer comparison.
 - **Extra processes only while used:** the launcher is a single process at idle. The Now Playing helper (~23 MB) runs only while something plays, and the virtual keypad (~21 MB) only for 5 minutes after a phone-remote key press inside an app.
 - **Screensaver:** under the screensaver the launcher uses no CPU (0 ticks in 60 s). The System card refreshes every 5 s, and only while home is on screen and in focus.
 - **Other apps in front:** after 30 s with another full-screen app in front, the app-list tile images are freed and redrawn on return. Hardware bitmaps live in graphics memory, so this saving doesn't show up in PSS.
+- **Idle CPU and the weather effects:** the script measures idle 25 s after its last cold start, while the weather effects (45 s after the home screen starts, when it's raining or stormy; it was) are still playing: 0.71 s. Measured again once they had settled: 0.18–0.27 s per 60 s, with the System card's 5-second refresh the only regular work.
+- **Since 1.8** (2026-10-25: 88 / 83 MB, 0.15 s idle CPU, 0.51–0.57 s cold start, 5.8 % janky frames, against the stock launcher's 87 / 122 MB, 1.49–1.59 s and 22.4 %), the weather card and effects, the Globe, Net traffic, quick actions and Button Mapper came in: cold start is about 0.25 s slower and memory after navigating about 30 MB higher. The stock launcher measured higher too this time (178 MB after navigating, 29.4 % janky), so part of the difference is the TV's state on the day.
 - **Before these optimisations** the same benchmark measured 104 / 133 MB, 0.54 s idle CPU, 2.0–2.1 s cold start and 11.4 % janky frames.

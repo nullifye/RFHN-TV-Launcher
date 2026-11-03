@@ -116,7 +116,7 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
         <li><b>Info overlay</b> over apps (optional): network speed, uptime, a clock with seconds and time since you left the home screen; hidden on the home screen.</li>
         <li><b>Inputs</b> menu for HDMI 1–3, AV and Live TV.</li>
         <li><b>Button Mapper</b>: give any remote button a new single, double or long press (open an app, the screen saver, sleep, the quick menu, mute, media keys and more), with USB debugging off.</li>
-        <li>Light: a 0.51 MB app that starts about 3× faster than the stock launcher, uses about a third less memory after navigating, and has a quarter of its janky frames (<a href="#benchmark">benchmark</a>).</li>
+        <li>Light: a 0.53 MB app that starts about twice as fast as the stock launcher, uses about a third less memory after navigating, and has a sixth of its janky frames (<a href="#benchmark">benchmark</a>).</li>
       </ul>
     </td>
   </tr>
@@ -176,17 +176,17 @@ More: [how every feature works](docs/features.md).
 
 ## Benchmark
 
-Against the stock Android TV launcher on the Mi TV (2026-10-25, launcher 1.8). Method and notes: [development.md](docs/development.md#benchmark).
+Against the stock Android TV launcher on the Mi TV (2026-11-04, TV Home 1.16.0). Method and notes: [development.md](docs/development.md#benchmark).
 
-| | This launcher (1.8) | Stock Android TV launcher |
+| | TV Home 1.16.0 | Stock Android TV launcher |
 |---|---|---|
-| Memory, idle / after navigating (PSS) | 88 / **83 MB** | 87 / 122 MB |
-| CPU, idle, 60 s | 0.15 s | 0.11 s |
-| Cold start (process killed → first frame) | **0.51–0.57 s** | 1.49–1.59 s |
-| Back to home from an app (wait time) | 22–24 ms | 17–20 ms |
-| Janky frames while navigating | **5.8 % (33/567)** | 22.4 % (74/331) |
-| Frame time p50 / p90 / p99 | 7 / **8** / 61 ms | 5 / 22 / 40 ms |
-| APK size | **0.51 MB** | 12.7 MB |
+| Memory, idle / after navigating (PSS) | 87 / **115 MB** | 90 / 178 MB |
+| CPU, idle, 60 s | 0.18–0.27 s settled (0.71 s while the weather effects play) | 0.08 s |
+| Cold start (process killed → first frame) | **0.76–0.81 s** | 1.47–2.34 s |
+| Back to home from an app (wait time) | 18–20 ms | 15–17 ms |
+| Janky frames while navigating | **4.8 % (59/1240)** | 29.4 % (109/371) |
+| Frame time p50 / p90 / p99 | 9 / **12** / **38** ms | 7 / 28 / 150 ms |
+| APK size | **0.53 MB** | 12.7 MB |
 
 ## Security
 
