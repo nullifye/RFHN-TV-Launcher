@@ -212,6 +212,21 @@ advice = "keep"
 note = "Makes the remote's special buttons work."
 
 [[app]]
+package = "com.google.android.inputmethod.latin"
+label = "Keyboard (Gboard)"
+category = "Kept on purpose"
+advice = "keep"
+note = "Often the TV's only on-screen keyboard: without it you can't type a search or a Wi-Fi password."
+
+[[app]]
+package = "com.mitv.overseaservice"
+label = "Xiaomi remote services"
+category = "Kept on purpose"
+advice = "keep"
+note = "Runs the remote's Netflix button, and on some models the Bluetooth remote."
+brands = ["xiaomi"]
+
+[[app]]
 package = "com.xiaomi.android.tvsetup.partnercustomizer"
 label = "Remote pairing helper"
 category = "Kept on purpose"
