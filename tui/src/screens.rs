@@ -1255,26 +1255,29 @@ impl App {
                 None,
             );
         }
+        let row = |v: &mut View, amount: String, who: String| {
+            v.body.push(Line::from(vec![
+                Span::styled(format!("  {amount:>8}  "), Style::new().fg(DIM)),
+                Span::raw(who),
+            ]));
+        };
+        if !h.top_cpu.is_empty() {
+            v.gap();
+            v.dim("Using the most CPU (over 2 seconds, of the whole TV):");
+            for c in &h.top_cpu {
+                let who = if c.process == health::DRIVERS {
+                    "TV hardware drivers (picture, sound, HDMI)".to_string()
+                } else {
+                    process_name(&c.process)
+                };
+                row(&mut v, health::percent(c.percent), who);
+            }
+        }
         if !h.top_memory.is_empty() {
             v.gap();
             v.dim("Using the most memory:");
             for m in &h.top_memory {
-                // Apps by name (package after it); processes that aren't apps as they are.
-                let shown = if m.process == "system" {
-                    "Android system".to_string()
-                } else if m.process.contains('.') {
-                    let base = m.process.split(':').next().unwrap_or(&m.process);
-                    format!("{} ({})", device::friendly_app_name(base), m.process)
-                } else {
-                    m.process.clone()
-                };
-                v.body.push(Line::from(vec![
-                    Span::styled(
-                        format!("  {:>8}  ", health::bytes(m.bytes)),
-                        Style::new().fg(DIM),
-                    ),
-                    Span::raw(shown),
-                ]));
+                row(&mut v, health::bytes(m.bytes), process_name(&m.process));
             }
         }
         v.gap();
@@ -2161,6 +2164,54 @@ fn advice_word(a: Advice) -> &'static str {
     }
 }
 
+/// Processes that aren't apps, in plain words (Android's own parts and MediaTek's TV system).
+const PROCESSES: &[(&str, &str)] = &[
+    ("system", "Android system"),
+    ("system_server", "Android system"),
+    ("surfaceflinger", "Screen drawing"),
+    ("zygote", "App starter"),
+    ("audioserver", "Sound"),
+    ("mediaserver", "Media playback"),
+    ("mediadrmserver", "Streaming protection"),
+    ("media.codec", "Video decoding"),
+    ("media.swcodec", "Software video decoding"),
+    ("media.extractor", "Media file reading"),
+    ("media.metrics", "Media statistics"),
+    ("wpa_supplicant", "Wi-Fi"),
+    ("xiaomi.tvservice", "Xiaomi TV service"),
+    ("cpu_audio", "Sound processing"),
+    ("dtv_svc", "TV tuner and inputs"),
+    ("app_man", "TV system manager"),
+];
+
+/// A process as people would know it: apps by name with the package after it, Android's and
+/// the TV's own parts in words with the process after it, anything else as it is.
+fn process_name(p: &str) -> String {
+    if let Some((_, words)) = PROCESSES.iter().find(|(name, _)| *name == p) {
+        return if p.starts_with("system") {
+            words.to_string()
+        } else {
+            format!("{words} ({p})")
+        };
+    }
+    match p {
+        _ if p.starts_with("android.hardware.graphics.composer") => {
+            "Screen drawing (graphics driver)".into()
+        }
+        // A package: dotted, no dashes (ld-linux.so.3 isn't one) and not a HAL service.
+        _ if p.contains('.')
+            && !p.contains('-')
+            && !p.contains(".so")
+            && !p.starts_with("android.hardware.")
+            && !p.starts_with("vendor.") =>
+        {
+            let base = p.split(':').next().unwrap_or(p);
+            format!("{} ({p})", device::friendly_app_name(base))
+        }
+        _ => p.to_string(),
+    }
+}
+
 fn friendly_title(t: &str) -> String {
     t.replace("Install tvhome-", "Install TV Home ")
         .replace(".apk", "")
@@ -2253,6 +2304,23 @@ fn phone_words_view(mut v: View) -> View {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn process_names_in_plain_words() {
+        assert_eq!(process_name("system"), "Android system");
+        assert_eq!(process_name("dtv_svc"), "TV tuner and inputs (dtv_svc)");
+        assert_eq!(process_name("cpu_audio"), "Sound processing (cpu_audio)");
+        assert_eq!(process_name("media.codec"), "Video decoding (media.codec)");
+        assert_eq!(
+            process_name("com.netflix.ninja"),
+            "Netflix (com.netflix.ninja)"
+        );
+        assert_eq!(process_name("ld-linux.so.3"), "ld-linux.so.3");
+        assert_eq!(
+            process_name("vendor.mediatek.tv.mtkrm@1.0-service"),
+            "vendor.mediatek.tv.mtkrm@1.0-service"
+        );
+    }
 
     #[test]
     fn friendly_errors() {

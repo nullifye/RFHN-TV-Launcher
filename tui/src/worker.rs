@@ -888,26 +888,44 @@ impl Worker {
         let p = self.read_batch(
             "health",
             &[
+                // The CPU and network sample first, so the heavier reads below don't count: the
+                // totals and every process's CPU time, 2 s apart, then the processes' full names.
+                "cat /proc/stat; cat /proc/net/dev",
+                "cat /proc/[0-9]*/stat 2>/dev/null; :",
+                "sleep 2; cat /proc/stat; cat /proc/net/dev",
+                "cat /proc/[0-9]*/stat 2>/dev/null; :",
+                // Programs started through the Linux loader (MediaTek's TV side) show as
+                // ld-linux.so.3: add a line naming the program it runs (later lines win).
+                "ps -A -o PID,NAME | while read -r p n; do echo \"$p $n\"; case \"$n\" in ld-linux*) \
+                 set -- $(tr '\\0' ' ' < /proc/$p/cmdline 2>/dev/null); \
+                 [ -n \"$2\" ] && echo \"$p ${2##*/}\";; esac; done",
                 "cat /proc/meminfo",
                 "df -h /data",
                 "dumpsys meminfo",
                 "dumpsys thermalservice",
                 "dumpsys hardware_properties",
-                "cat /proc/stat; cat /proc/net/dev; sleep 1; cat /proc/stat; cat /proc/net/dev",
             ],
             40,
         );
-        let (ram, swap) = health::parse_proc_meminfo(&p[0]);
-        let (cpu_percent, net) = health::parse_sample(&p[5], 1.0);
+        let (ram, swap) = health::parse_proc_meminfo(&p[5]);
+        let sample = format!("{}\n{}", p[0], p[2]);
+        let (cpu_percent, net) = health::parse_sample(&sample, 2.0);
         health::Health {
             ram,
             swap,
-            storage: health::parse_df_data(&p[1]),
+            storage: health::parse_df_data(&p[6]),
             cpu_percent,
             net,
-            temperature: health::parse_thermal(&p[3])
-                .or_else(|| health::parse_hardware_properties(&p[4])),
-            top_memory: health::parse_top_memory(&p[2], 8),
+            temperature: health::parse_thermal(&p[8])
+                .or_else(|| health::parse_hardware_properties(&p[9])),
+            top_memory: health::parse_top_memory(&p[7], 8),
+            top_cpu: health::parse_proc_cpu(
+                &p[1],
+                &p[3],
+                &p[4],
+                health::cpu_ticks(&p[0], &p[2]),
+                6,
+            ),
         }
     }
 

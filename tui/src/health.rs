@@ -72,6 +72,17 @@ pub struct MemUser {
     pub bytes: u64,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct CpuUser {
+    /// The process name (a package name for apps), or `DRIVERS` for the kernel's own tasks.
+    pub process: String,
+    /// Share of the whole TV's CPU (all cores) during the sample, in percent, like the CPU line.
+    pub percent: f64,
+}
+
+/// Stands for the kernel's tasks (picture, sound, HDMI drivers and interrupts) added together.
+pub const DRIVERS: &str = "";
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Health {
     pub ram: Option<Usage>,
@@ -81,6 +92,7 @@ pub struct Health {
     pub net: Vec<NetRate>,
     pub temperature: Option<Temperature>,
     pub top_memory: Vec<MemUser>,
+    pub top_cpu: Vec<CpuUser>,
 }
 
 /// `/proc/meminfo`: RAM used (total − available) and swap used (total − free), in bytes.
@@ -330,6 +342,105 @@ pub fn parse_top_memory(text: &str, n: usize) -> Vec<MemUser> {
     out
 }
 
+/// The CPU time (user + system, in clock ticks) and parent of each process in the output of
+/// `cat /proc/[0-9]*/stat`: pid → (ticks, ppid, name).
+fn proc_ticks(text: &str) -> std::collections::HashMap<u32, (u64, u32, String)> {
+    let mut out = std::collections::HashMap::new();
+    for l in text.lines() {
+        // "18243 (fhan.app.tvhome) S 2652 … utime stime …"; the name can hold spaces and ")".
+        let (Some(open), Some(close)) = (l.find(" ("), l.rfind(") ")) else {
+            continue;
+        };
+        let Ok(pid) = l[..open].trim().parse::<u32>() else {
+            continue;
+        };
+        let f: Vec<&str> = l[close + 2..].split_whitespace().collect();
+        let num = |i: usize| f.get(i).and_then(|x| x.parse::<u64>().ok());
+        let (Some(ppid), Some(ut), Some(st)) = (num(1), num(11), num(12)) else {
+            continue;
+        };
+        out.insert(pid, (ut + st, ppid as u32, l[open + 2..close].to_string()));
+    }
+    out
+}
+
+/// The processes that used the most CPU between two `/proc/[0-9]*/stat` readings, the biggest
+/// `n`, as shares of the whole TV: `total_ticks` is how much the `cpu` line of /proc/stat moved
+/// (all cores) between them. Names come from `ps -A -o PID,NAME` (full package names; /proc
+/// cuts them to 15 letters). Kernel threads (children of kthreadd, pid 2) are added up as one
+/// `DRIVERS` entry. This app's own reading (adbd, the shell, cat, sleep, ps) is left out.
+pub fn parse_proc_cpu(
+    before: &str,
+    after: &str,
+    ps: &str,
+    total_ticks: u64,
+    n: usize,
+) -> Vec<CpuUser> {
+    if total_ticks == 0 {
+        return Vec::new();
+    }
+    let names: std::collections::HashMap<u32, &str> = ps
+        .lines()
+        .filter_map(|l| {
+            let (pid, name) = l.trim().split_once(char::is_whitespace)?;
+            Some((pid.parse().ok()?, name.trim()))
+        })
+        .collect();
+    let before = proc_ticks(before);
+    let share = |ticks: u64| ticks as f64 * 100.0 / total_ticks as f64;
+    let mut users = Vec::new();
+    let mut drivers = 0;
+    for (pid, (ticks, ppid, comm)) in proc_ticks(after) {
+        let Some((was, _, _)) = before.get(&pid) else {
+            continue;
+        };
+        let used = ticks.saturating_sub(*was);
+        if used == 0 {
+            continue;
+        }
+        let name = names.get(&pid).copied().unwrap_or(&comm);
+        if pid == 2 || ppid == 2 || name.starts_with('[') {
+            drivers += used;
+        } else if !matches!(name, "adbd" | "sh" | "cat" | "sleep" | "ps") {
+            users.push(CpuUser {
+                process: name.to_string(),
+                percent: share(used),
+            });
+        }
+    }
+    if drivers > 0 {
+        users.push(CpuUser {
+            process: DRIVERS.to_string(),
+            percent: share(drivers),
+        });
+    }
+    users.sort_by(|a, b| {
+        b.percent
+            .total_cmp(&a.percent)
+            .then(a.process.cmp(&b.process))
+    });
+    users.retain(|u| u.percent >= 0.05);
+    users.truncate(n);
+    users
+}
+
+/// How far the `cpu` line of /proc/stat moved between two readings, in clock ticks (all cores).
+pub fn cpu_ticks(before: &str, after: &str) -> u64 {
+    match (cpu_times(before), cpu_times(after)) {
+        (Some((_, a)), Some((_, b))) => b.saturating_sub(a),
+        _ => 0,
+    }
+}
+
+/// "4.8%", "12%": one decimal below 10.
+pub fn percent(p: f64) -> String {
+    if p < 10.0 {
+        format!("{p:.1}%")
+    } else {
+        format!("{p:.0}%")
+    }
+}
+
 /// "1.2 GB", "530 MB", "12 KB", "800 B" (powers of 1024).
 pub fn bytes(n: u64) -> String {
     const U: [&str; 4] = ["KB", "MB", "GB", "TB"];
@@ -359,6 +470,68 @@ mod tests {
     const SAMPLE: &str = include_str!("testdata/stat-net-sample.txt");
     const THERMAL_EMPTY: &str = include_str!("testdata/thermalservice.txt");
     const HW_EMPTY: &str = include_str!("testdata/hardware-properties.txt");
+    #[test]
+    fn top_cpu_from_two_proc_readings() {
+        // Real lines from the Mi TV (utime and stime are fields 14 and 15).
+        let line = |pid: u32, comm: &str, ppid: u32, ut: u64, st: u64| {
+            format!(
+                "{pid} ({comm}) S {ppid} {ppid} 0 0 -1 1077936448 553263 20076 158 0 {ut} {st} 42 109 20 0 33 0\n"
+            )
+        };
+        let before = [
+            line(18243, "fhan.app.tvhome", 2652, 25026, 9129),
+            line(2756, "surfaceflinger", 1, 9000, 8000),
+            line(17653, "kworker/0:1-mali_mmu4", 2, 0, 500),
+            line(11864, "VDEC_CALLBACK_T", 2, 0, 900),
+            line(3423, "system_server", 2652, 7000, 3000),
+            line(4000, "adbd", 1, 100, 100),
+            line(5000, "gone", 1, 10, 10),
+            line(6000, "idle app", 2652, 50, 50),
+        ]
+        .concat();
+        let after = [
+            line(18243, "fhan.app.tvhome", 2652, 25036, 9133), // +14
+            line(2756, "surfaceflinger", 1, 9006, 8004),       // +10
+            line(17653, "kworker/0:1-mali_mmu4", 2, 0, 503),   // +3
+            line(11864, "VDEC_CALLBACK_T", 2, 0, 902),         // +2
+            line(3423, "system_server", 2652, 7001, 3000),     // +1
+            line(4000, "adbd", 1, 150, 150),                   // this app's reading
+            line(7000, "new", 1, 99, 99),                      // started in between
+            line(6000, "idle app", 2652, 50, 50),
+            "garbage line\n".to_string(),
+        ]
+        .concat();
+        let ps = "  PID NAME\n18243 my.rafhan.app.tvhome\n 2756 surfaceflinger\n17653 [kworker/0:1-mali_mmu4]\n";
+        let top = parse_proc_cpu(&before, &after, ps, 200, 3);
+        assert_eq!(
+            top,
+            vec![
+                CpuUser {
+                    process: "my.rafhan.app.tvhome".into(),
+                    percent: 7.0
+                },
+                CpuUser {
+                    process: "surfaceflinger".into(),
+                    percent: 5.0
+                },
+                CpuUser {
+                    process: DRIVERS.into(),
+                    percent: 2.5
+                },
+            ]
+        );
+        // No total, nothing; a name with spaces and brackets still parses.
+        assert!(parse_proc_cpu(&before, &after, ps, 0, 3).is_empty());
+        let odd = |t| format!("9 (my (odd) name) S 1 1 0 0 -1 0 0 0 0 0 {t} 0 0 0\n");
+        assert_eq!(
+            parse_proc_cpu(&odd(1), &odd(5), "", 100, 3)[0].process,
+            "my (odd) name"
+        );
+        let (a, b) = SAMPLE.split_at(SAMPLE.find("\ncpu ").unwrap() + 1);
+        assert!(cpu_ticks(a, b) > 0);
+        assert_eq!(percent(4.75), "4.8%");
+        assert_eq!(percent(12.3), "12%");
+    }
 
     #[test]
     fn memory_from_a_mi_tv() {
