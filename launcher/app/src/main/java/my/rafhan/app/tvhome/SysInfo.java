@@ -91,12 +91,15 @@ final class SysInfo {
         int linkMbps;         // Wi-Fi only
         String dnsHost;       // Private DNS host, or null
         boolean dnsAuto;      // Private DNS on, automatic
+        boolean vpn;          // a VPN is up (Net traffic's, or any other)
     }
 
     static Net network(Context ctx) {
         Net n = new Net();
         ConnectivityManager cm = ctx.getSystemService(ConnectivityManager.class);
-        Network net = cm.getActiveNetwork();
+        NetworkCapabilities active = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        n.vpn = active != null && active.hasTransport(NetworkCapabilities.TRANSPORT_VPN);
+        Network net = NetState.physical(cm); // the Wi-Fi's address, not a VPN's
         NetworkCapabilities nc = net == null ? null : cm.getNetworkCapabilities(net);
         LinkProperties lp = net == null ? null : cm.getLinkProperties(net);
         n.wifi = nc != null && nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);

@@ -34,7 +34,7 @@ jobs:
       # Ask for what the build actually needs (compileSdk 36 and AGP 8.13's build tools).
       - uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
 
       # Caches ~/.gradle (dependencies, wrapper distribution, build cache) between runs.
       - uses: gradle/actions/setup-gradle@v4
@@ -59,6 +59,15 @@ jobs:
         with:
           name: app-release
           path: launcher/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      # The Net traffic monitor's native engine, kept out of the APK: the app downloads the files
+      # for its CPU from the release and checks them against fingerprints built into that APK.
+      - name: Upload the Net traffic engine
+        uses: actions/upload-artifact@v4
+        with:
+          name: netengine
+          path: launcher/app/build/outputs/netengine/release/netengine-*.so
           if-no-files-found: error
 
   # The terminal app (tui/): checked and built for every desktop platform. Intel Macs are
@@ -151,7 +160,8 @@ jobs:
           path: tui/target/${{ matrix.target }}/release/${{ matrix.exe }}
           if-no-files-found: error
 
-  # Tag v<versionName> → a GitHub Release with tvhome-<version>.apk and the terminal app for each
+  # Tag v<versionName> → a GitHub Release with tvhome-<version>.apk, the Net traffic engine files
+  # (netengine-<abi>-<lib>.so, downloaded by the app) and the terminal app for each
   # platform, downloadable without signing in.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -189,6 +199,11 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
+          name: netengine
+          path: netengine
+
+      - uses: actions/download-artifact@v4
+        with:
           pattern: tvhome-tui-*
           path: tui-bin
 
@@ -216,5 +231,9 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           mv app-release.apk "tvhome-$VERSION.apk"
-          gh release create "$GITHUB_REF_NAME" "tvhome-$VERSION.apk" dist/* \
+          # The engine's library is LGPL: its licences and source notice travel with it.
+          cp launcher/app/src/main/cpp/zdtun/COPYING netengine/netengine-LICENSE-LGPL-3.0.txt
+          cp launcher/app/src/main/cpp/zdtun/COPYING.GPL netengine/netengine-LICENSE-GPL-3.0.txt
+          cp launcher/app/src/main/cpp/zdtun/UPSTREAM.md netengine/netengine-SOURCE.md
+          gh release create "$GITHUB_REF_NAME" "tvhome-$VERSION.apk" dist/* netengine/netengine-* \
             --title "TV Home $VERSION" --generate-notes

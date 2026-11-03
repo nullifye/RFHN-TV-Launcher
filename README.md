@@ -67,6 +67,20 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
     <td valign="top"><b>Settings → Screen saver</b>: switch it on or off, choose Prayer time, Live log, Globe or any other screen saver on the TV, and preview it with Start now. With Globe chosen, each of its layers has a switch.</td>
   </tr>
   <tr>
+    <td width="50%"><img src="docs/net-traffic.jpg" width="100%" alt="Settings → Net traffic: capture on, Clear history, and the latest connections with app, country, server name and data"></td>
+    <td width="50%"><img src="docs/net-traffic-detail.jpg" width="100%" alt="One connection's details: app, package, server, address, protocol, request, country, time and data"></td>
+  </tr>
+  <tr>
+    <td valign="top"><b>Net traffic</b> (new in 1.15, optional): see where the TV's apps connect. Start capture in Settings → Net traffic and it lists each connection, newest first: "RadioStream → United States", the server's name (<code>27223.live.streamtheworld.com</code>), how often and how much. The routes also arc across the Globe screen saver, from your zone to each country.</td>
+    <td valign="top"><b>Connection details</b>: OK on a connection shows its app and package, server name, address and port, protocol (HTTPS asking for h2, HTTP, QUIC, DNS…), the request where it's visible, country, when, and data. It works as a local VPN on the TV: no outside server, nothing decrypted, the last 30 minutes kept in memory only. The home screen's IP shows a <b>VPN</b> badge while it runs.</td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/net-traffic-globe.jpg" width="100%" alt="Globe screen saver with cyan dotted routes arcing from Malaysia to Europe, the United States and Australia"></td>
+  </tr>
+  <tr>
+    <td colspan="2" valign="top"><b>Net traffic on the Globe</b>: each connection arcs from your prayer zone to its country, a glowing dot hopping along the newest ones; older routes fade in steps over 30 minutes. The Globe's <b>Internet connections</b> layer (Settings → Screen saver) turns them on or off.</td>
+  </tr>
+  <tr>
     <td colspan="2" align="center"><img src="docs/wallpapers.jpg" width="50%" alt="Wallpaper list"><br><b>Wallpapers</b>: move to preview, OK to set. Add your own from the phone remote: Settings → Wallpaper → Your photo.</td>
   </tr>
   <tr>
@@ -136,6 +150,7 @@ You need an Android TV or Google TV running Android 8.0 or newer, and a computer
 | Hold OK on an app | Move, add or remove dock apps, or open |
 | The gear | Settings: wallpaper, prayer zone, azan, cards, screen saver, notifications, phone remote |
 | Hold OK on the gear | Quick actions: start screen saver, sleep timer, sleep now, restart, shut down |
+| Settings → Net traffic | Start or stop the connection monitor; OK on a connection for its details |
 | Back / Home | Back to the dock |
 
 **Phone remote:** open `http://<TV IP>:8486` in your phone's browser on the same Wi-Fi and pair with the PIN shown on the TV. Settings → Phone remote shows the exact address. Five tabs:
@@ -172,6 +187,7 @@ This setup is meant for a TV on your own network, and it deliberately makes the 
 - **What the launcher is granted over ADB:** "draw over other apps" (the pairing PIN and messages over any app), an accessibility service (Back and Home from the phone remote, and the remote's Input button), `DUMP` (Now Playing without USB debugging), `WRITE_SECURE_SETTINGS` (choosing and switching the screen saver from TV Home's Settings), `READ_LOGS` below Android 13 (the Live log screen saver and Play Store updates in the bell; it can read the whole system log, which stays on the TV) and All files access (the Files tab and the `Wallpapers` folder). The accessibility service could see what's on screen, but doesn't ask to; it sends Back and Home, and filters one key, the Input button, letting every other key through untouched.
 - **The Weather card fetches public data** while TV Home is open (and keeps it for offline use): MET Malaysia's forecast and warnings for the place set in Settings (data.gov.my), the DOE's APIMS readings, and ECMWF's feels-like temperature and Copernicus air quality for the chosen station's spot (Open-Meteo). Like the Globe, the requests carry nothing about you beyond the TV's address and the `TvHome/1.0` user agent.
 - **The Globe screen saver fetches public data while it's on screen** (and keeps it for offline use): NASA's Earth maps (once, from Wikimedia Commons), OpenStreetMap's edits, USGS's earthquakes, CelesTrak's satellite orbits, NOAA's aurora and wind, NASA's snow and ice, the cloud map, and Natural Earth's countries (once) with each country's flag from Flagpedia (the first time it pops up), each only if its layer is switched on. The requests carry nothing about you or the TV beyond what any web request does (its address and a `TvHome/1.0` user agent).
+- **Net traffic (optional, off until you start it) is a local VPN.** Android asks before it runs, and a "VPN" badge shows on the home screen while it does. It forwards the TV's traffic on the TV itself (no outside VPN server) and reads only each connection's first outgoing bytes, for the server's name (the TLS hello's SNI or HTTP Host), a plain-HTTP request line or a plain-DNS name. Nothing is decrypted or stored beyond a 30-minute, in-memory list. Countries come from an offline IP list downloaded once, so no address is sent to a lookup service. The first start downloads its small engine (checked against fingerprints in the APK) and the country data (about 30 MB).
 - **The phone remote is plain HTTP on port 8486.** Pairing needs a six-digit PIN shown on the TV (five tries, then a lockout that grows to 15 minutes), and the server refuses requests whose `Host` isn't an IP address and any cross-site request, so a web page can't drive the TV. Traffic isn't encrypted though: keep the TV on a trusted WPA2/WPA3 network, never forward the port from your router, and use Settings → Phone remote → Forget all phones if you lose a phone.
 - **Releases are signed with the project's own key**, so every GitHub Release updates the last one in place, settings kept. Building it yourself without that key signs with your computer's debug key instead: switching between a self-built and a downloaded APK needs one uninstall, which resets the launcher's settings. See [development.md](docs/development.md#release-signing-and-github-releases).
 

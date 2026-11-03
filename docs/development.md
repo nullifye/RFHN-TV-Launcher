@@ -2,6 +2,14 @@
 
 Notes for changing and rebuilding the launcher. To install it, see the [install guides](../README.md#install); for how each feature works, see [features.md](features.md).
 
+The optional Net traffic monitor (Settings → Net traffic, new in 1.15) includes native code. Install **NDK 28.2.13676358** and **CMake 3.22.1** through the Android SDK manager (Gradle can offer to download them after accepting the SDK licences):
+
+```bash
+sdkmanager "ndk;28.2.13676358" "cmake;3.22.1"
+```
+
+Its forwarding library is pinned in `launcher/app/src/main/cpp/zdtun/`, built separately as `libzdtun.so` for ARM32/ARM64/x86/x86_64 with 16 KB page alignment. The engine (`libzdtun.so` and its bridge `libtraffic.so`) is **not packed into the APK**: the `netEngineRelease` Gradle task copies it to `launcher/app/build/outputs/netengine/release/netengine-<cpu>-<lib>.so` and writes each file's SHA-256 into the APK as `assets/netengine.txt`. The app loads only files matching those fingerprints, from where `scripts/build-and-install.sh` pushes a local build's engine (`/sdcard/Android/data/my.rafhan.app.tvhome/files/netengine/`), or else downloaded from the installed version's GitHub release, where CI attaches the files with the library's licence texts. Keep the corresponding source and LGPL/GPL notices with distributions; see that directory's `UPSTREAM.md`. No capture is enabled by building or installing the APK. See [Net traffic](features.md#net-traffic-internet-connection-monitor) for consent, limitations, and the live-network test checklist.
+
 ## Folder structure
 
 ```

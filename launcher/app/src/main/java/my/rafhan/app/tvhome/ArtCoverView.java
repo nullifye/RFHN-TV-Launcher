@@ -1,5 +1,6 @@
 package my.rafhan.app.tvhome;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -91,6 +92,8 @@ final class ArtCoverView extends ImageView {
         canvas.drawBitmap(rendered, 0, 0, blurPaint);
     }
 
+    // super.onDraw draws the ImageView's picture into the off-screen bitmap, on purpose.
+    @SuppressLint("WrongCall")
     private void renderCover(Canvas canvas, int w, int h) {
         canvas.drawColor(0xFF1C1C1E);
         super.onDraw(canvas);

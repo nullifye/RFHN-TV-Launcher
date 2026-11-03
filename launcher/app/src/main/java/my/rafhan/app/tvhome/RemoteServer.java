@@ -257,7 +257,7 @@ final class RemoteServer {
     /** e.g. http://192.168.0.44:8486, for the PIN card. */
     static String lanUrl(Context ctx) {
         ConnectivityManager cm = ctx.getSystemService(ConnectivityManager.class);
-        Network net = cm.getActiveNetwork();
+        Network net = NetState.physical(cm); // the address phones can reach, not a VPN's
         LinkProperties lp = net == null ? null : cm.getLinkProperties(net);
         if (lp != null) {
             for (LinkAddress la : lp.getLinkAddresses()) {

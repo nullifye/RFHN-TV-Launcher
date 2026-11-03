@@ -59,7 +59,7 @@ final class GlobeView extends GLSurfaceView {
     /** Which layers are on (Settings → Screen saver, with Globe chosen); read again every few seconds. */
     static final class Layers {
         boolean sky, lines, makkah, zone, lights, clouds, snow, aurora, wind, glint, rim, edits, quakes, iss, tiangong, hubble,
-                legend, countries;
+                legend, countries, traffic;
         /** Turning at the Earth's own speed (Settings → Turning) rather than round it every 2 minutes. */
         boolean realTime;
 
@@ -83,14 +83,29 @@ final class GlobeView extends GLSurfaceView {
             rim = LauncherSettings.flag(ctx, LauncherSettings.GLOBE_RIM);
             legend = LauncherSettings.flag(ctx, LauncherSettings.GLOBE_LEGEND);
             countries = LauncherSettings.flag(ctx, LauncherSettings.GLOBE_COUNTRIES);
+            traffic = LauncherSettings.flag(ctx, LauncherSettings.GLOBE_TRAFFIC);
         }
     }
     private static final long MOVE_EVERY_MS = 60_000, SLIDE_MS = 2_000;
 
     // Dot colours (r, g, b): dim, like the other screen savers.
     private static final float[] EDIT = {0.42f, 0.72f, 0.40f}, QUAKE = {0.82f, 0.47f, 0.20f},
-            ISS_C = {0.40f, 0.68f, 0.82f}, TIANGONG_C = {0.84f, 0.44f, 0.44f}, HUBBLE_C = {0.74f, 0.76f, 0.80f},
-            GOLD = {0.80f, 0.64f, 0.28f}, HOME = {0.62f, 0.66f, 0.70f};
+            ISS_C = {0.72f, 0.54f, 0.90f} /* violet: the connection arcs are cyan */, TIANGONG_C = {0.84f, 0.44f, 0.44f}, HUBBLE_C = {0.74f, 0.76f, 0.80f},
+            GOLD = {0.80f, 0.64f, 0.28f}, HOME = {0.62f, 0.66f, 0.70f}, TRAFFIC = {0.36f, 0.82f, 0.88f},
+            TRAFFIC_HOT = {0.70f, 0.95f, 1.00f}; // the hopping dot's core: light cyan, never white
+    /** After a connection's dot lands: its ping, before the next hop. */
+    private static final long HOP_REST_MS = 700;
+    /**
+     * How a connection's arc looks by how long ago it was last seen: {up to this age (ms),
+     * brightness, path dot size (dp), draw every nth path dot, country ring size (dp)}. Only the
+     * first step (the last 5 minutes) has the hopping dot; after 30 minutes the history drops it.
+     */
+    private static final float[][] AGE_STEPS = {
+            {5 * 60_000f, 1.00f, 2.4f, 1, 11},
+            {10 * 60_000f, 0.75f, 2.0f, 1, 10},
+            {20 * 60_000f, 0.50f, 1.6f, 2, 8},
+            {30 * 60_000f, 0.30f, 1.2f, 3, 6},
+    };
 
     private final GlobeFeeds feeds;
     private final Context ctx;
@@ -348,7 +363,7 @@ final class GlobeView extends GLSurfaceView {
                     + "varying vec2 v_uv;\n"
                     + "varying vec3 v_n;\n"
                     + "varying float v_s, v_rise;\n"
-                    + "const vec3 MAGHRIB = vec3(0.80, 0.58, 0.25), FAJR = vec3(0.30, 0.66, 0.62);\n"
+                    + "const vec3 MAGHRIB = vec3(0.80, 0.58, 0.25), FAJR = vec3(0.86, 0.52, 0.68);\n"
                     + "float line(float s, float at, float px) {\n"
                     + "  float d = abs(s - at);\n"
                     + "  return (1.0 - smoothstep(0.9 * px, 2.2 * px, d)) * 0.85 + exp(-d / (5.0 * px)) * 0.18;\n"
@@ -611,6 +626,48 @@ final class GlobeView extends GLSurfaceView {
         private final Layers on = new Layers();
         private final FloatBuffer corners = floats(new float[]{-1, -1, 1, -1, -1, 1, 1, 1});
         private FloatBuffer points = floats(new float[9 * 512]);
+        private List<TrafficMonitor.Destination> trafficSeen;
+        private final List<TrafficArc> trafficArcs = new ArrayList<>();
+
+        /**
+         * A connection's route: an arc from home that rises well off the surface and comes down on
+         * the country (higher for longer routes), drawn as dots, with a glowing dot hopping along it.
+         */
+        private final class TrafficArc {
+            final TrafficMonitor.Destination destination;
+            final List<double[]> route = new ArrayList<>();
+            private final double[] a, b;
+            private final double angle, height;
+            /** One hop's length, and where in its cycle this route starts (so they don't hop together). */
+            final long hopMs, phase;
+
+            TrafficArc(TrafficMonitor.Destination d) {
+                destination = d;
+                a = Globe.vector(homeLat, homeLon);
+                b = d.vector;
+                angle = Math.acos(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])));
+                height = 0.06 + 0.20 * angle / Math.PI; // in Earth radii, at the middle
+                int steps = (int) Math.max(20, Math.toDegrees(angle) / 1.5);
+                for (int i = 0; i <= steps; i++) route.add(at(i / (double) steps));
+                hopMs = 1_400 + (long) (1_400 * angle / Math.PI);
+                phase = Math.floorMod(d.country.code.hashCode() * 7919L, hopMs + HOP_REST_MS);
+            }
+
+            /** The point a fraction t of the way along, lifted off the sphere by the arc. */
+            double[] at(double t) {
+                double sw = Math.sin(angle), wa, wb;
+                if (sw < 1e-6) { // the same spot: no arc
+                    wa = 1 - t;
+                    wb = t;
+                } else {
+                    wa = Math.sin((1 - t) * angle) / sw;
+                    wb = Math.sin(t * angle) / sw;
+                }
+                double lift = 1 + height * Math.sin(Math.PI * t);
+                return new double[] {(wa * a[0] + wb * b[0]) * lift, (wa * a[1] + wb * b[1]) * lift,
+                        (wa * a[2] + wb * b[2]) * lift};
+            }
+        }
         private int count;
         private static final int TRAIL_DOTS = 30; // every 20 s over 10 minutes
         @SuppressWarnings("unchecked")
@@ -866,6 +923,47 @@ final class GlobeView extends GLSurfaceView {
             points.clear();
             if (on.makkah) for (double[] p : qibla) dot(p, DOT, GOLD, 0.35f, dp(2.5f));
             if (on.zone) dot(Globe.vector(homeLat, homeLon), PERSON, HOME, 1f, dp(10));
+            if (on.traffic) {
+                List<TrafficMonitor.Destination> snapshot = TrafficMonitor.destinations;
+                if (snapshot != trafficSeen) {
+                    trafficSeen = snapshot;
+                    trafficArcs.clear();
+                    java.util.HashSet<String> drawn = new java.util.HashSet<>();
+                    for (TrafficMonitor.Destination d : snapshot) {
+                        if (d.country != null && drawn.add(d.country.code)) trafficArcs.add(new TrafficArc(d));
+                        if (trafficArcs.size() >= 24) break;
+                    }
+                }
+                long elapsed = SystemClock.elapsedRealtime();
+                for (TrafficArc arc : trafficArcs) {
+                    TrafficMonitor.Destination d = arc.destination;
+                    long age = elapsed - d.entry.lastSeen;
+                    if (age >= TrafficHistory.WINDOW_MS) continue;
+                    // The older the connection, the less of it, in steps (AGE_STEPS): fainter, thinner,
+                    // sparser; only the newest keeps a dot hopping.
+                    int step = 0;
+                    while (step < AGE_STEPS.length - 1 && age >= AGE_STEPS[step][0]) step++;
+                    float[] look = AGE_STEPS[step];
+                    float fade = look[1], size = dp(look[2]);
+                    int every = (int) look[3];
+                    for (int i = 0; i < arc.route.size(); i += every) dot(arc.route.get(i), DOT, TRAFFIC, fade * 0.7f, size);
+                    dot(d.vector, RING, TRAFFIC, fade, dp(look[4]));
+                    dot(d.vector, DOT, TRAFFIC, fade, dp(look[4] / 3));
+                    if (step > 0) continue;
+                    // The glowing dot: hops home → country (eased, like a jump), lands with a ping, rests.
+                    long cycle = (up + arc.phase) % (arc.hopMs + HOP_REST_MS);
+                    if (cycle < arc.hopMs) {
+                        double t = cycle / (double) arc.hopMs;
+                        double[] p = arc.at(t * t * (3 - 2 * t));
+                        dot(p, DOT, TRAFFIC, 0.16f * fade, dp(18)); // soft halo
+                        dot(p, DOT, TRAFFIC, 0.38f * fade, dp(10));
+                        dot(p, DOT, TRAFFIC_HOT, 0.95f * fade, dp(5)); // bright core
+                    } else {
+                        float g = (cycle - arc.hopMs) / (float) HOP_REST_MS;
+                        dot(d.vector, RING, TRAFFIC_HOT, 0.85f * fade * (1 - g), dp(8 + 22 * g));
+                    }
+                }
+            }
 
             for (Globe.Spot q : on.quakes ? feeds.quakes : java.util.Collections.<Globe.Spot>emptyList()) {
                 long age = now - q.time;
@@ -1327,7 +1425,7 @@ final class GlobeView extends GLSurfaceView {
         edge.moveTo(32, 27);
         edge.lineTo(32, 58);
         c.drawPath(edge, p);
-        satellite(c, p, 64, 0xFF7DB4CC, 0xFF2C5A78);  // the ISS
+        satellite(c, p, 64, 0xFFB894E3, 0xFF4E3478);  // the ISS: violet
         satellite(c, p, 192, 0xFFDB8A8A, 0xFF7A2E2E); // Tiangong
         hubble(c, p, 256);
         // You: a person (head and shoulders) in a circle.
@@ -1437,9 +1535,9 @@ final class GlobeView extends GLSurfaceView {
         private static final int LINE = 0, KAABA_ICON = 1, RING_MARK = 2, DOT_MARK = 3, SATELLITE_ICON = 4, PERSON_ICON = 5,
                 SATELLITE_CN_ICON = 6, HUBBLE_ICON = 7;
         private static final int[] KINDS = {LINE, LINE, KAABA_ICON, PERSON_ICON, DOT_MARK, RING_MARK, LINE, LINE,
-                SATELLITE_ICON, SATELLITE_CN_ICON, HUBBLE_ICON};
-        private static final int[] COLORS = {0xFFCC9440, 0xFF4DA89E, 0, 0xFF9EA8B3, 0xFF6BB866, 0xFFD17833, 0xFF3DC77A,
-                0xFFB8C4D0, 0, 0, 0};
+                SATELLITE_ICON, SATELLITE_CN_ICON, HUBBLE_ICON, DOT_MARK};
+        private static final int[] COLORS = {0xFFCC9440, 0xFFDB85AD, 0, 0xFF9EA8B3, 0xFF6BB866, 0xFFD17833, 0xFF3DC77A,
+                0xFFB8C4D0, 0, 0, 0, 0xFF52B8C2};
         private final String[] parts = new String[KINDS.length];
         private final List<String> wrapped = new ArrayList<>();
         private final GlobeFeeds feeds;
@@ -1696,6 +1794,10 @@ final class GlobeView extends GLSurfaceView {
             parts[8] = on.iss && feeds.iss != null ? "ISS" : null;
             parts[9] = on.tiangong && feeds.tiangong != null ? "Tiangong (China)" : null;
             parts[10] = on.hubble && feeds.hubble != null ? "Hubble telescope" : null;
+            List<TrafficMonitor.Destination> traffic = on.traffic ? TrafficMonitor.recent() : java.util.Collections.emptyList();
+            // Only while capturing or with recent history: not a lasting "0 · monitor off" line.
+            parts[11] = on.traffic && (TrafficMonitor.running || !traffic.isEmpty())
+                    ? "Net traffic · " + traffic.size() + (TrafficMonitor.running ? "" : " · off") : null; // connections, last 30 min
             if (!on.legend) java.util.Arrays.fill(parts, null);
             // One column: the swatches line up on either side.
             float widest = 0;
@@ -1721,8 +1823,13 @@ final class GlobeView extends GLSurfaceView {
             GlobeFeeds.Edit edit = on.legend && on.edits ? latestEdit(ms) : null;
             if (edit != null) {
                 long at = edit.spot.time > 0 ? edit.spot.time : edit.showAt; // when it was saved
-                block(c, ago(ms - at) + " · \u201c" + edit.spot.text.replaceAll("\\s+", " ") + "\u201d", text, GREY,
-                        DOT_MARK, COLORS[4], right, y, room, 2, a, pad);
+                y = block(c, ago(ms - at) + " · \u201c" + edit.spot.text.replaceAll("\\s+", " ") + "\u201d", text, GREY,
+                        DOT_MARK, COLORS[4], right, y, room, 2, a, pad) - gap;
+            }
+            if (on.legend && on.traffic && !traffic.isEmpty()) { // the latest connection
+                TrafficMonitor.Destination d = traffic.get(0);
+                String endpoint = d.entry.app + " → " + (d.country == null ? "somewhere unknown" : d.country.name);
+                block(c, endpoint, text, GREY, DOT_MARK, COLORS[11], right, y, room, 2, a, pad);
             }
             drawPopup(c);
         }

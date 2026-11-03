@@ -65,8 +65,23 @@ APK=launcher/app/build/outputs/apk/release/app-release.apk
 
 # Push + pm install instead of `adb install`: on some sets adb install waits for an on-screen confirmation.
 A push "$APK" /data/local/tmp/tvhome.apk >/dev/null
+updated() { A shell dumpsys package "$PKG" 2>/dev/null | tr -d '\r' | sed -n 's/^ *lastUpdateTime=//p' | head -1; }
+BEFORE="$(updated || true)"
 INSTALL="$(A shell pm install -r /data/local/tmp/tvhome.apk 2>&1 | tr -d '\r' || true)"
-A shell rm /data/local/tmp/tvhome.apk
+# Replacing the running launcher can drop the TV's ADB connection for a moment (a VPN it was
+# running goes away and the network changes): reconnect before the remaining steps.
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  [ "$(A get-state 2>/dev/null | tr -d '\r')" = device ] && break
+  # A network TV stuck "offline" needs a fresh connection, not just another connect.
+  case "$TV" in *:*) adb disconnect "$TV" >/dev/null 2>&1 || true; adb connect "$TV" >/dev/null 2>&1 || true ;; esac
+  sleep 1
+done
+A shell rm -f /data/local/tmp/tvhome.apk || true
+# The connection can drop before pm's "Success" arrives: the package's new install time says it worked.
+case "$INSTALL" in *Success*) ;; *)
+  AFTER="$(updated || true)"
+  [ -n "$AFTER" ] && [ "$AFTER" != "$BEFORE" ] && INSTALL="Success (confirmed after the connection dropped)" ;;
+esac
 echo "$INSTALL"
 case "$INSTALL" in
   *UPDATE_INCOMPATIBLE*)
@@ -77,6 +92,20 @@ Or sign your builds with the project's release key (docs/development.md)." ;;
   *Success*) ;;
   *) die "the TV refused the install (above)." ;;
 esac
+
+# The Net traffic monitor's native engine isn't in the APK (it keeps the APK small). A release
+# install downloads it from the GitHub release; a local build's engine is pushed here instead,
+# next to the app, where the app checks it against the fingerprints in this APK before using it.
+ENGINE=launcher/app/build/outputs/netengine/release
+if [ -d "$ENGINE" ]; then
+  ABI="$(A shell getprop ro.product.cpu.abi | tr -d '\r')"
+  DEST="/sdcard/Android/data/$PKG/files/netengine"
+  if A shell mkdir -p "$DEST" 2>/dev/null; then
+    for f in "$ENGINE"/netengine-"$ABI"-*.so; do
+      [ -f "$f" ] && A push "$f" "$DEST/" >/dev/null 2>&1 || true
+    done
+  fi
+fi
 
 # Optional permissions: a TV that refuses one just loses that feature, so carry on.
 opt() { A shell "$@" >/dev/null 2>&1 || echo "note: '$*' was refused by this TV (that feature may be limited)"; }

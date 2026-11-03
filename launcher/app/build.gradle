@@ -15,13 +15,17 @@ def releaseStore = signing('SIGNING_STORE_FILE', 'storeFile')
 android {
     namespace 'my.rafhan.app.tvhome'
     compileSdk 36
+    ndkVersion '28.2.13676358'
 
     defaultConfig {
         applicationId 'my.rafhan.app.tvhome'
         minSdk 26          // Android 8.0: the overlays, fonts and java.time need it; the Mi TV runs 10, the Mi Box 9
         targetSdk 36       // some Google TV 14 sets refuse old targets at install
-        versionCode 24
-        versionName '1.14.7'
+        versionCode 26
+        versionName '1.15.0'
+        ndk { abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64' }
+        // TV Home is English-only: leave out the libraries' translations.
+        resourceConfigurations += ['en']
     }
 
     signingConfigs {
@@ -50,10 +54,74 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    // The Net traffic engine (src/main/cpp) is built for every CPU type but kept out of the APK, so
+    // TV Home stays small: the NetEngine task below copies it out and records each file's SHA-256,
+    // and the app downloads and checks it the first time the monitor starts (TrafficEngine.java).
+    packaging {
+        jniLibs { excludes += ['**/libzdtun.so', '**/libtraffic.so'] }
+        // Kotlin's reflection metadata and coroutine debug probes (from dadb): nothing reads them.
+        resources { excludes += ['**/*.kotlin_builtins', 'DebugProbesKt.bin', 'META-INF/androidx/**/LICENSE.txt'] }
+    }
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
 
     testOptions {
         // Unit tests read a stubbed android.jar; the pure classes they exercise never call into it.
         unitTests.returnDefaultValues = true
+    }
+}
+
+/**
+ * Copies the Net traffic engine's libraries to build/outputs/netengine/<variant>/ as
+ * netengine-<abi>-<lib> (what CI attaches to a release and build-and-install.sh pushes to the TV),
+ * and writes netengine.txt into the APK's assets: "<abi> <lib> <sha256>" a line. The app loads
+ * only files matching those fingerprints.
+ */
+abstract class NetEngine extends DefaultTask {
+    @InputFiles abstract ConfigurableFileCollection getLibs()
+    @Input abstract ListProperty<String> getAbis()
+    @Input abstract Property<String> getConfig()
+    @OutputDirectory abstract DirectoryProperty getEngineDir()
+    @OutputDirectory abstract DirectoryProperty getAssetsDir()
+
+    @TaskAction
+    void run() {
+        File out = engineDir.get().asFile
+        out.deleteDir()
+        out.mkdirs()
+        List<String> lines = []
+        abis.get().each { abi ->
+            ['libzdtun.so', 'libtraffic.so'].each { lib ->
+                File f = libs.files.findAll {
+                    it.name == lib && it.parentFile.name == abi && it.path.contains("/${config.get()}/")
+                }.max { it.lastModified() }
+                if (f == null) throw new GradleException("Net traffic engine: ${abi}/${lib} wasn't built")
+                byte[] bytes = f.bytes
+                new File(out, "netengine-${abi}-${lib}").bytes = bytes
+                lines << "${abi} ${lib} ${java.security.MessageDigest.getInstance('SHA-256').digest(bytes).encodeHex()}"
+            }
+        }
+        File assets = assetsDir.get().asFile
+        assets.mkdirs()
+        new File(assets, 'netengine.txt').text = lines.join('\n') + '\n'
+    }
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        String name = variant.name.capitalize()
+        def engine = tasks.register("netEngine${name}", NetEngine) {
+            dependsOn "externalNativeBuild${name}"
+            libs.from(fileTree(layout.buildDirectory.dir('intermediates/cxx')) { include '**/obj/*/lib*.so' })
+            abis.set(['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'])
+            config.set(variant.buildType == 'release' ? 'RelWithDebInfo' : 'Debug')
+            engineDir.set(layout.buildDirectory.dir("outputs/netengine/${variant.name}"))
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(engine) { it.assetsDir }
     }
 }
 

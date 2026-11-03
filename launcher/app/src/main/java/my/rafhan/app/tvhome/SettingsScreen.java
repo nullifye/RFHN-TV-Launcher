@@ -43,17 +43,20 @@ final class SettingsScreen {
     private static final int TEXT = 0xFFFFFFFF, DIM = 0x8CFFFFFF, GREEN = 0xFF34C759, AMBER = 0xFFFFB340;
     private static final int TOGGLE = 0, CHOICE = 1, PICKER = 2, ACTION = 3, INFO = 4, CHECK = 5;
 
-    private static final int HOME = 0, PRAYER = 1, WEATHER = 2, USAGE = 3, SAVER = 4, ALERTS = 5, STATUS = 6,
-            REMOTE = 7, HIDDEN = 8; // About: 9
+    private static final int HOME = 0, PRAYER = 1, WEATHER = 2, USAGE = 3, SAVER = 4, NET = 5, ALERTS = 6, STATUS = 7,
+            REMOTE = 8, HIDDEN = 9; // About: 10
     private static final String[] CATS = {"Home screen", "Prayer times", "Weather", "Most used", "Screen saver",
-            "Notifications", "Info overlay", "Phone remote", "Running apps", "About"};
+            "Net traffic", "Notifications", "Info overlay", "Phone remote", "Running apps", "About"};
     private static final String[] CAT_SUBS = {"Cards, clock and wallpaper", "Zone and card",
-            "Forecast and air quality", "Your top apps this week", "What the TV shows when idle", "What the bell tells you",
+            "Forecast and air quality", "Your top apps this week", "What the TV shows when idle",
+            "Where the TV's apps connect", "What the bell tells you",
             "Speed, uptime and clock over apps", "Control the TV from your phone", "Apps hidden from the list",
             "Version and TV settings"};
     private static final int[] CAT_ICONS = {R.drawable.ic_tv, R.drawable.ic_crescent, R.drawable.ic_storm,
-            R.drawable.ic_chart, R.drawable.ic_screensaver, R.drawable.ic_bell, R.drawable.ic_status_bar,
-            R.drawable.ic_phone, R.drawable.ic_ram, R.drawable.ic_info};
+            R.drawable.ic_chart, R.drawable.ic_screensaver, R.drawable.ic_signal, R.drawable.ic_bell,
+            R.drawable.ic_status_bar, R.drawable.ic_phone, R.drawable.ic_ram, R.drawable.ic_info};
+    /** Net traffic's connection list updates this often while it's on screen. */
+    private static final long NET_REFRESH_MS = 3_000;
     private static final String LIVE_TV = "com.mediatek.wwtv.tvcenter";
 
     interface Host {
@@ -70,6 +73,9 @@ final class SettingsScreen {
 
         /** Shows a wallpaper without saving it (focus in the Wallpaper list); null: the saved one. */
         void previewWallpaper(String id);
+
+        /** Net traffic → Start capture: Android's VPN approval if needed, then the monitor. */
+        void startNetTraffic();
     }
 
     private static final class Row {
@@ -86,6 +92,7 @@ final class SettingsScreen {
         boolean thumbSlot; // wallpaper list: a small preview on the left
         Bitmap thumb;
         String heading;    // a separator above the row, with this small title (never focused)
+        boolean busy;      // an action under way: a small spinner before its value
 
         Row(int type, String label) {
             this.type = type;
@@ -220,6 +227,12 @@ final class SettingsScreen {
     }
 
     // ---------------------------------------------------------------- focus (MainActivity)
+
+    /** Opened on Net traffic (the monitor's notification). */
+    void openNetTraffic() {
+        cat = NET;
+        open();
+    }
 
     /** Opened from the gear: categories, on the last category used. */
     void open() {
@@ -361,6 +374,200 @@ final class SettingsScreen {
 
     // ---------------------------------------------------------------- rows per category
 
+    /**
+     * Net traffic: Start or Stop capture (with what it's doing now, and a spinner while it starts or
+     * stops), Clear history (on or off), two short notes, then the latest connections, newest
+     * first (TrafficMonitor). Drawing them on the Globe is the Globe's own layer switch (Screen saver).
+     */
+    private void netRows(List<Row> out) {
+        if (TrafficMonitor.stopping && !TrafficMonitor.running && !TrafficMonitor.preparing) TrafficMonitor.stopping = false;
+        boolean busy = TrafficMonitor.running || TrafficMonitor.preparing;
+        Row capture = new Row(ACTION, busy ? "Stop capture" : "Start capture");
+        capture.busy = TrafficMonitor.preparing || TrafficMonitor.stopping;
+        // What it's doing (the value on the right already says On or Off); with nothing to say, what it is.
+        capture.sub = TrafficMonitor.status.isEmpty() ? "See where the TV's apps connect" : TrafficMonitor.status;
+        capture.value = () -> TrafficMonitor.stopping ? "Stopping…" : TrafficMonitor.preparing ? "Starting…"
+                : TrafficMonitor.running ? "On" : "Off";
+        capture.action = () -> {
+            if (TrafficMonitor.stopping) return; // already on its way
+            if (TrafficMonitor.running || TrafficMonitor.preparing) {
+                TrafficMonitor.stopping = true;
+                // The STOP command, not stopService(): Android keeps a running VPN's service bound.
+                try {
+                    ctx.startService(new android.content.Intent(ctx, TrafficVpnService.class)
+                            .setAction(TrafficVpnService.STOP));
+                } catch (RuntimeException e) {
+                    TrafficMonitor.stopping = false;
+                    TrafficMonitor.status = "Couldn't stop it here: use Android's VPN settings";
+                }
+            } else {
+                host.startNetTraffic();
+            }
+            refreshRows();
+        };
+        out.add(capture);
+
+        List<TrafficHistory.Entry> entries = TrafficMonitor.HISTORY.snapshot(android.os.SystemClock.elapsedRealtime());
+        // Always there, capture on or off: while capturing, the list starts again from now.
+        Row clear = new Row(ACTION, "Clear history");
+        clear.sub = entries.isEmpty() ? "Nothing to clear yet" : "Forget the connections below";
+        clear.action = () -> {
+            TrafficMonitor.clear();
+            if (!TrafficMonitor.running && !TrafficMonitor.preparing) TrafficMonitor.status = "History cleared";
+            refreshRows();
+        };
+        out.add(clear);
+
+        Row how = new Row(INFO, "How it works");
+        how.sub = "A local VPN on this TV: no outside server, nothing decrypted, no content saved. Countries are approximate";
+        how.heading = "About";
+        out.add(how);
+        Row know = new Row(INFO, "Good to know");
+        know.sub = "Uses the TV's one VPN slot. Starting or stopping may briefly reconnect a stream. First start downloads about 30 MB";
+        out.add(know);
+
+        Map<String, String> where = new HashMap<>();
+        for (TrafficMonitor.Destination d : TrafficMonitor.destinations) {
+            if (d.country != null) where.put(d.entry.ip, d.country.name);
+        }
+        String heading = "Last 30 minutes · " + entries.size() + (entries.size() == 1 ? " connection" : " connections");
+        if (entries.isEmpty()) {
+            Row none = new Row(INFO, "No connections yet");
+            none.sub = busy ? "They appear here as the TV's apps go online" : "Start capture, then use the TV as usual";
+            none.heading = heading;
+            out.add(none);
+            return;
+        }
+        long elapsed = android.os.SystemClock.elapsedRealtime();
+        for (int i = 0; i < entries.size() && i < 40; i++) {
+            TrafficHistory.Entry e = entries.get(i);
+            String country = where.get(e.ip);
+            Row r = new Row(ACTION, e.app + " → " + (country != null ? country : "unknown"));
+            long at = System.currentTimeMillis() - Math.max(0, elapsed - e.lastSeen);
+            // The server's name when the connection gave one, else its address.
+            String server = e.hosts.isEmpty() ? e.ip + ":" + e.port : e.hosts.get(e.hosts.size() - 1);
+            r.sub = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date(at)) + " · " + server
+                    + " · " + e.connections + (e.connections == 1 ? " start" : " starts");
+            r.value = () -> "↓ " + TrafficMonitor.bytes(e.received) + "  ↑ " + TrafficMonitor.bytes(e.sent);
+            String place = country;
+            r.action = () -> openConnection(e, place);
+            r.id = "net:" + e.uid + "|" + e.protocol + "|" + e.ip + "|" + e.port; // focus follows it when the list re-sorts
+            if (i == 0) r.heading = heading;
+            out.add(r);
+        }
+    }
+
+    /** OK on a connection: everything known about it, as a list (Back returns). */
+    private void openConnection(TrafficHistory.Entry e, String country) {
+        List<Row> items = new ArrayList<>();
+        items.add(detail("App", e.app, null));
+        String[] pkgs = e.uid < 0 ? null : ctx.getPackageManager().getPackagesForUid(e.uid);
+        if (pkgs == null || pkgs.length == 0) {
+            items.add(detail("Package", "Not known", e.uid >= 0 ? "Android user ID " + e.uid : null));
+        } else if (pkgs.length == 1) {
+            items.add(detail("Package", pkgs[0], null));
+        } else {
+            java.util.Arrays.sort(pkgs);
+            StringBuilder few = new StringBuilder();
+            for (int i = 0; i < pkgs.length && i < 6; i++) few.append(i > 0 ? ", " : "").append(pkgs[i]);
+            if (pkgs.length > 6) few.append(", …");
+            items.add(detail("Package", "Shared by " + pkgs.length + " apps",
+                    "Android can't tell which of them connected: " + few));
+        }
+        boolean tls = "TLS".equals(e.kind), quic = "QUIC".equals(e.kind), dot = "DNS over TLS".equals(e.kind);
+        String hostNote = e.hosts.isEmpty()
+                ? quic ? "QUIC encrypts it" : dot ? "Private DNS: the lookups themselves are encrypted"
+                : "The app didn't send one (it may connect by address)"
+                : e.hosts.size() > 1 ? "Names seen on this address (newest last)" : null;
+        items.add(detail("Server", e.hosts.isEmpty() ? "Not visible" : TextUtils.join(", ", e.hosts), hostNote));
+        items.add(detail("Address", e.ip + ":" + e.port + (e.protocol == 6 ? " · TCP" : e.protocol == 17 ? " · UDP" : ""),
+                service(e.port)));
+        String kind = e.kind == null ? (e.protocol == 17 ? "UDP" : "TCP") + ", not recognised"
+                : tls ? "HTTPS (TLS)" + (e.request != null ? " · asks for " + e.request : "")
+                : quic ? "QUIC (HTTP/3)" : e.kind;
+        items.add(detail("Protocol", kind, null));
+        if ("HTTP".equals(e.kind) && e.request != null) {
+            items.add(detail("Request", e.request, "Plain HTTP: the request line is visible; its data isn't kept"));
+        } else if ("DNS".equals(e.kind) && e.request != null) {
+            items.add(detail("Looked up", e.request, "Plain DNS"));
+        } else {
+            items.add(detail("Request", "Encrypted", tls || quic || dot
+                    ? "HTTPS hides the path and the data: only the server's name is sent openly" : null));
+        }
+        items.add(detail("Country", country != null ? country : "Not known", "Approximate, by IP address"));
+        long now = android.os.SystemClock.elapsedRealtime(), wall = System.currentTimeMillis();
+        DateFormat t = DateFormat.getTimeInstance(DateFormat.MEDIUM);
+        String first = e.firstSeen < 0 ? "—" : t.format(new Date(wall - Math.max(0, now - e.firstSeen)));
+        items.add(detail("Seen", first + " – " + t.format(new Date(wall - Math.max(0, now - e.lastSeen))),
+                e.connections + (e.connections == 1 ? " connection started" : " connections started") + " in the last 30 minutes"));
+        items.add(detail("Data", "↓ " + TrafficMonitor.bytes(e.received) + "  ↑ " + TrafficMonitor.bytes(e.sent),
+                "Received and sent, including protocol overhead"));
+        openPicker(e.app, items, 0);
+    }
+
+    private static Row detail(String label, String value, String sub) {
+        Row r = new Row(INFO, label);
+        r.value = () -> value;
+        r.sub = sub;
+        return r;
+    }
+
+    /** What a well-known port usually is, or null. */
+    private static String service(int port) {
+        switch (port) {
+            case 443: return "Port 443: HTTPS";
+            case 80: return "Port 80: HTTP";
+            case 853: return "Port 853: DNS over TLS";
+            case 53: return "Port 53: DNS";
+            case 5228: case 5229: case 5230: return "Google Play services (notifications)";
+            case 8008: case 8009: return "Google Cast";
+            case 123: return "Port 123: time (NTP)";
+            default: return null;
+        }
+    }
+
+    /**
+     * While Net traffic is on screen, its rows follow the monitor: every half second while it starts
+     * or stops, else every NET_REFRESH_MS; rebuilt only when something changed, so the spinner
+     * keeps turning instead of restarting.
+     */
+    private final Runnable netTick = new Runnable() {
+        @Override
+        public void run() {
+            if (cat != NET || picker != null || !rowList.isShown()) return;
+            if (netState().equals(netShown)) {
+                main.postDelayed(this, netBusy() ? 500 : NET_REFRESH_MS);
+                return;
+            }
+            // Newest first means the list re-sorts: keep the focus on the same connection.
+            String keep = col == 1 && row < rows.size() ? rows.get(row).id : null;
+            rows = rowsFor(cat);
+            if (keep != null) {
+                for (int i = 0; i < rows.size(); i++) {
+                    if (keep.equals(rows.get(i).id)) {
+                        row = i;
+                        break;
+                    }
+                }
+            }
+            render(); // posts the next tick
+        }
+    };
+    private String netShown = "";
+
+    private static boolean netBusy() {
+        return TrafficMonitor.preparing || TrafficMonitor.stopping;
+    }
+
+    /** What the Net traffic rows show, in one string: a change means rebuild. */
+    private static String netState() {
+        long bytes = 0;
+        List<TrafficHistory.Entry> e = TrafficMonitor.HISTORY.snapshot(android.os.SystemClock.elapsedRealtime());
+        for (TrafficHistory.Entry x : e) bytes += x.sent + x.received;
+        return TrafficMonitor.running + "|" + TrafficMonitor.preparing + "|" + TrafficMonitor.stopping + "|"
+                + TrafficMonitor.status + "|" + e.size() + "|" + bytes + "|" + TrafficMonitor.destinations.size();
+    }
+
     private List<Row> rowsFor(int c) {
         List<Row> out = new ArrayList<>();
         switch (c) {
@@ -368,6 +575,7 @@ final class SettingsScreen {
             case PRAYER: prayerRows(out); break;
             case WEATHER: weatherRows(out); break;
             case SAVER: saverRows(out); break;
+            case NET: netRows(out); break;
             case USAGE: usageRows(out); break;
             case ALERTS: alertRows(out); break;
             case STATUS: statusRows(out); break;
@@ -438,6 +646,8 @@ final class SettingsScreen {
             out.add(toggle(LauncherSettings.GLOBE_HUBBLE, "Hubble", "The Hubble Space Telescope"));
             out.add(toggle(LauncherSettings.GLOBE_COUNTRIES, "Countries",
                     "A country's flag and name now and then, and when you stop turning"));
+            out.add(toggle(LauncherSettings.GLOBE_TRAFFIC, "Internet connections",
+                    "Routes from Settings → Net traffic"));
             out.add(toggle(LauncherSettings.GLOBE_LEGEND, "Legend", "What each colour and icon means, with the latest edit and earthquake"));
         }
     }
@@ -1026,6 +1236,11 @@ final class SettingsScreen {
 
     private void render() {
         if (picker == null) rows = rowsFor(cat);
+        main.removeCallbacks(netTick);
+        if (cat == NET && picker == null) {
+            netShown = netState();
+            main.postDelayed(netTick, netBusy() ? 500 : NET_REFRESH_MS); // runs again from here
+        }
         for (int i = 0; i < catViews.size(); i++) {
             // The open category stays marked while its rows have focus.
             catViews.get(i).setBackgroundResource(i == cat && col == 1 ? R.drawable.row_selected : 0);
@@ -1134,6 +1349,12 @@ final class SettingsScreen {
                 break;
             }
             case ACTION:
+                if (r.busy) {
+                    android.widget.ProgressBar spin = new android.widget.ProgressBar(ctx);
+                    spin.setIndeterminate(true);
+                    spin.setIndeterminateTintList(ColorStateList.valueOf(DIM));
+                    v.addView(spin, margin(new LinearLayout.LayoutParams(px(18), px(18))));
+                }
                 if (!TextUtils.isEmpty(value)) {
                     boolean asking = (r.id == null && confirmForget) || (r.id != null && r.id.equals(confirmPhone));
                     TextView t = text(14, 500, asking ? AMBER : DIM);

@@ -169,7 +169,9 @@ final class SystemPanel {
         SysInfo.Net n = SysInfo.network(ctx);
         // The Wi-Fi button is icon-only, so the network's name lives here.
         String where = n.ethernet ? "LAN" : n.wifi && n.name != null ? n.name : n.wifi ? "WI-FI" : "OFFLINE";
-        ip.set(n.ip != null ? n.ip : "—", "IP · " + where, n.ip != null ? TEXT : WARN, -1);
+        ip.set(n.ip != null ? n.ip : "—", (n.vpn ? "VPN · " : "IP · ") + where, n.ip != null ? TEXT : WARN, -1);
+        // A VPN up (Net traffic's, or another): a "VPN" badge instead of the network icon.
+        ip.icon.setImageResource(n.vpn ? R.drawable.ic_vpn : R.drawable.ic_ip);
         if (n.wifi) {
             int color = n.rssi >= -65 ? TEXT : n.rssi >= -75 ? WARN : BAD;
             signal.set(n.rssi > -127 ? n.rssi + " dBm" : "—", n.linkMbps > 0 ? n.linkMbps + " MBPS" : "SIGNAL", color, -1);

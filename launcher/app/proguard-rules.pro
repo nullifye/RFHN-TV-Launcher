@@ -2,3 +2,5 @@
 -keep class my.rafhan.app.tvhome.MediaHelper {
     public static void main(java.lang.String[]);
 }
+# JNI callbacks invoked by the local traffic monitor.
+-keep class my.rafhan.app.tvhome.TrafficVpnService { *; }

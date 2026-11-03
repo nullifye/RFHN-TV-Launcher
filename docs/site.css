@@ -74,6 +74,7 @@ section[id] { scroll-margin-top: 24px; }
 .section-intro { max-width: 760px; margin-bottom: 42px; }
 .section-intro > p:last-child, .section-copy { color: var(--muted); font-size: 16px; }
 .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.new-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; vertical-align: 2px; }
 .feature { padding: 29px; min-height: 240px; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; }
 .feature .icon { display: grid; place-items: center; width: 41px; height: 41px; margin-bottom: 27px; border-radius: 6px; background: var(--soft); color: var(--green); font-size: 21px; }
 .feature h3 { margin-bottom: 10px; }

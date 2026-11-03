@@ -40,7 +40,7 @@ final class LauncherSettings {
             GLOBE_QUAKES = "globe_quakes", GLOBE_ISS = "globe_iss", GLOBE_TIANGONG = "globe_tiangong",
             GLOBE_HUBBLE = "globe_hubble", GLOBE_LEGEND = "globe_legend", GLOBE_WIND = "globe_wind",
             GLOBE_GLINT = "globe_glint", GLOBE_RIM = "globe_rim", GLOBE_SKY = "globe_sky",
-            GLOBE_COUNTRIES = "globe_countries";
+            GLOBE_COUNTRIES = "globe_countries", GLOBE_TRAFFIC = "globe_traffic";
     /** How the Globe turns on its own (a choice): SPIN_TWO_MINUTES or SPIN_REAL_TIME. */
     static final String GLOBE_SPIN = "globe_spin";
     static final int SPIN_TWO_MINUTES = 0, SPIN_REAL_TIME = 1;
@@ -96,7 +96,7 @@ final class LauncherSettings {
      */
     private static boolean defaultFlag(String key) {
         return !STATUS_BAR.equals(key) && !GLOBE_CLOUDS.equals(key) && !GLOBE_WIND.equals(key)
-                && !GLOBE_COUNTRIES.equals(key);
+                && !GLOBE_COUNTRIES.equals(key) && !GLOBE_TRAFFIC.equals(key);
     }
 
     static void setFlag(Context ctx, String key, boolean on) {

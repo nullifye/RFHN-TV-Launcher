@@ -26,6 +26,7 @@
          (connectedDevice) and a runtime prerequisite for it; without them startForeground()
          throws SecurityException. CHANGE_NETWORK_STATE is the prerequisite (normal permission). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -183,6 +184,13 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:theme="@style/UpdateTheme" />
+
+        <service android:name=".TrafficVpnService" android:exported="true"
+            android:permission="android.permission.BIND_VPN_SERVICE" android:foregroundServiceType="specialUse">
+            <intent-filter><action android:name="android.net.VpnService" /></intent-filter>
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-approved local VPN for TV internet connection metadata and Globe visualization" />
+        </service>
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -2,6 +2,7 @@ package my.rafhan.app.tvhome;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -21,9 +22,28 @@ final class NetState {
         this.wifi = wifi;
     }
 
+    /**
+     * The network the TV is really on: the active one, or, while a VPN is up (Net traffic's, or any
+     * other), the Wi-Fi or Ethernet under it, so its address and name are the TV's, not the VPN's.
+     */
+    @SuppressWarnings("deprecation") // getAllNetworks: its replacement needs a callback; this is a one-off look
+    static Network physical(ConnectivityManager cm) {
+        Network active = cm.getActiveNetwork();
+        NetworkCapabilities nc = active == null ? null : cm.getNetworkCapabilities(active);
+        if (nc == null || !nc.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return active;
+        for (Network n : cm.getAllNetworks()) {
+            NetworkCapabilities c = cm.getNetworkCapabilities(n);
+            if (c != null && !c.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+                    && c.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    && (c.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                    || c.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))) return n;
+        }
+        return active;
+    }
+
     static NetState read(Context ctx) {
         ConnectivityManager cm = ctx.getSystemService(ConnectivityManager.class);
-        NetworkCapabilities nc = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        NetworkCapabilities nc = cm.getNetworkCapabilities(physical(cm));
         if (nc == null) return new NetState(DISCONNECTED, null, false);
         boolean wifi = nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
         String name;
