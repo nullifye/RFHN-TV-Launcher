@@ -5,7 +5,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Hands phone-remote D-pad keys to the launcher. MainActivity attaches while it's resumed, so
  * "attached" also means "the home screen is what's on the TV"; home listeners (the info overlay)
- * hear when that changes, on the main thread.
+ * hear when that changes, on the main thread, and when TV Home's screen-saver preview
+ * (SaverActivity) comes and goes, which the overlay stays off for too.
  */
 final class RemoteBridge {
     interface Launcher {
@@ -14,6 +15,7 @@ final class RemoteBridge {
     }
 
     private static volatile Launcher launcher;
+    private static volatile boolean saver;
     private static final CopyOnWriteArrayList<Runnable> homeListeners = new CopyOnWriteArrayList<>();
 
     private RemoteBridge() {}
@@ -43,6 +45,17 @@ final class RemoteBridge {
 
     static boolean isHome() {
         return launcher != null;
+    }
+
+    /** SaverActivity is (or no longer is) in front. Main thread. */
+    static void saverShowing(boolean showing) {
+        saver = showing;
+        homeChanged();
+    }
+
+    /** Home or the screen-saver preview is in front: nothing drawn over it (the info overlay). */
+    static boolean coverNothing() {
+        return launcher != null || saver;
     }
 
     static boolean key(String k) {

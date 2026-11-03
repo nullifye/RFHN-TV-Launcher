@@ -26,7 +26,8 @@ import java.util.Locale;
 
 /**
  * Settings → Info overlay: network speed, uptime, a clock and the time since leaving home, in a
- * thin bar over other apps (like the NetSpeedTime app), never over the home screen. Left, centre and right each show one of
+ * thin bar over other apps (like the NetSpeedTime app), never over the home screen or the
+ * screen-saver preview (the real screen saver is drawn above it anyway). Left, centre and right each show one of
  * them, at the top or bottom of the screen. Not focusable or touchable, so it can't take keys
  * from the app underneath.
  *
@@ -110,7 +111,7 @@ final class StatusOverlay implements LauncherSettings.Listener {
             kinds[i] = LauncherSettings.choice(ctx, KEYS[i]);
             any |= kinds[i] != LauncherSettings.SLOT_NONE;
         }
-        boolean want = any && screenOn && !RemoteBridge.isHome()
+        boolean want = any && screenOn && !RemoteBridge.coverNothing()
                 && LauncherSettings.flag(ctx, LauncherSettings.STATUS_BAR) && Settings.canDrawOverlays(ctx);
         if (!want) since = 0; // elapsed time starts again next time (a settings rebuild keeps it)
         else if (since == 0) since = SystemClock.elapsedRealtime();

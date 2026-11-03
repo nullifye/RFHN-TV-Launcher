@@ -59,7 +59,7 @@ final class ScreenSaver {
         return ComponentName.unflattenFromString(v.split(",")[0]);
     }
 
-    /** What OK cycles through: ours, then the TV's other screen savers A–Z. */
+    /** What OK cycles through: ours, then the TV's other screen savers A–Z (Android lists only enabled ones). */
     static List<ComponentName> choices(Context ctx) {
         List<ComponentName> out = new ArrayList<>();
         out.add(prayer(ctx));

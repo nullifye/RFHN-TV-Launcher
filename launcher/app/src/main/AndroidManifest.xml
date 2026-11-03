@@ -30,6 +30,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Android 12+: the screen-saver preview (SaverActivity) hides other apps' overlays. -->
+    <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
     <!-- Android 13+: updating the phone-remote notification. The launcher doesn't prompt for it,
          so without the grant RemoteService simply skips the update; the foreground notification
          startForeground shows is not affected. -->
@@ -164,6 +166,16 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
+
+        <!-- "Start now" for TV Home's own screen savers on TVs with no SystemUI "start screen
+             saver now" screen (Google TV): shows the screen saver itself (SaverActivity). -->
+        <activity
+            android:name=".SaverActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density" />
 
         <!-- The remote's Input button (RemoteAccessibilityService catches it), and Android TV's
              "show inputs" when asked for without naming the (disabled) stock TV launcher. -->

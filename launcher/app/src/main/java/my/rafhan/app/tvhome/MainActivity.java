@@ -1523,20 +1523,34 @@ public class MainActivity extends Activity {
     /** Settings → Screen saver → Start now, and the quick actions' Start screen saver. */
     private void startScreenSaverNow() {
         Context ctx = MainActivity.this;
+        android.content.ComponentName chosen = ScreenSaver.current(ctx);
         // SystemUI's "start screen saver now" (the dock shortcut) runs the chosen one, but
         // only while screen savers are on: switch them on for the start, then back off.
         boolean wasOff = !ScreenSaver.enabled(ctx);
-        if (wasOff && !ScreenSaver.canSet(ctx)) {
-            Toast.makeText(ctx, "Turn the screen saver on first", Toast.LENGTH_SHORT).show();
-            return;
+        if (!wasOff || ScreenSaver.canSet(ctx)) {
+            if (wasOff) ScreenSaver.setEnabled(ctx, true);
+            try {
+                startActivity(new Intent(Intent.ACTION_MAIN)
+                        .setClassName("com.android.systemui", "com.android.systemui.Somnambulator")
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                // Switching them off again ends a running screen saver, so that waits until the
+                // preview is over and the launcher is back in front (onWindowFocusChanged).
+                if (wasOff) previewStartedAt = SystemClock.uptimeMillis();
+                return;
+            } catch (ActivityNotFoundException | SecurityException e) {
+                // Google TV has no such screen: TV Home shows its own screen savers itself.
+                if (wasOff) ScreenSaver.setEnabled(ctx, false);
+            }
         }
-        if (wasOff) ScreenSaver.setEnabled(ctx, true);
-        startSafely(new Intent(Intent.ACTION_MAIN)
-                .setClassName("com.android.systemui", "com.android.systemui.Somnambulator")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        // Switching them off again ends a running screen saver, so that waits until the
-        // preview is over and the launcher is back in front (onWindowFocusChanged).
-        if (wasOff) previewStartedAt = SystemClock.uptimeMillis();
+        Intent own = SaverActivity.intent(ctx, chosen);
+        if (own != null) {
+            startActivity(own);
+        } else if (wasOff && !ScreenSaver.canSet(ctx)) {
+            Toast.makeText(ctx, "Turn the screen saver on first", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(ctx, "This TV starts " + ScreenSaver.label(ctx, chosen)
+                    + " only by itself, when it's been idle", Toast.LENGTH_LONG).show();
+        }
     }
 
     // ---------------------------------------------------------------- quick actions

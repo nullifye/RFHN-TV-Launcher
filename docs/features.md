@@ -76,8 +76,8 @@ A thin bar over every other app: **network speed** (`↓ 1.2 Mb  ↑ 34 Kb`), **
 Three screen savers, all on black and moving so nothing burns in. Everything about them is in TV Home's **Settings → Screen saver** (under Prayer times):
 
 - **Screen saver:** on or off. Off means the TV never starts one.
-- **Show:** OK cycles Prayer time → Live log → Globe → every other screen saver on the TV (A–Z); the row shows the one in use.
-- **Start now:** a preview of the chosen one; any key ends it (on the Globe, any key but the arrows). It works even with the screen saver off: it's switched on just for the preview and back off when you return.
+- **Show:** OK cycles Prayer time → Live log → Globe → the TV's own screen savers (A–Z; ones turned off, for example by Clean up, are left out); the row shows the one in use.
+- **Start now:** a preview of the chosen one; any key ends it (on the Globe, any key but the arrows). It works even with the screen saver off: it's switched on just for the preview and back off when you return. TVs that can't start a screen saver on request (Google TV) get TV Home's three from TV Home itself, full screen with the info overlay and other apps' overlays hidden, like the real one; the TV's own start there only when the TV is idle.
 - **With Globe chosen:** a switch for each of its layers, listed under [Globe](#globe) below.
 
 Some TVs, like this Mi TV, can't open their screen-saver page from another app, so TV Home sets these itself. That needs `WRITE_SECURE_SETTINGS`, granted by the setup app and `build-and-install.sh`. Without it, the page offers **Choose a screen saver** (opens the TV's Settings) and **Start now**. The TV's own Settings → Device Preferences → Screen saver still works too.
