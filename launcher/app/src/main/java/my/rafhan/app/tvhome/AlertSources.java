@@ -32,7 +32,8 @@ import java.util.regex.Pattern;
 /**
  * Feeds the bell (Alerts), modelled on Matinee's, from RemoteService so it runs while any app is
  * on screen:
- *  - TV Home updates: a newer release on GitHub (UpdateCheck), at start and every 6 h; opening it
+ *  - TV Home updates: a newer release on GitHub (UpdateCheck), a minute after the launcher starts,
+ *    then once a day (an hour later after a failed check); opening it
  *    downloads and installs it (UpdateActivity). A banner shows once per version;
  *  - Play Store updates: one alert per app with an update waiting, from the Play Store's log
  *    (PlayUpdates: it rarely posts a notification on a TV), at start, every hour and whenever an
@@ -47,7 +48,11 @@ import java.util.regex.Pattern;
  * Device and memory alerts also show a short banner over any app.
  */
 final class AlertSources {
-    private static final long UPDATE_EVERY_MS = 6 * 60 * 60_000L, UPDATE_FIRST_MS = 60_000;
+    // GitHub is asked a minute after the launcher starts, then once a day (an hour after a failed
+    // check); the timer looks every hour whether that's due, by the clock, since the timer doesn't
+    // run while the TV sleeps.
+    private static final long UPDATE_EVERY_MS = 24 * 60 * 60_000L, UPDATE_RETRY_MS = 60 * 60_000L,
+            UPDATE_LOOK_MS = 60 * 60_000L, UPDATE_FIRST_MS = 60_000;
     private static final long PLAY_EVERY_MS = 60 * 60_000L, PLAY_AFTER_INSTALL_MS = 5_000, MEMORY_EVERY_MS = 60_000, BT_SETTLE_MS = 2 * 60_000;
     private static final float MEMORY_REARM_GAP = 0.05f; // re-arm 5 points under the level
     private static final Pattern REMOTE = Pattern.compile("(?i)\\b(rc|remote)\\b");
@@ -85,6 +90,7 @@ final class AlertSources {
     }
 
     void start() {
+        updateAsked = false; // the first look, a minute in, always asks
         LauncherSettings.addListener(settingsListener);
         main.post(playCheck);
         // A minute in: the network is usually up by then after a boot.
@@ -118,12 +124,19 @@ final class AlertSources {
 
     // ---------------------------------------------------------------- TV Home updates
 
+    private volatile boolean updateAsked;
+
     private final Runnable updateCheck = new Runnable() {
         @Override
         public void run() {
             boolean on = LauncherSettings.flag(ctx, LauncherSettings.ALERT_UPDATE);
             Thread t = new Thread(() -> {
-                UpdateCheck.Release r = on ? UpdateCheck.newer(ctx) : null;
+                UpdateCheck.load(ctx);
+                long due = UpdateCheck.lastCheckedAt() + (UpdateCheck.lastFailed() ? UPDATE_RETRY_MS : UPDATE_EVERY_MS);
+                boolean ask = on && (!updateAsked || System.currentTimeMillis() >= due);
+                if (ask) updateAsked = true;
+                // Not due: the saved answer (a release found earlier still shows in the bell).
+                UpdateCheck.Release r = !on ? null : ask ? UpdateCheck.newer(ctx) : UpdateCheck.lastFound();
                 List<Alerts.Alert> now = new ArrayList<>();
                 if (r != null) {
                     now.add(new Alerts.Alert("update:" + r.version, Alerts.UPDATE,
@@ -140,7 +153,7 @@ final class AlertSources {
             }, "alerts-update");
             t.setDaemon(true);
             t.start();
-            main.postDelayed(this, UPDATE_EVERY_MS);
+            main.postDelayed(this, UPDATE_LOOK_MS);
         }
     };
 

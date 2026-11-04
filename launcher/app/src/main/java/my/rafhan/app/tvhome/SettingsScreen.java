@@ -454,7 +454,7 @@ final class SettingsScreen {
         how.heading = "About";
         out.add(how);
         Row know = new Row(INFO, "Good to know");
-        know.sub = "Uses the TV's one VPN slot. Starting or stopping may briefly reconnect a stream. First start downloads about 30 MB";
+        know.sub = "Uses the TV's one VPN slot. Starting or stopping may briefly reconnect a stream. First start downloads about 30 KB";
         out.add(know);
 
         Map<String, String> where = new HashMap<>();
@@ -767,7 +767,7 @@ final class SettingsScreen {
     }
 
     private void alertRows(List<Row> out) {
-        out.add(toggle(LauncherSettings.ALERT_UPDATE, "TV Home updates", "Checked every 6 hours"));
+        out.add(toggle(LauncherSettings.ALERT_UPDATE, "TV Home updates", "Checked once a day"));
         out.add(toggle(LauncherSettings.ALERT_PLAY, "Play Store updates", "Apps with an update waiting, checked every hour"));
         out.add(toggle(LauncherSettings.ALERT_HDMI, "New HDMI devices", "A device that appears over HDMI-CEC"));
         out.add(toggle(LauncherSettings.ALERT_BT, "Bluetooth devices", "Connecting or disconnecting (not the TV remote)"));
@@ -1118,11 +1118,12 @@ final class SettingsScreen {
     }
 
     // Settings → About → Check for updates: a check running from here (the result is UpdateCheck's,
-    // shared with the bell's 6-hourly check).
+    // shared with the bell's daily check).
     private boolean updChecking;
 
     /** Check for updates, showing the last check's answer; once one is found, the same row installs it. */
     private Row updateRow() {
+        UpdateCheck.load(ctx); // the saved answer, before the bell's first look after a restart
         UpdateCheck.Release found = UpdateCheck.lastFound();
         if (!updChecking && found != null) {
             Row u = new Row(ACTION, "Update to " + found.version);

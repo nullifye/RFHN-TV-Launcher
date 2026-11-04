@@ -38,18 +38,42 @@ final class UpdateCheck {
 
     private UpdateCheck() {}
 
-    // The last check's answer, whichever ran it (the bell's 6-hourly one or Settings → About), so
-    // About shows it. In memory only: a launcher restart forgets it until the next check.
+    // The last check's answer, whichever ran it (the bell's daily one or Settings → About), so
+    // About shows it and the daily check knows when it's next due. Kept in prefs: a launcher
+    // restart doesn't check GitHub again before the day is up.
+    private static final String PREFS = "update_check";
     private static volatile Release lastFound;
     private static volatile long lastAt;
-    private static volatile boolean lastFailed;
+    private static volatile boolean lastFailed, loaded;
+
+    /** Reads the saved answer once. A saved release that's no longer newer (just installed) is dropped. */
+    static synchronized void load(Context ctx) {
+        if (loaded) return;
+        loaded = true;
+        android.content.SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        lastAt = p.getLong("at", 0);
+        lastFailed = p.getBoolean("failed", false);
+        String v = p.getString("version", null), current = installedVersion(ctx);
+        if (v != null && current != null && compare(v, current) > 0) {
+            lastFound = new Release(v, p.getString("url", ""), p.getLong("size", 0), p.getString("sha256", null));
+        }
+    }
+
+    private static void save(Context ctx) {
+        Release r = lastFound;
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putLong("at", lastAt).putBoolean("failed", lastFailed)
+                .putString("version", r != null ? r.version : null).putString("url", r != null ? r.url : null)
+                .putLong("size", r != null ? r.size : 0).putString("sha256", r != null ? r.sha256 : null)
+                .apply();
+    }
 
     /** The newer release the last check found, or null. */
     static Release lastFound() {
         return lastFound;
     }
 
-    /** When the last check finished (epoch ms), or 0 if none has since the launcher started. */
+    /** When the last check finished (epoch ms), or 0 if there hasn't been one. */
     static long lastCheckedAt() {
         return lastAt;
     }
@@ -83,6 +107,8 @@ final class UpdateCheck {
             throw e;
         } finally {
             lastAt = System.currentTimeMillis();
+            loaded = true; // this answer is newer than anything saved
+            save(ctx);
         }
     }
 

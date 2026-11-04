@@ -21,7 +21,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Opt-in local-only forwarding VPN. Never restarted automatically and never stores payloads. */
+/**
+ * Opt-in local-only forwarding VPN. Never started automatically and never stores payloads.
+ *
+ * The tunnel is built on the TV's physical network (Wi-Fi or Ethernet): its DNS servers and
+ * whether it has IPv6. After a long sleep this TV's Wi-Fi comes back as a new network, and a
+ * tunnel left from the old one carried no internet until capture was switched off and on. So when
+ * the physical network changes, the tunnel is built again on the new one (as off and on would),
+ * and Android is told which network it runs over.
+ */
 public final class TrafficVpnService extends VpnService {
     static final String STOP = "my.rafhan.app.tvhome.STOP_TRAFFIC";
     private static final AtomicBoolean BUSY = new AtomicBoolean();
@@ -30,6 +38,9 @@ public final class TrafficVpnService extends VpnService {
     private Thread worker, snapshots;
     private final Map<Integer, String> apps = new LinkedHashMap<>();
     private ConnectivityManager connectivity;
+    /** The newest physical network Android reports, and the one the current tunnel was built on. */
+    private volatile android.net.Network latest, built;
+    private ConnectivityManager.NetworkCallback watcher;
 
     // The native engine isn't in the APK: TrafficEngine.load() fetches, checks and loads it in run().
     private static native void nativeReset();
@@ -47,6 +58,7 @@ public final class TrafficVpnService extends VpnService {
         owned = true;
         stop = false;
         connectivity = getSystemService(ConnectivityManager.class);
+        watchNetwork();
         TrafficMonitor.preparing = true;
         TrafficMonitor.status = "Starting…";
         NotificationManager nm = getSystemService(NotificationManager.class);
@@ -74,31 +86,38 @@ public final class TrafficVpnService extends VpnService {
             nativeReset();
             geo = new TrafficGeo(this);
             if (stop) return;
-            LinkProperties link = connectivity.getLinkProperties(connectivity.getActiveNetwork());
-            Builder builder = new Builder().setSession("RFHN · local internet monitor")
-                    .setMtu(1500).addAddress("10.111.0.1", 32);
-            for (String route : TrafficRoutes.ipv4()) {
-                String[] parts = route.split("/"); builder.addRoute(parts[0], Integer.parseInt(parts[1]));
+            while (!stop) {
+                android.net.Network net = latest != null ? latest : connectivity.getActiveNetwork();
+                ParcelFileDescriptor next = establish(connectivity.getLinkProperties(net));
+                if (next == null) throw new IllegalStateException("VPN approval was revoked");
+                tunnel = next;
+                built = net;
+                setUnderlyingNetworks(net != null ? new android.net.Network[] {net} : null);
+                if (stop) return;
+                if (!TrafficMonitor.running) {
+                    TrafficMonitor.preparing = false;
+                    TrafficMonitor.running = true;
+                    TrafficMonitor.status = "Capturing: the TV's connections go through the local VPN";
+                    LauncherSettings.setFlag(this, LauncherSettings.GLOBE_TRAFFIC, true);
+                    TrafficGeo lookup = geo;
+                    snapshots = new Thread(() -> publish(lookup), "traffic-country");
+                    snapshots.start();
+                }
+                nativeReset();
+                if (!changed()) {
+                    int result = nativeRun(tunnel.getFd());
+                    if (stop || !changed()) {
+                        if (result != 0 && !stop) TrafficMonitor.status = "Monitor stopped: forwarding failed; normal network restored";
+                        break;
+                    }
+                }
+                // A new physical network: off and on again, as switching capture off and on does.
+                // Closing the tunnel ends Android's VPN network; the next one is a fresh network
+                // (its own DNS and Private DNS checks), built once the old one is gone.
+                try { tunnel.close(); } catch (Exception ignored) {}
+                tunnel = null;
+                waitForVpnGone();
             }
-            // IPv6 only when the network really has it: claiming IPv6 on an IPv4-only network makes
-            // apps try IPv6 through the VPN first, fail, and fall back slowly (streams stall).
-            if (hasGlobalIpv6(link)) {
-                builder.addAddress("fd11:111::1", 128).addRoute("2000::", 3).addRoute("64:ff9b::", 96);
-            }
-            if (link != null) for (InetAddress dns : link.getDnsServers()) builder.addDnsServer(dns);
-            if (Build.VERSION.SDK_INT >= 29) builder.setMetered(false);
-            tunnel = builder.establish();
-            if (tunnel == null) throw new IllegalStateException("VPN approval was revoked");
-            if (stop) return;
-            TrafficMonitor.preparing = false;
-            TrafficMonitor.running = true;
-            TrafficMonitor.status = "Capturing: the TV's connections go through the local VPN";
-            LauncherSettings.setFlag(this, LauncherSettings.GLOBE_TRAFFIC, true);
-            TrafficGeo lookup = geo;
-            snapshots = new Thread(() -> publish(lookup), "traffic-country");
-            snapshots.start();
-            int result = nativeRun(tunnel.getFd());
-            if (result != 0 && !stop) TrafficMonitor.status = "Monitor stopped: forwarding failed; normal network restored";
         } catch (Throwable e) {
             if (!stop) TrafficMonitor.status = "Monitor stopped: " + (e instanceof java.io.IOException
                     ? e.getMessage() : e.getClass().getSimpleName() + ": " + e.getMessage());
@@ -112,12 +131,78 @@ public final class TrafficVpnService extends VpnService {
                 try { snapshots.join(3000); } catch (InterruptedException ignored) {}
             }
             if (geo != null) geo.close();
+            unwatchNetwork();
             TrafficMonitor.running = TrafficMonitor.preparing = TrafficMonitor.stopping = false;
             if (TrafficMonitor.status.startsWith("Capturing") || TrafficMonitor.status.startsWith("Downloading")
                     || TrafficMonitor.status.startsWith("Starting")) TrafficMonitor.status = "The connections below stay for 30 minutes";
             BUSY.set(false);
             stopSelf();
         }
+    }
+
+    /** The tunnel on this network: its DNS servers, and IPv6 only if it has global IPv6. Null if revoked. */
+    private ParcelFileDescriptor establish(LinkProperties link) {
+        Builder builder = new Builder().setSession("RFHN · local internet monitor")
+                .setMtu(1500).addAddress("10.111.0.1", 32);
+        for (String route : TrafficRoutes.ipv4()) {
+            String[] parts = route.split("/"); builder.addRoute(parts[0], Integer.parseInt(parts[1]));
+        }
+        // IPv6 only when the network really has it: claiming IPv6 on an IPv4-only network makes
+        // apps try IPv6 through the VPN first, fail, and fall back slowly (streams stall).
+        if (hasGlobalIpv6(link)) {
+            builder.addAddress("fd11:111::1", 128).addRoute("2000::", 3).addRoute("64:ff9b::", 96);
+        }
+        if (link != null) for (InetAddress dns : link.getDnsServers()) builder.addDnsServer(dns);
+        if (Build.VERSION.SDK_INT >= 29) builder.setMetered(false);
+        return builder.establish();
+    }
+
+    /** Waits (up to 3 s) for Android to drop the closed tunnel's VPN network, and the new one to settle. */
+    private void waitForVpnGone() {
+        long until = SystemClock.elapsedRealtime() + 3000;
+        while (!stop && SystemClock.elapsedRealtime() < until) {
+            boolean vpn = false;
+            for (android.net.Network n : connectivity.getAllNetworks()) {
+                android.net.NetworkCapabilities c = connectivity.getNetworkCapabilities(n);
+                if (c != null && c.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN)) vpn = true;
+            }
+            if (!vpn) break;
+            SystemClock.sleep(200);
+        }
+        SystemClock.sleep(500); // DHCP and DNS on the new network
+    }
+
+    /** A physical network has come up that the tunnel wasn't built on. */
+    private boolean changed() {
+        android.net.Network now = latest;
+        return now != null && !now.equals(built);
+    }
+
+    /**
+     * Follows the physical networks (not VPNs). A new one under a running tunnel stops the
+     * forwarding loop, and run() builds the tunnel again on it.
+     */
+    private void watchNetwork() {
+        android.net.NetworkRequest physical = new android.net.NetworkRequest.Builder()
+                .addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_VPN).build();
+        watcher = new ConnectivityManager.NetworkCallback() {
+            @Override public void onAvailable(android.net.Network n) {
+                latest = n;
+                if (TrafficMonitor.running && !stop && changed() && TrafficEngine.loaded()) nativeStop();
+            }
+        };
+        try {
+            connectivity.registerNetworkCallback(physical, watcher);
+        } catch (RuntimeException e) {
+            watcher = null; // can't follow it: the tunnel stays on the network it started on
+        }
+    }
+
+    private void unwatchNetwork() {
+        ConnectivityManager.NetworkCallback w = watcher;
+        watcher = null;
+        if (w != null && connectivity != null) try { connectivity.unregisterNetworkCallback(w); } catch (RuntimeException ignored) {}
     }
 
     /** A global IPv6 address on the network (not link-local fe80::/10 or unique-local fc00::/7). */

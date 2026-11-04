@@ -40,7 +40,7 @@ The top bar is four round icon buttons: **bell**, **Inputs**, **Wi-Fi**, **Setti
 
 | Source | How it's detected | OK opens |
 |---|---|---|
-| TV Home updates | A newer release on GitHub (`releases/latest`, so never a draft or pre-release), checked a minute after the launcher starts and every 6 h. A banner shows once per version. | The update: TV Home downloads the release APK, checks its size and SHA-256, and opens Android's installer. Choose **Update**: settings are kept, because Android only accepts an update signed with the same key. It needs "install unknown apps" for TV Home: the setup app and `build-and-install.sh` allow it, otherwise TV Home asks once. |
+| TV Home updates | A newer release on GitHub (`releases/latest`, so never a draft or pre-release), checked a minute after the launcher starts, then once a day (an hour later if a check couldn't reach GitHub). A banner shows once per version. | The update: TV Home downloads the release APK, checks its size and SHA-256, and opens Android's installer. Choose **Update**: settings are kept, because Android only accepts an update signed with the same key. It needs "install unknown apps" for TV Home: the setup app and `build-and-install.sh` allow it, otherwise TV Home asks once. |
 | Play Store updates | One alert per app with an update waiting. The Play Store rarely posts its "updates available" notification on a TV, but every update check writes each pending app to the system log (`Finsky: UCtl: For package <app>, first update discovery…`). The launcher reads those lines at start, every hour and right after any app is updated, and keeps its own list, because the log only holds a day or two. An app leaves the list once it's updated, disabled or removed. Reading the log needs `READ_LOGS` (granted by the setup app and `build-and-install.sh` below Android 13; Android 13+ asks on screen whenever an app reads the log, so there it's read over the launcher's own ADB connection while USB debugging is on). Without either, it falls back to the Play Store's own notification, read from `dumpsys notification`. | That app's Play Store page |
 | New HDMI device | HDMI-CEC devices (child inputs under an HDMI port) that appear after start-up. Needs a CEC-capable device. | That HDMI input |
 | Bluetooth | A device connecting, or staying disconnected for 2 min. The TV remote and quick reconnects are ignored. | Bluetooth settings |
@@ -143,6 +143,7 @@ New in 1.15, optional and off until you start it: see which apps on the TV conne
    - **What can be seen:** the server name comes from the start of each connection, which apps send openly: the TLS hello's server name (SNI) for HTTPS, the Host header for plain HTTP. Plain HTTP also shows its request line ("GET /path"), and plain DNS the name looked up.
    - **What can't:** HTTPS encrypts the path, the query and the data, and QUIC (HTTP/3, used by YouTube and Google) and Private DNS encrypt even the name. Showing those would mean decrypting the TV's traffic, which this monitor doesn't do.
 5. Use **Stop capture** (the same row), the notification's **Stop** action, or Android's VPN controls to restore normal routing (the TV's ADB connection drops for a moment when the VPN starts or stops, as the network changes). **Clear history** discards the in-memory list at any time; while capturing, it starts again from then. Starting/stopping a VPN can reconnect streams.
+6. **Sleep and Wi-Fi changes:** when the TV's Wi-Fi (or Ethernet) comes back as a new network, for example after a long sleep, the monitor rebuilds its VPN on it by itself, as switching capture off and on would. It takes about a second, and capture carries on.
 
 While any VPN is up (this monitor's or another), the home screen's System card shows a "VPN" badge in place of the network icon and "VPN · <network>" under the IP, which stays the TV's real address.
 
@@ -210,7 +211,7 @@ The gear at the end of the top bar opens the launcher's Settings: categories on 
 | Phone remote | Remote on/off (the banner and bell keep working when it's off), its address, forget all paired phones (press OK twice), and each paired phone with when it was last used and its own Forget (OK twice) |
 | Button Mapper | The buttons with new actions, Add a button (press it), Add the Back button, long-press time (Short / Medium / Long), double-press time (Fast / Medium / Slow); see [Button Mapper](#button-mapper) |
 | Running apps | Apps hidden from the running-apps screen; OK shows one again |
-| About | Version, install time, APK size, Check for updates (shows the last check's answer, from here or the bell's 6-hourly check: "You have the latest version", or the row becomes "Update to x.y.z" to download and install it, settings kept), TV settings |
+| About | Version, install time, APK size, Check for updates (shows the last check's answer, from here or the bell's daily check: "You have the latest version", or the row becomes "Update to x.y.z" to download and install it, settings kept), TV settings |
 
 ## Button Mapper
 
