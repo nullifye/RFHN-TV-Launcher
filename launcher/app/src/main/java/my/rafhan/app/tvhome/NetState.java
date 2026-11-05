@@ -14,40 +14,50 @@ final class NetState {
 
     final int state;
     final String name;   // Wi-Fi name, "Ethernet", or null when disconnected
-    final boolean wifi;
+    final boolean wifi, ethernet;
 
-    private NetState(int state, String name, boolean wifi) {
+    private NetState(int state, String name, boolean wifi, boolean ethernet) {
         this.state = state;
         this.name = name;
         this.wifi = wifi;
+        this.ethernet = ethernet;
     }
 
     /**
      * The network the TV is really on: the active one, or, while a VPN is up (Net traffic's, or any
      * other), the Wi-Fi or Ethernet under it, so its address and name are the TV's, not the VPN's.
+     * With both connected, Ethernet: the one Android itself prefers.
      */
     @SuppressWarnings("deprecation") // getAllNetworks: its replacement needs a callback; this is a one-off look
     static Network physical(ConnectivityManager cm) {
         Network active = cm.getActiveNetwork();
         NetworkCapabilities nc = active == null ? null : cm.getNetworkCapabilities(active);
         if (nc == null || !nc.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return active;
-        for (Network n : cm.getAllNetworks()) {
+        Network best = preferred(cm, java.util.Arrays.asList(cm.getAllNetworks()));
+        return best != null ? best : active;
+    }
+
+    /** Of these networks, the physical one Android would use: Ethernet before Wi-Fi; null if none. */
+    static Network preferred(ConnectivityManager cm, Iterable<Network> networks) {
+        Network wifi = null;
+        for (Network n : networks) {
             NetworkCapabilities c = cm.getNetworkCapabilities(n);
-            if (c != null && !c.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
-                    && c.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                    && (c.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-                    || c.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))) return n;
+            if (c == null || c.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+                    || !c.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) continue;
+            if (c.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) return n;
+            if (wifi == null && c.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) wifi = n;
         }
-        return active;
+        return wifi;
     }
 
     static NetState read(Context ctx) {
         ConnectivityManager cm = ctx.getSystemService(ConnectivityManager.class);
         NetworkCapabilities nc = cm.getNetworkCapabilities(physical(cm));
-        if (nc == null) return new NetState(DISCONNECTED, null, false);
+        if (nc == null) return new NetState(DISCONNECTED, null, false, false);
         boolean wifi = nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+        boolean ethernet = nc.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET);
         String name;
-        if (nc.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+        if (ethernet) {
             name = "Ethernet";
         } else if (wifi) {
             WifiInfo info = ctx.getApplicationContext().getSystemService(WifiManager.class).getConnectionInfo();
@@ -59,15 +69,17 @@ final class NetState {
         }
         // VALIDATED: Android's own internet check passed (also fails behind a captive portal).
         boolean internet = nc.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
-        return new NetState(internet ? CONNECTED : NO_INTERNET, name, wifi);
+        return new NetState(internet ? CONNECTED : NO_INTERNET, name, wifi, ethernet);
     }
 
     int color() {
         return state == CONNECTED ? GREEN : state == NO_INTERNET ? AMBER : RED;
     }
 
+    /** The top bar's network button and the connection banner: LAN on Ethernet (coloured by color()). */
     int icon() {
         if (state == DISCONNECTED) return R.drawable.ic_wifi_off;
+        if (ethernet) return R.drawable.ic_lan;
         if (state == NO_INTERNET) return R.drawable.ic_wifi_alert;
         return R.drawable.ic_wifi;
     }

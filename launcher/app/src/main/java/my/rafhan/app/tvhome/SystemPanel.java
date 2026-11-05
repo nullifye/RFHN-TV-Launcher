@@ -172,11 +172,15 @@ final class SystemPanel {
         ip.set(n.ip != null ? n.ip : "—", (n.vpn ? "VPN · " : "IP · ") + where, n.ip != null ? TEXT : WARN, -1);
         // A VPN up (Net traffic's, or another): a "VPN" badge instead of the network icon.
         ip.icon.setImageResource(n.vpn ? R.drawable.ic_vpn : R.drawable.ic_ip);
+        // On Ethernet a LAN icon, not the Wi-Fi signal one.
+        signal.icon.setImageResource(n.ethernet ? R.drawable.ic_lan : R.drawable.ic_signal);
         if (n.wifi) {
             int color = n.rssi >= -65 ? TEXT : n.rssi >= -75 ? WARN : BAD;
             signal.set(n.rssi > -127 ? n.rssi + " dBm" : "—", n.linkMbps > 0 ? n.linkMbps + " MBPS" : "SIGNAL", color, -1);
         } else {
-            signal.set(n.ethernet ? "Wired" : "—", "LINK", TEXT, -1);
+            // Android gives apps no Ethernet link speed (its Ethernet "bandwidth" is a fixed 100 Mbps
+            // placeholder, and /sys/class/net is closed even to the ADB shell), so: what it is.
+            signal.set(n.ethernet ? "Wired" : "—", n.ethernet ? "ETHERNET" : "LINK", TEXT, -1);
         }
         if (n.dnsHost != null) {
             dns.set(n.dnsHost.contains("adguard") ? "AdGuard" : n.dnsHost, "DNS · DoT", GOOD, -1);

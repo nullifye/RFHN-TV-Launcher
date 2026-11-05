@@ -1844,6 +1844,8 @@ public class MainActivity extends Activity {
     }
 
     private int netShown = -1;
+
+    private int netIconShown;
     // Network callbacks fire while Android still reports the old network (e.g. onLost before the
     // active network is cleared), so look again shortly after the last one.
     private final Runnable netRecheck = this::updateNetwork;
@@ -1852,8 +1854,9 @@ public class MainActivity extends Activity {
     /** Wi-Fi button: icon and colour show connected / no internet / disconnected. */
     private void updateNetwork() {
         NetState st = NetState.read(this);
-        if (st.state != netShown) {
+        if (st.state != netShown || st.icon() != netIconShown) { // Wi-Fi ↔ Ethernet changes the icon only
             netShown = st.state;
+            netIconShown = st.icon();
             ImageView wifi = (ImageView) pills[PILL_WIFI];
             wifi.setImageResource(st.icon());
             wifi.setImageTintList(android.content.res.ColorStateList.valueOf(st.color()));

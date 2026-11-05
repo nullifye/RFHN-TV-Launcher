@@ -28,7 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * whether it has IPv6. After a long sleep this TV's Wi-Fi comes back as a new network, and a
  * tunnel left from the old one carried no internet until capture was switched off and on. So when
  * the physical network changes, the tunnel is built again on the new one (as off and on would),
- * and Android is told which network it runs over.
+ * and Android is told which network it runs over. With Ethernet and Wi-Fi both connected it
+ * follows Ethernet, as Android does, and moves to the Wi-Fi when the cable is unplugged.
  */
 public final class TrafficVpnService extends VpnService {
     static final String STOP = "my.rafhan.app.tvhome.STOP_TRAFFIC";
@@ -38,8 +39,9 @@ public final class TrafficVpnService extends VpnService {
     private Thread worker, snapshots;
     private final Map<Integer, String> apps = new LinkedHashMap<>();
     private ConnectivityManager connectivity;
-    /** The newest physical network Android reports, and the one the current tunnel was built on. */
+    /** The physical network to use (Ethernet before Wi-Fi), and the one the current tunnel was built on. */
     private volatile android.net.Network latest, built;
+    private final java.util.Set<android.net.Network> physicals = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private ConnectivityManager.NetworkCallback watcher;
 
     // The native engine isn't in the APK: TrafficEngine.load() fetches, checks and loads it in run().
@@ -179,8 +181,9 @@ public final class TrafficVpnService extends VpnService {
     }
 
     /**
-     * Follows the physical networks (not VPNs). A new one under a running tunnel stops the
-     * forwarding loop, and run() builds the tunnel again on it.
+     * Follows the physical networks (not VPNs) as they come and go. When the one to use changes (a
+     * new Wi-Fi after sleep, the cable plugged in or out), a running tunnel's forwarding loop stops
+     * and run() builds the tunnel again on it. A Wi-Fi coming and going under Ethernet changes nothing.
      */
     private void watchNetwork() {
         android.net.NetworkRequest physical = new android.net.NetworkRequest.Builder()
@@ -188,8 +191,13 @@ public final class TrafficVpnService extends VpnService {
                 .addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_VPN).build();
         watcher = new ConnectivityManager.NetworkCallback() {
             @Override public void onAvailable(android.net.Network n) {
-                latest = n;
-                if (TrafficMonitor.running && !stop && changed() && TrafficEngine.loaded()) nativeStop();
+                physicals.add(n);
+                follow();
+            }
+
+            @Override public void onLost(android.net.Network n) {
+                physicals.remove(n);
+                follow();
             }
         };
         try {
@@ -197,6 +205,13 @@ public final class TrafficVpnService extends VpnService {
         } catch (RuntimeException e) {
             watcher = null; // can't follow it: the tunnel stays on the network it started on
         }
+    }
+
+    private void follow() {
+        android.net.Network best = NetState.preferred(connectivity, physicals);
+        if (best == null) return; // none for now: keep the tunnel until one comes back
+        latest = best;
+        if (TrafficMonitor.running && !stop && changed() && TrafficEngine.loaded()) nativeStop();
     }
 
     private void unwatchNetwork() {
