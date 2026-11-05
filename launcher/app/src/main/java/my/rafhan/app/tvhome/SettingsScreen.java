@@ -687,10 +687,11 @@ final class SettingsScreen {
     private void prayerRows(List<Row> out) {
         out.add(toggle(LauncherSettings.SHOW_PRAYER, "Prayer card", "Today's five prayer times on the home screen"));
         String zone = LauncherSettings.zone(ctx);
+        boolean auto = LauncherSettings.zoneAuto(ctx);
         String[] z = RemoteSettings.zoneEntry(ctx, zone);
         Row r = new Row(PICKER, "Zone");
         r.sub = z != null ? z[0] + " · " + z[2] : "JAKIM e-solat zone";
-        r.value = () -> zone;
+        r.value = () -> auto ? "Auto (" + zone + ")" : zone;
         r.action = this::openZonePicker;
         out.add(r);
         out.add(toggle(LauncherSettings.AZAN, "Azan", "Plays the azan and shows a banner at each prayer time, while the TV is on"));
@@ -703,7 +704,7 @@ final class SettingsScreen {
         out.add(test);
     }
 
-    /** The Weather card: on/off, the MET place (Auto: the prayer zone's town) and the APIMS station. */
+    /** The Weather card: on/off, the MET place (Auto: the town nearest the TV) and the APIMS station. */
     private void weatherRows(List<Row> out) {
         out.add(toggle(LauncherSettings.SHOW_WEATHER, "Weather card",
                 "Today's forecast and air quality on the home screen"));
@@ -712,7 +713,7 @@ final class SettingsScreen {
         boolean auto = LauncherSettings.weatherPlace(ctx).isEmpty();
         Row loc = new Row(PICKER, "Location");
         loc.sub = place != null ? "MET Malaysia's forecast for this " + place.type().toLowerCase(Locale.ROOT)
-                : "MET Malaysia's forecast. Auto: your prayer zone's town";
+                : "MET Malaysia's forecast. Auto: the town nearest your TV";
         loc.value = () -> place == null ? "Auto" : auto ? "Auto (" + place.name + ")" : place.name;
         loc.action = this::openPlacePicker;
         out.add(loc);
@@ -1172,13 +1173,24 @@ final class SettingsScreen {
 
     private void openZonePicker() {
         String zone = LauncherSettings.zone(ctx);
+        boolean auto = LauncherSettings.zoneAuto(ctx);
         List<Row> items = new ArrayList<>();
         int focus = 0;
+        // Auto first: the zone from the TV's location (ZoneDetect), looked for again when picked.
+        Row a = new Row(CHECK, "Auto (" + zone + ")");
+        a.sub = "From the TV's location";
+        a.checked = auto;
+        a.action = () -> {
+            LauncherSettings.setZone(ctx, LauncherSettings.ZONE_AUTO);
+            LauncherSettings.detectZone(ctx);
+            closePicker();
+        };
+        items.add(a);
         for (String e : ctx.getResources().getStringArray(R.array.prayer_zones)) {
             String[] z = e.split("\\|", 3); // state | code | areas
             Row r = new Row(CHECK, z[2]);
             r.sub = z[0] + " · " + z[1];
-            r.checked = z[1].equals(zone);
+            r.checked = !auto && z[1].equals(zone);
             if (r.checked) focus = items.size();
             r.action = () -> {
                 LauncherSettings.setZone(ctx, z[1]);
@@ -1189,7 +1201,7 @@ final class SettingsScreen {
         openPicker("Zone", items, focus);
     }
 
-    /** Every MET forecast location, with Auto (the prayer zone's town) first. */
+    /** Every MET forecast location, with Auto (the town nearest the TV) first. */
     private void openPlacePicker() {
         if (WeatherPanel.places(ctx).isEmpty()) loadingPicker("Location", this::openPlacePicker);
         else preparing("Location", this::showPlaces);
@@ -1202,7 +1214,8 @@ final class SettingsScreen {
         Weather.Place auto = WeatherPanel.autoPlace(ctx, places);
         List<Row> items = new ArrayList<>();
         Row a = new Row(CHECK, "Auto");
-        a.sub = "Your prayer zone's town" + (auto != null ? ": " + auto.name : "");
+        a.sub = (LauncherSettings.where(ctx) != null ? "The town nearest your TV" : "Your prayer zone's town")
+                + (auto != null ? ": " + auto.name : "");
         a.checked = chosen.isEmpty();
         a.action = () -> {
             LauncherSettings.setWeatherPlace(ctx, "");
@@ -1224,7 +1237,7 @@ final class SettingsScreen {
         openPicker("Location", items, focus);
     }
 
-    /** Every APIMS station by state, with Nearest (to the prayer zone's town) first. */
+    /** Every APIMS station by state, with Nearest (to the TV, or the prayer zone's town) first. */
     private void openStationPicker() {
         if (WeatherPanel.stations(ctx).isEmpty()) loadingPicker("Air quality station", this::openStationPicker);
         else preparing("Air quality station", this::showStations);
@@ -1236,7 +1249,8 @@ final class SettingsScreen {
         Weather.Station near = WeatherPanel.nearestStation(ctx, stations);
         List<Row> items = new ArrayList<>();
         Row n = new Row(CHECK, "Nearest");
-        n.sub = "Closest to your prayer zone's town" + (near != null ? ": " + near.place : "");
+        n.sub = (LauncherSettings.where(ctx) != null ? "Closest to your TV" : "Closest to your prayer zone's town")
+                + (near != null ? ": " + near.place : "");
         n.checked = chosen.isEmpty();
         n.action = () -> {
             LauncherSettings.setWeatherStation(ctx, "");

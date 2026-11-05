@@ -418,6 +418,7 @@ public class MainActivity extends Activity {
             }
         });
         LauncherSettings.addListener(settingsChanged);
+        LauncherSettings.detectZone(this); // the prayer zone's Auto: the TV's zone from its location
         applyCardSettings();
         loadApps(); // restores focus when the list arrives
         startForegroundService(new Intent(this, RemoteService.class));
@@ -1667,6 +1668,7 @@ public class MainActivity extends Activity {
             case LauncherSettings.ZONE:
                 prayer.setZone(LauncherSettings.zone(this));
                 weather.settingsChanged(); // Auto place and Nearest station follow the zone
+                if (section == SETTINGS) settingsScreen.refreshRows(); // "Auto (…)" once it's found
                 break;
             case LauncherSettings.WEATHER_PLACE:
             case LauncherSettings.WEATHER_STATION:
@@ -1854,6 +1856,11 @@ public class MainActivity extends Activity {
     /** Wi-Fi button: icon and colour show connected / no internet / disconnected. */
     private void updateNetwork() {
         NetState st = NetState.read(this);
+        // Auto zone not found yet (a boot can start before the network): look again once online.
+        if (st.state == NetState.CONNECTED && netShown != NetState.CONNECTED
+                && LauncherSettings.zoneAuto(this) && !LauncherSettings.zoneFound(this)) {
+            LauncherSettings.detectZone(this);
+        }
         if (st.state != netShown || st.icon() != netIconShown) { // Wi-Fi ↔ Ethernet changes the icon only
             netShown = st.state;
             netIconShown = st.icon();

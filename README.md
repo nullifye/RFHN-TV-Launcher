@@ -48,7 +48,7 @@ The Globe screen saver (21 seconds, no sound): Settings → Screen saver → **S
   </tr>
   <tr>
     <td valign="top"><b>Running apps</b> (Up from the top bar): what's running, how much memory each app uses and what it's doing. OK force-closes; hold OK to hide an app from the list.</td>
-    <td valign="top"><b>Settings</b> (the gear): prayer zone (all 60 JAKIM zones), azan and prayer reminders, which cards show, 12/24-hour clock, wallpaper, the Most used week, apps per row, the screen saver, what the bell tells you, the phone remote, and more. Changes apply straight away.</td>
+    <td valign="top"><b>Settings</b> (the gear): prayer zone (found from the TV's location, or any of the 60 JAKIM zones), azan and prayer reminders, which cards show, 12/24-hour clock, wallpaper, the Most used week, apps per row, the screen saver, what the bell tells you, the phone remote, and more. Changes apply straight away.</td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/dock-reorder.jpg" width="100%" alt="Hold OK on a dock app: Move, Remove from dock, Open"></td>

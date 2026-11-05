@@ -9,6 +9,7 @@ import android.text.format.DateFormat;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -140,16 +141,78 @@ final class LauncherSettings {
 
     // ---------------------------------------------------------------- typed helpers
 
+    /** The zone setting's "Auto" (also what a fresh install has): the zone found from the TV's location. */
+    static final String ZONE_AUTO = "auto";
+    private static final String ZONE_FOUND = "prayer_zone_found", WHERE = "prayer_zone_where";
+
+    /**
+     * The prayer zone in use: the one chosen, or with Auto the one found from the TV's location
+     * (ZoneDetect), and until one's found the default (SGR03).
+     */
     static String zone(Context ctx) {
-        return prefs(ctx).getString(ZONE, ctx.getString(R.string.prayer_zone));
+        String z = prefs(ctx).getString(ZONE, ZONE_AUTO);
+        if (!ZONE_AUTO.equals(z)) return z;
+        return prefs(ctx).getString(ZONE_FOUND, ctx.getString(R.string.prayer_zone));
     }
 
+    /** Auto has found the TV's zone (it may not have yet: no location, or no network so far). */
+    static boolean zoneFound(Context ctx) {
+        return prefs(ctx).contains(ZONE_FOUND);
+    }
+
+    /** Auto: never chosen, or Auto picked. */
+    static boolean zoneAuto(Context ctx) {
+        return ZONE_AUTO.equals(prefs(ctx).getString(ZONE, ZONE_AUTO));
+    }
+
+    /** A zone code, or ZONE_AUTO. */
     static void setZone(Context ctx, String zone) {
         prefs(ctx).edit().putString(ZONE, zone).apply();
         changed(ZONE);
     }
 
-    /** The MET forecast place's id ("Tn181"), or "" for Auto: the prayer zone's town. */
+    /** What Auto found (null: nothing yet). Listeners hear ZONE when it changes the zone in use. */
+    static void setZoneFound(Context ctx, String zone) {
+        String before = zone(ctx);
+        if (zone == null) prefs(ctx).edit().remove(ZONE_FOUND).apply();
+        else prefs(ctx).edit().putString(ZONE_FOUND, zone).apply();
+        if (!before.equals(zone(ctx))) changed(ZONE);
+    }
+
+    /**
+     * Where the TV is ({latitude, longitude}, to about 100 m), as Auto last found it; null when the
+     * zone was picked by hand or nothing's found yet. The weather's Auto place and Nearest station
+     * use it, else the prayer zone's town. Kept only on the TV.
+     */
+    static double[] where(Context ctx) {
+        if (!zoneAuto(ctx)) return null;
+        String[] p = prefs(ctx).getString(WHERE, "").split(",");
+        if (p.length != 2) return null;
+        try {
+            return new double[] {Double.parseDouble(p[0]), Double.parseDouble(p[1])};
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** With Auto, looks for the TV's zone (from its location) and keeps it and where the TV is. */
+    static void detectZone(Context ctx) {
+        if (!zoneAuto(ctx)) return;
+        Context app = ctx.getApplicationContext();
+        ZoneDetect.locate(app, here -> {
+            if (here == null || !zoneAuto(app)) return;
+            String found = ZoneDetect.nearest(here[0], here[1]);
+            if (found == null) return; // outside Malaysia: keep what was found before
+            String at = String.format(Locale.ROOT, "%.3f,%.3f", here[0], here[1]);
+            boolean moved = !at.equals(prefs(app).getString(WHERE, ""));
+            prefs(app).edit().putString(WHERE, at).apply();
+            String before = zone(app);
+            setZoneFound(app, found);
+            if (moved && before.equals(zone(app))) changed(WEATHER_PLACE); // same zone, new spot: the weather's Auto
+        });
+    }
+
+    /** The MET forecast place's id ("Tn181"), or "" for Auto: the town nearest the TV (else the prayer zone's). */
     static String weatherPlace(Context ctx) {
         return prefs(ctx).getString(WEATHER_PLACE, "");
     }
@@ -159,7 +222,7 @@ final class LauncherSettings {
         changed(WEATHER_PLACE);
     }
 
-    /** The APIMS station's id ("CA21B"), or "" for Nearest: the one closest to the prayer zone. */
+    /** The APIMS station's id ("CA21B"), or "" for Nearest: the one closest to the TV (else the prayer zone). */
     static String weatherStation(Context ctx) {
         return prefs(ctx).getString(WEATHER_STATION, "");
     }

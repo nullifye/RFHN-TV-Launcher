@@ -75,6 +75,23 @@ public class WeatherTest {
     }
 
     @Test
+    public void autoPlaceIsTheTownNearestTheTv() {
+        // MET's own ids (5 November 2026).
+        List<Weather.Place> places = java.util.Arrays.asList(new Weather.Place("Tn181", "Klang"),
+                new Weather.Place("Tn147", "Meru"), new Weather.Place("Tn066", "Pelabuhan Klang"),
+                new Weather.Place("Tn084", "Banting"), new Weather.Place("Tn033", "Kota Bharu"),
+                new Weather.Place("Tn187", "Kuching"), new Weather.Place("St010", "Selangor"));
+        assertEquals("Meru", Weather.nearestTown(places, 3.1326, 101.4175).name); // this TV, north of Klang
+        assertEquals("Klang", Weather.nearestTown(places, 3.04, 101.45).name);
+        assertEquals("Banting", Weather.nearestTown(places, 2.815, 101.502).name); // Kuala Langat: SGR03 too
+        assertEquals("Kota Bharu", Weather.nearestTown(places, 6.125, 102.24).name);
+        assertEquals("Kuching", Weather.nearestTown(places, 1.55, 110.35).name);
+        assertNull(Weather.nearestTown(places, 4.0, 106.0)); // the South China Sea: the zone decides
+        assertNull(Weather.nearestTown(places, 5.98, 116.07)); // Kota Kinabalu isn't in this list
+        assertNull(Weather.nearestTown(java.util.Collections.emptyList(), 3.13, 101.42)); // places not loaded yet
+    }
+
+    @Test
     public void autoPlaceIsTheAirStationsTownWhenTheZoneHasIt() {
         // MET's own ids (31 October 2026).
         List<Weather.Place> places = java.util.Arrays.asList(new Weather.Place("Tn037", "Bachok"),

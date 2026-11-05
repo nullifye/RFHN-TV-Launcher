@@ -171,6 +171,7 @@ Gradle needs Java 17+: `export JAVA_HOME="$(/usr/libexec/java_home -v 17+)"` on 
 | `UpdateCheckTest` | TV Home's own updates: versions compared number by number |
 | `StatusOverlayTest` | Info overlay: speed in decimal bits a second, uptime and elapsed time, the clock |
 | `DreamViewTest` | Screen savers: splitting `logcat` lines (Live log), the Hijri date as on the home screen |
+| `ZoneDetectTest` | Auto prayer zone: towns land in their zone, mountain-top zones are never picked, no guess outside Malaysia |
 | `GlobeTest` | Globe: where the sun is overhead, the prayer lines against JAKIM's times for Kuala Lumpur, the Earth's tilt and the sun in the ecliptic frame, great circles (qibla), every JAKIM zone has a place, reading OpenStreetMap, USGS and aurora feeds, snow and ice map colours, picking the GFS run |
 | `OrbitTest` | Globe satellites: SGP4 against the reference implementation (ISS and Tiangong within 10 m; GPS within 25 km without the Moon and Sun), reading CelesTrak's files |
 | `GribTest` | Globe wind: reading NOAA's GRIB2 (complex packing with spatial differencing, against a real global field; simple packing) |

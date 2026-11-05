@@ -69,7 +69,9 @@ final class RemoteSettings {
         cats.put(category("Prayer times", "Card, zone and azan",
                 toggle(LauncherSettings.SHOW_PRAYER, "Prayer card", "Today's five prayer times on the home screen"),
                 row("zone", LauncherSettings.ZONE, "Zone", z != null ? z[0] + " · " + z[2] : "JAKIM e-solat zone")
-                        .put("value", zone),
+                        // "auto" with Auto (its text names the zone found), else the zone code
+                        .put("value", LauncherSettings.zoneAuto(ctx) ? LauncherSettings.ZONE_AUTO : zone)
+                        .put("text", LauncherSettings.zoneAuto(ctx) ? "Auto (" + zone + ")" : zone),
                 toggle(LauncherSettings.AZAN, "Azan", "Plays the azan and shows a banner at each prayer time, while the TV is on"),
                 choice(LauncherSettings.PRAYER_REMINDER, "Reminder before prayer",
                         "A banner over any app, without sound, while the TV is on",
@@ -149,6 +151,11 @@ final class RemoteSettings {
                 return "Not one of the choices.";
             }
             case "zone":
+                if (LauncherSettings.ZONE_AUTO.equals(v)) {
+                    LauncherSettings.setZone(ctx, LauncherSettings.ZONE_AUTO);
+                    LauncherSettings.detectZone(ctx);
+                    return null;
+                }
                 if (!(v instanceof String) || zoneEntry(ctx, (String) v) == null) return "Unknown zone.";
                 LauncherSettings.setZone(ctx, (String) v);
                 return null;
@@ -188,7 +195,8 @@ final class RemoteSettings {
             String[] z = e.split("\\|", 3);
             if (z.length == 3) out.put(new JSONObject().put("state", z[0]).put("code", z[1]).put("area", z[2]));
         }
-        return new JSONObject().put("ok", true).put("current", LauncherSettings.zone(ctx)).put("zones", out);
+        return new JSONObject().put("ok", true).put("current", LauncherSettings.zone(ctx))
+                .put("auto", LauncherSettings.zoneAuto(ctx)).put("zones", out);
     }
 
     /** {state, code, areas} for a zone code, or null. */

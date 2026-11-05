@@ -1125,7 +1125,7 @@ function uploadOne(dir, file, onPct, name) {
 // Rendered from the schema the TV sends: the TV's own Settings, minus the phone remote's switch
 // and "Forget all phones". Each change is saved on the TV at once, and the TV answers with the
 // updated schema.
-let settingsData = null, wallData = null, zonesData = null, picksOpen = false, wallTimer = null;
+let settingsData = null, wallData = null, zonesData = null, zonesCurrent = "", zonesAuto = false, picksOpen = false, wallTimer = null;
 const settingsOpen = () => !$("tab-settings").classList.contains("hidden") && !document.hidden;
 function settingValue(key) {
   for (const c of settingsData ? settingsData.categories : []) for (const r of c.rows) if (r.key === key) return r.value;
@@ -1218,7 +1218,7 @@ function settingRow(r) {
     });
     row.appendChild(seg);
   } else if (r.type === "zone") {
-    const b = document.createElement("button"); b.textContent = r.value; b.onclick = openZones;
+    const b = document.createElement("button"); b.textContent = r.text || r.value; b.onclick = openZones;
     row.appendChild(b);
   } else if (r.type === "action") {
     const b = document.createElement("button"); b.textContent = r.button || "Go";
@@ -1317,7 +1317,8 @@ $("wallInput").onchange = async () => {
 // Prayer zone: a searchable list of the 60 JAKIM zones.
 async function openZones() {
   buzz();
-  if (!zonesData) try { zonesData = (await api("/api/settings/zones")).zones; } catch (e) { flash(e.message); return; }
+  try { const d = await api("/api/settings/zones"); zonesData = d.zones; zonesCurrent = d.current; zonesAuto = d.auto; }
+  catch (e) { flash(e.message); return; }
   $("zoneSearch").value = "";
   renderZones();
   $("zoneSheet").classList.remove("hidden");
@@ -1326,6 +1327,13 @@ async function openZones() {
 function renderZones() {
   const q = $("zoneSearch").value.trim().toLowerCase(), cur = settingValue("prayer_zone");
   const list = $("zoneList"); list.innerHTML = "";
+  // Auto first: the zone from the TV's location.
+  if (!q || "auto".includes(q)) {
+    const a = document.createElement("button"); a.className = "zone" + (cur === "auto" ? " on" : "");
+    a.innerHTML = `<div><b>Auto (${esc(zonesCurrent || "")})</b></div><span>From the TV's location</span>`;
+    a.onclick = async () => { if (await saveSetting("prayer_zone", "auto")) { $("zoneSheet").classList.add("hidden"); flash("Prayer zone: Auto"); } };
+    list.appendChild(a);
+  }
   zonesData.filter((z) => !q || (z.state + " " + z.code + " " + z.area).toLowerCase().includes(q)).forEach((z) => {
     const b = document.createElement("button"); b.className = "zone" + (z.code === cur ? " on" : "");
     b.innerHTML = `<div><b>${esc(z.code)}</b>${esc(z.state)}</div><span>${esc(z.area)}</span>`;
