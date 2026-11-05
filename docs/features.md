@@ -271,7 +271,7 @@ The band word sits beside the number; a long one that doesn't fit ends in "…".
 - **APIMS has no published API:** the card reads the APIMS portal's own map service (`eqms.doe.gov.my/api3/publicmapproxy/…/CAQM_MCAQM_Current_Reading`). If the DOE changes it, the API part shows "–" until the launcher is updated; the rest keeps working.
 - **Weather effects** (Settings → Home screen, on by default): the home screen shows the weather as it is now, behind the cards, from ECMWF's weather code (fetched with the feels-like, every 15 min):
   - **Drizzle or fog:** a misty glass with fine droplets.
-  - **Rain:** drops land on the glass, more and bigger the heavier the rain, and some run down it, wiping a clear trail. Each drop shows the wallpaper behind it shrunk and upside down, as real water does.
+  - **Rain:** small drops land on the glass and stay, more of them the heavier the rain; the big ones run down it, wiping a clear trail and leaving a few droplets in it, and slide off the bottom, so no big drop hangs on the glass. Each drop shows the wallpaper behind it shrunk and upside down, as real water does.
   - **Thunderstorm** (or a MET thunderstorm warning in force): soft lightning flashes every 5–13 s, sometimes a double flash.
   - **Unhealthy air** (API over 100): a faint warm haze.
   - **It plays, then settles:** for 45 seconds after home comes back to the front, or the weather gets worse, then everything stops where it is and the screen is still, so a home screen left on uses no CPU for it. It runs at about 30 frames a second while it plays. When the rain stops, the glass clears over 2–3 seconds.

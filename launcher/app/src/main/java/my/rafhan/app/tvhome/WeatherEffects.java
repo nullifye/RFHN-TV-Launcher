@@ -26,8 +26,9 @@ import java.util.Random;
  * thunderstorm (or a MET thunderstorm warning) and a warm haze when the API is unhealthy.
  *
  * It plays, then settles: for PLAY_MS after home comes to the front (or the weather changes),
- * drops land and some run down the glass, wiping a clear trail; then everything stops where it
- * is and nothing is drawn again until the next time, so a home screen left on costs nothing.
+ * small drops land and stay, and big ones run down the glass, wiping a clear trail, and off the
+ * bottom (a big drop never hangs on the glass); then everything stops and nothing is drawn again
+ * until the next time, so a home screen left on costs nothing.
  *
  * The glass (the mist and the drops sitting on it) is a grid of small bitmaps drawn in software:
  * a drop is drawn into it once, and only the tiles that changed go to the GPU again, at most
@@ -146,8 +147,7 @@ final class WeatherEffects extends View {
     }
 
     private void settle() {
-        for (Slider s : sliders) stamps.add(new float[] {s.x, s.y, s.r, s.r * 1.2f}); // stops where it is
-        sliders.clear();
+        sliders.clear(); // a running drop doesn't freeze big on the glass: it's gone, its trail stays
         commit();
         playing = false;
         flashAt = flash2At = -1;
@@ -176,7 +176,7 @@ final class WeatherEffects extends View {
         dirty = null;
     }
 
-    // How each kind of rain lands: drops a second, their size (1080p px), drops running down a second.
+    // How each kind of rain lands: drops a second, their size (1080p px), big drops running down a second.
     private float spawnRate() {
         switch (rain) {
             case Weather.FX_MIST: return 70f;
@@ -189,19 +189,20 @@ final class WeatherEffects extends View {
 
     private float slideRate() {
         switch (rain) {
-            case Weather.FX_LIGHT: return 0.15f;
-            case Weather.FX_RAIN: return 0.45f;
-            case Weather.FX_HEAVY: return 1f;
+            case Weather.FX_LIGHT: return 0.3f;
+            case Weather.FX_RAIN: return 0.8f;
+            case Weather.FX_HEAVY: return 1.6f;
             default: return 0f; // mist doesn't run
         }
     }
 
+    /** The biggest drop that stays where it lands; bigger ones are too heavy and run (Slider). */
     private float maxRadius() {
         switch (rain) {
             case Weather.FX_MIST: return 3.2f;
-            case Weather.FX_LIGHT: return 8f;
-            case Weather.FX_RAIN: return 11f;
-            default: return 13f;
+            case Weather.FX_LIGHT: return 5f;
+            case Weather.FX_RAIN: return 5.5f;
+            default: return 6f;
         }
     }
 
@@ -252,12 +253,7 @@ final class WeatherEffects extends View {
                     stamps.add(new float[] {s.x + (rnd.nextFloat() - 0.5f) * s.r * 0.6f, s.y - s.r * 1.6f, r, r * 1.1f});
                 }
             }
-            if (s.y - s.r > getHeight()) {
-                sliders.remove(i);
-            } else if (rnd.nextFloat() < 0.12f * dt) { // stops partway, as drops do
-                stamps.add(new float[] {s.x, s.y, s.r, s.r * 1.2f});
-                sliders.remove(i);
-            }
+            if (s.y - s.r > getHeight()) sliders.remove(i); // ran off the bottom: never left hanging
         }
         if (now - lastCommit >= COMMIT_MS) {
             commit();
