@@ -187,6 +187,26 @@ static int flush(zdtun_t *tun, const zdtun_conn_t *conn, void *unused) {
     return 0;
 }
 
+/* How long the system has been suspended since boot, in ms (boot time keeps counting in suspend). */
+static long long suspended_ms(void) {
+    struct timespec boot, mono;
+    clock_gettime(CLOCK_BOOTTIME, &boot);
+    clock_gettime(CLOCK_MONOTONIC, &mono);
+    return (boot.tv_sec - mono.tv_sec) * 1000LL + (boot.tv_nsec - mono.tv_nsec) / 1000000;
+}
+
+/*
+ * After the TV slept (suspended), every TCP connection's far end is likely gone: the router forgot
+ * it and the server closed it while the TV couldn't hear. Reset them all at once, so each app
+ * reconnects straight away, instead of retransmitting into a dead connection for minutes (Android
+ * 10's DNS-over-TLS, with no query timeout, then resolves nothing until TCP gives up).
+ */
+static int reset_tcp(zdtun_t *tun, const zdtun_conn_t *conn, void *unused) {
+    if (zdtun_conn_get_5tuple(conn)->ipproto == IPPROTO_TCP)
+        zdtun_conn_close(tun, (zdtun_conn_t *)conn, CONN_STATUS_CLOSED);
+    return 0;
+}
+
 static void closed(zdtun_t *tun, const zdtun_conn_t *conn) {
     monitor_t *m = zdtun_userdata(tun);
     counter_t *c = zdtun_conn_get_userdata(conn);
@@ -223,7 +243,11 @@ Java_my_rafhan_app_tvhome_TrafficVpnService_nativeRun(JNIEnv *e, jobject service
     zdtun_set_mtu(tun, 1500);
     unsigned char buffer[65535];
     time_t last = time(NULL);
+    long long slept = suspended_ms();
     while (!atomic_load(&stopping) && !m.failed) {
+        long long s = suspended_ms();
+        if (s - slept > 2000) zdtun_iter_connections(tun, reset_tcp, NULL); // woke from sleep
+        slept = s;
         fd_set rd, wr;
         FD_ZERO(&rd); FD_ZERO(&wr);
         int maxfd = 0;

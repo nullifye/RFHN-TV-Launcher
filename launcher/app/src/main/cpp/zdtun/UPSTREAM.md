@@ -4,7 +4,9 @@ Source: https://github.com/emanuele-f/zdtun
 Pinned commit: `80b7941d4e685d8354346820878eaec0e35b6b1e`
 
 Copyright © 2018–2021 Emanuele Faranda. LGPL-3.0-or-later; see COPYING and COPYING.GPL.
-The upstream sources are unmodified. `third_party/uthash.h` carries its own BSD notice;
+The upstream sources are unmodified except for one change in `zdtun.c` (marked "TV Home
+change"): `reset_unknown_tcp()` answers a TCP segment for a connection zdtun doesn't know with a
+reset (RFC 793), where upstream dropped it silently and left the app's socket hanging for minutes. `third_party/uthash.h` carries its own BSD notice;
 `third_party/net_headers.h` retains the upstream notices in that file.
 
 Built as the separately linked `libzdtun.so` by ../CMakeLists.txt. The application bridge

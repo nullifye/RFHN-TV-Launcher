@@ -632,6 +632,46 @@ static void build_reply_tcpip(zdtun_t *tun, zdtun_conn_t *conn, u_int8_t flags,
 
 /* ******************************************************* */
 
+/*
+ * TV Home change: answer a TCP segment for a connection zdtun doesn't know (one it already closed,
+ * or one from before the forwarder restarted, e.g. across the TV's sleep) with a reset, as RFC 793
+ * says a closed port must. Upstream drops it silently, so the app's socket keeps retransmitting
+ * until its own TCP gives up, minutes later: Android 10's DNS-over-TLS, which reuses one connection
+ * and has no query timeout, then resolves nothing for that long.
+ */
+static void reset_unknown_tcp(zdtun_t *tun, const zdtun_pkt_t *pkt) {
+  const struct tcphdr *in = pkt->tcp;
+
+  if(in->th_flags & TH_RST)
+    return; // never answer a reset
+
+  zdtun_conn_t conn;
+  memset(&conn, 0, sizeof(conn));
+  conn.tuple = pkt->tuple;
+  conn.sock = INVALID_SOCKET;
+
+  u_int8_t flags;
+
+  if(in->th_flags & TH_ACK) {
+    // <SEQ=SEG.ACK><CTL=RST>
+    conn.tcp.zdtun_seq = ntohl(in->th_ack);
+    flags = TH_RST;
+  } else {
+    // <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
+    conn.tcp.client_seq = ntohl(in->th_seq) + pkt->l7_len
+      + ((in->th_flags & TH_SYN) ? 1 : 0) + ((in->th_flags & TH_FIN) ? 1 : 0);
+    flags = TH_RST | TH_ACK;
+  }
+
+  build_reply_tcpip(tun, &conn, flags, 0, 0);
+
+  zdtun_pkt_t reply;
+  if(zdtun_parse_pkt(tun, tun->reply_buf, zdtun_iphdr_len(tun, &conn) + TCP_HEADER_LEN, &reply) == 0)
+    tun->callbacks.send_client(tun, &reply, &conn); // best effort: the app retransmits if it's lost
+}
+
+/* ******************************************************* */
+
 // It is used to defer the destroy_conn function to let the user
 // consume the connection without accessing invalid memory. The connections
 // will be (later) destroyed by zdtun_purge_expired.
@@ -1657,6 +1697,7 @@ zdtun_conn_t* zdtun_easy_forward(zdtun_t *tun, const char *pkt_buf, int pkt_len)
   if(!conn) {
     if(is_tcp_established) {
       debug("TCP: ignoring non SYN connection");
+      reset_unknown_tcp(tun, &pkt);
     } else {
       debug("zdtun_lookup failed");
     }
