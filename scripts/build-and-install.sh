@@ -14,19 +14,41 @@ PKG=my.rafhan.app.tvhome
 DOCS="see docs/install-macos.md, docs/install-linux.md or docs/install-windows.md"
 die() { echo "Error: $*" >&2; exit 1; }
 
-# ---- the computer: adb, Java 17+, Android SDK
+# ---- the computer: adb, Java 17-21, Android SDK
 command -v adb >/dev/null || die "adb not found. Install Android platform-tools ($DOCS)."
-# A JAVA_HOME that points somewhere stale is ignored; macOS can find a JDK by itself.
-if [ ! -x "${JAVA_HOME:-/nonexistent}/bin/java" ] && [ ! -x "${JAVA_HOME:-/nonexistent}/bin/java.exe" ]; then
+# Gradle and the Android plugin support JDK 17-21. A newer one (for example Homebrew's 27) fails
+# in the plugin's jlink step, so a JAVA_HOME outside that range is replaced by one that works;
+# java on PATH is used when no JDK is installed at all.
+jdk_java() {
+  if [ -x "$1/bin/java" ]; then echo "$1/bin/java"
+  elif [ -x "$1/bin/java.exe" ]; then echo "$1/bin/java.exe"
+  fi
+}
+jdk_major() {
+  local bin; bin="$(jdk_java "$1")"
+  [ -n "$bin" ] && "$bin" -version 2>&1 | sed -nE '1s/.*version "([0-9]+).*/\1/p'
+}
+jdk_ok() {
+  local v; v="$(jdk_major "$1")"
+  [ -n "$v" ] && [ "$v" -ge 17 ] && [ "$v" -le 21 ]
+}
+if ! jdk_ok "${JAVA_HOME:-/nonexistent}"; then
   unset JAVA_HOME
-  if [ -x /usr/libexec/java_home ] && JH="$(/usr/libexec/java_home -v 17+ 2>/dev/null)"; then
-    export JAVA_HOME="$JH"
+  if [ -x /usr/libexec/java_home ]; then
+    for want in 21 17; do
+      if JH="$(/usr/libexec/java_home -v "$want" 2>/dev/null)" && jdk_ok "$JH"; then
+        export JAVA_HOME="$JH"; break
+      fi
+    done
   fi
 fi
-JAVA="java"; [ -n "${JAVA_HOME:-}" ] && JAVA="$JAVA_HOME/bin/java"
+JAVA="java"; [ -n "${JAVA_HOME:-}" ] && JAVA="$(jdk_java "$JAVA_HOME")"
 JV="$("$JAVA" -version 2>&1 | head -1 | sed -E 's/.*version "([0-9]+).*/\1/')" || true
 case "${JV:-}" in ''|*[!0-9]*) JV= ;; esac
-[ "${JV:-0}" -ge 17 ] 2>/dev/null || die "JDK 17 or newer is needed to build (found: ${JV:-none}). $DOCS"
+if [ "${JV:-0}" -lt 17 ] 2>/dev/null || [ "${JV:-0}" -gt 21 ] 2>/dev/null; then
+  die "JDK 17-21 is needed to build (found: ${JV:-none}). $DOCS"
+fi
+[ -n "${JAVA_HOME:-}" ] && echo "Using JDK $JV ($JAVA_HOME)"
 SDK_DIR="$(sed -n 's/^sdk\.dir=//p' launcher/local.properties 2>/dev/null || true)"
 SDK_DIR="${SDK_DIR:-${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}}"
 [ -n "$SDK_DIR" ] && [ -d "$SDK_DIR" ] || die "Android SDK not found: set ANDROID_HOME ($DOCS)."

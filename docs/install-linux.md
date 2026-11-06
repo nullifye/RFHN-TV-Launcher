@@ -308,7 +308,7 @@ With debugging off, a few extras are limited: the phone remote can't move the cu
 |---|---|
 | `unauthorized` | Accept "Allow USB debugging?" on the TV. If it never appears, turn USB debugging off and on, run `adb kill-server`, and connect again. |
 | `can't reach the TV` / *No route to host* | Check the IP and that both are on the same Wi-Fi. Run `adb kill-server` and try again. A firewall blocking outgoing port 5555 can also cause this. |
-| `JDK 17 or newer is needed` | Install the JDK (step 2). If several are installed, point `JAVA_HOME` at 17 or newer. |
+| `JDK 17-21 is needed` | Install the JDK (step 2). If several are installed, point `JAVA_HOME` at 17-21. |
 | `Android SDK not found` | Set `ANDROID_HOME` (step 2) and open a new terminal. |
 | Build fails about licences or a missing platform | Run `yes \| sdkmanager --licenses` and `sdkmanager "platforms;android-36"`. |
 | `needs Android 10` | The TV is too old for this launcher. |

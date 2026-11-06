@@ -157,7 +157,7 @@ cd launcher
 ./gradlew assembleRelease       # the APK scripts/build-and-install.sh installs
 ```
 
-Gradle needs Java 17+: `export JAVA_HOME="$(/usr/libexec/java_home -v 17+)"` on macOS, or `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64` on Linux. The tests read a stubbed `android.jar`, so they can't touch the TV's APIs — that's why the logic they cover is kept free of `Context`:
+Gradle needs Java 17-21: `export JAVA_HOME="$(/usr/libexec/java_home -v 21)"` on macOS, or `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64` on Linux. The build script also picks a suitable JDK itself when `JAVA_HOME` is missing or too new. The tests read a stubbed `android.jar`, so they can't touch the TV's APIs — that's why the logic they cover is kept free of `Context`:
 
 | Test | Covers |
 |---|---|

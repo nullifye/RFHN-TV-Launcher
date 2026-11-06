@@ -215,7 +215,8 @@
             android:paddingStart="10dp"
             android:paddingTop="15dp"
             android:paddingEnd="10dp"
-            android:paddingBottom="15dp">
+            android:paddingBottom="15dp"
+            android:visibility="invisible">
 
             <LinearLayout
                 android:id="@+id/dockRow"

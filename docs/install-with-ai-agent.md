@@ -27,7 +27,7 @@ Install the launcher from this repository on my Android TV.
 Steps:
 1. Read README.md and the install guide for my system in docs/ (install-windows.md,
    install-macos.md or install-linux.md), and follow it.
-2. Check which tools are missing: Git, adb, JDK 17 or newer, and the Android SDK with
+2. Check which tools are missing: Git, adb, JDK 17-21, and the Android SDK with
    "platforms;android-36" and ANDROID_HOME set. Tell me what you'll install and wait for my
    OK before installing anything. On Windows, run the scripts in Git Bash.
 3. Connect with `adb connect <TV IP>:5555`, and wait while I accept "Allow USB debugging?"

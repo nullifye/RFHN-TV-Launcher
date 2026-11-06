@@ -206,6 +206,10 @@ public class MainActivity extends Activity {
     // focus: the screensaver (a daydream window) covers home without pausing it.
     private boolean live;
     private boolean appsLoaded;
+    // The dock band starts hidden (XML) and is revealed with an expand once its icons are drawn:
+    // at a cold boot the package list and tile renderer arrive after the first frame, and a strip
+    // of empty tiles looks broken.
+    private boolean dockShown;
     private boolean tilesDropped;
     private long wallpaperStamp = -1;
     private boolean wallpaperFetching;
@@ -609,6 +613,7 @@ public class MainActivity extends Activity {
 
     @SuppressLint("NotifyDataSetChanged") // the whole list is new: re-read and re-sorted
     private void applyApps(List<AppEntry> all, List<String> dockPkgs, UsageScores.Scores scores) {
+        boolean firstLoad = !appsLoaded;
         String focusedPkg = focusedPackage();
         Map<String, AppEntry> byPkg = new HashMap<>();
         for (AppEntry e : all) byPkg.put(e.pkg, e);
@@ -649,7 +654,13 @@ public class MainActivity extends Activity {
             tile.setImageBitmap(e.tile);
             dockTiles.add(tile);
         }
-        findViewById(R.id.dockBand).setVisibility(dock.isEmpty() ? View.INVISIBLE : View.VISIBLE);
+        View band = findViewById(R.id.dockBand);
+        if (dock.isEmpty()) {
+            dockShown = false;
+            band.setVisibility(View.INVISIBLE);
+        } else if (!dockShown && dockTilesReady()) {
+            revealDock(firstLoad); // cached icons: no need to wait for a render
+        }
         adapter.notifyDataSetChanged();
 
         // Keep focus on the same app across reloads (installs, updates).
@@ -733,9 +744,59 @@ public class MainActivity extends Activity {
         if (d >= 0) {
             dockTiles.get(d).setImageBitmap(e.tile);
             if (d == dockIdx) setGlow(e.glow, true);
+            if (!dockShown && dockTilesReady()) revealDock(true);
         }
         int g = apps.indexOf(e);
         if (g >= 0) adapter.notifyItemChanged(g, PAYLOAD_TILE);
+    }
+
+    /** True once every dock app has a drawn tile, so the band would never show an empty slot. */
+    private boolean dockTilesReady() {
+        if (dock.isEmpty()) return false;
+        for (AppEntry e : dock) if (e.tile == null) return false;
+        return true;
+    }
+
+    /**
+     * Shows the dock only once its icons are ready, expanding it in. On a cold boot the first
+     * frame lands before PackageManager and the tile renderer finish; reloads (installs, dock
+     * edits) are already drawn, so they appear at once.
+     */
+    private void revealDock(boolean animate) {
+        if (dock.isEmpty()) return;
+        View band = findViewById(R.id.dockBand);
+        band.animate().cancel();
+        if (dockShown) {
+            band.setVisibility(View.VISIBLE);
+            return;
+        }
+        dockShown = true;
+        band.setVisibility(View.VISIBLE);
+        updateHighlight(true); // frames the dock now that its tiles have their final size
+        if (!animate) {
+            band.setAlpha(1f);
+            band.setScaleX(1f);
+            band.setScaleY(1f);
+            highlight.setAlpha(1f);
+            updateHero(false);
+            return;
+        }
+        // The focus ring is drawn at the dock's final size: hide it while the tiles expand, then
+        // fade it in, rather than leaving it floating over a smaller dock.
+        boolean ring = section == DOCK;
+        if (ring) {
+            highlight.animate().cancel();
+            highlight.setAlpha(0f);
+        }
+        band.setAlpha(0f);
+        band.setScaleX(0.78f);
+        band.setScaleY(0.78f);
+        band.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(240)
+                .setInterpolator(new DecelerateInterpolator(1.6f))
+                .withEndAction(() -> {
+                    if (ring) highlight.animate().alpha(1f).setDuration(160).start();
+                }).start();
+        updateHero(true);
     }
 
     private static int indexOf(List<AppEntry> list, String pkg) {
@@ -991,7 +1052,8 @@ public class MainActivity extends Activity {
                 radius = v.getHeight() * scale / 2f;
                 break;
             case DOCK:
-                if (dockIdx < dockTiles.size()) v = dockTiles.get(dockIdx);
+                // Hidden until its icons are drawn: no ring around an empty, invisible band.
+                if (dockShown && dockIdx < dockTiles.size()) v = dockTiles.get(dockIdx);
                 scale = TILE_SCALE;
                 radius *= scale;
                 break;
@@ -1017,6 +1079,10 @@ public class MainActivity extends Activity {
                 break;
         }
         // Nothing to frame while the running-apps list is empty or loading.
+        if (!dockShown && section == DOCK) {
+            highlight.setVisibility(View.INVISIBLE);
+            return;
+        }
         highlight.setVisibility((section == UP || section == SETTINGS) && v == null ? View.INVISIBLE : View.VISIBLE);
         if (v == null || v.getWidth() == 0) return;
         // Frame the highlight rides with: the menu (fixed), the grid (page slide + list scroll),
@@ -1039,7 +1105,7 @@ public class MainActivity extends Activity {
     }
 
     private void updateHero(boolean animate) {
-        boolean show = section == DOCK && !dock.isEmpty();
+        boolean show = dockShown && section == DOCK && !dock.isEmpty();
         if (dockIdx < dock.size()) {
             AppEntry e = dock.get(dockIdx);
             if (editMode == EDIT_MOVE) hero.setText("Move " + e.label + "  ◀ ▶   ·   OK to place");
