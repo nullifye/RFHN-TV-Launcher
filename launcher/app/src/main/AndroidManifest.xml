@@ -80,6 +80,9 @@
 
     <!-- Android 11+ package visibility: without these the app grid comes up empty. -->
     <queries>
+        <!-- H713 projectors: exported projection settings and the vendor's HDMI/source picker. -->
+        <package android:name="com.htc.htcsettings" />
+        <package android:name="com.softwinner.awsource" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LEANBACK_LAUNCHER" />

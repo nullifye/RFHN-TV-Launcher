@@ -22,6 +22,7 @@ public class RemoteService extends Service implements LauncherSettings.Listener 
     private Azan azan;
     private SleepTimer sleepTimer;
     private StatusOverlay statusBar;
+    private AccessibilityKeeper accessibilityKeeper;
     // Cleaners (Xiaomi's TV Manager) delete files in apps' shared folders. The dock and the
     // remote's disable log live in private storage; their shared copies (for ADB, restore.sh and
     // the setup app) are written again at start and every hour.
@@ -53,6 +54,8 @@ public class RemoteService extends Service implements LauncherSettings.Listener 
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, "Phone remote", NotificationManager.IMPORTANCE_MIN));
         startForeground(1, notification());
+        accessibilityKeeper = new AccessibilityKeeper(this);
+        accessibilityKeeper.start();
         RemoteAccessibilityService.checkSoon(this); // after an update it may not be reconnected
         netBanner = new NetBanner(this);
         netBanner.start();
@@ -122,6 +125,7 @@ public class RemoteService extends Service implements LauncherSettings.Listener 
     public void onDestroy() {
         main.removeCallbacks(sharedCopies);
         LauncherSettings.removeListener(this);
+        if (accessibilityKeeper != null) accessibilityKeeper.stop();
         if (server != null) server.stop();
         if (netBanner != null) netBanner.stop();
         if (alertSources != null) alertSources.stop();

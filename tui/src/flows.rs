@@ -858,6 +858,24 @@ pub fn restore(env: &mut Env, remove_launcher: bool) -> Plan {
         );
     }
 
+    // Stop the opt-in keeper before removing its service, just like restore.sh.
+    if env
+        .setting("secure", "tvhome_keep_accessibility_enabled")
+        .as_deref()
+        == Some("1")
+    {
+        p.push(Step::adb(
+            "Stop keeping TV Home accessibility enabled",
+            adb.shell(&[
+                "settings",
+                "put",
+                "secure",
+                "tvhome_keep_accessibility_enabled",
+                "0",
+            ]),
+        ));
+    }
+
     // Accessibility: drop ours, keep others; put the master switch back only if nothing else
     // needs it (restore.sh's rule).
     let current = env.setting("secure", "enabled_accessibility_services");
@@ -1705,6 +1723,38 @@ mod tests {
         assert!(
             !l.iter().any(|x| x.contains("accessibility_enabled")),
             "another service still needs it on"
+        );
+    }
+
+    #[test]
+    fn restore_stops_accessibility_keeper_before_removing_our_service() {
+        let d = tmp("restore-keeper");
+        let store = Store::at(&d);
+        let r = FakeRunner::new()
+            .on("tvhome_keep_accessibility_enabled", "1\n")
+            .on(
+                "enabled_accessibility_services",
+                &format!("flar2.homebutton/a.i:{A11Y_SERVICE}\n"),
+            );
+        let mut emit = |_e: EngineEvent| {};
+        let mut env = Env {
+            adb: &adb(),
+            runner: &r,
+            store: &store,
+            emit: &mut emit,
+        };
+        let l = lines(&restore(&mut env, false));
+        let stop = l
+            .iter()
+            .position(|x| x.ends_with("settings put secure tvhome_keep_accessibility_enabled 0"))
+            .unwrap();
+        let remove = l
+            .iter()
+            .position(|x| x.ends_with("enabled_accessibility_services flar2.homebutton/a.i"))
+            .unwrap();
+        assert!(
+            stop < remove,
+            "the keeper must be stopped before its service is removed"
         );
     }
 

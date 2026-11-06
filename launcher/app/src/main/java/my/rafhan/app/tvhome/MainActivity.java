@@ -267,6 +267,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        LauncherSettings.initializeDeviceDefaults(this);
         setContentView(R.layout.activity_main);
         dp = getResources().getDisplayMetrics().density;
         wantInputs = ACTION_INPUTS.equals(getIntent().getAction());
@@ -380,7 +381,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void openTvSettings() {
-                startSafely(new Intent(Settings.ACTION_SETTINGS));
+                startSafely(ProjectorSupport.settings(MainActivity.this));
             }
 
             @Override
@@ -1678,12 +1679,19 @@ public class MainActivity extends Activity {
                 updateClock(); // also re-renders the prayer times
                 break;
             case LauncherSettings.SHOW_PRAYER:
+            case LauncherSettings.AZAN:
+            case LauncherSettings.PRAYER_REMINDER:
+                LauncherSettings.detectZone(this);
+                prayer.refresh();
+                applyCardSettings();
+                break;
             case LauncherSettings.SHOW_USAGE:
             case LauncherSettings.SHOW_SYSTEM:
             case LauncherSettings.SHOW_NOW:
                 applyCardSettings();
                 break;
             case LauncherSettings.SHOW_WEATHER:
+                LauncherSettings.detectZone(this);
                 applyCardSettings();
                 weather.settingsChanged(); // back on: show and fetch now, not at the next minute
                 break;

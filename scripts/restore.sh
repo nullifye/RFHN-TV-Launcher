@@ -40,8 +40,13 @@ if [ -n "$SCAN" ] && [ "$SCAN" != "null" ]; then
   A shell settings put global wifi_scan_always_enabled "$SCAN"
 fi
 # Phone remote: drop our accessibility service, keep the others (Button Mapper).
+# Stop the explicit opt-in keeper first, or it would restore the service we are removing.
+KEEPER="$(A shell settings get secure tvhome_keep_accessibility_enabled | tr -d '\r')"
+if [ "$KEEPER" = "1" ]; then
+  A shell settings put secure tvhome_keep_accessibility_enabled 0 || exit 1
+fi
 CUR="$(A shell settings get secure enabled_accessibility_services | tr -d '\r')"
-NEW="$(echo "$CUR" | tr ':' '\n' | grep -v "$PKG/" | paste -sd: -)"
+NEW="$(echo "$CUR" | tr ':' '\n' | grep -v "$PKG/" | paste -sd: - || true)"
 if [ "$NEW" != "$CUR" ]; then
   if [ -n "$NEW" ]; then A shell settings put secure enabled_accessibility_services "$NEW"
   else A shell settings delete secure enabled_accessibility_services; fi

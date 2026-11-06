@@ -128,6 +128,9 @@ final class PrayerPanel {
 
     /** Called every minute (clock tick) and on resume. */
     void refresh() {
+        hijriView.setVisibility(LauncherSettings.flag(ctx, LauncherSettings.SHOW_PRAYER)
+                ? android.view.View.VISIBLE : android.view.View.GONE);
+        if (!needsTimes()) return;
         LocalDate today = LocalDate.now();
         YearMonth ym = YearMonth.from(today);
         if (month == null || !ym.equals(monthKey)) {
@@ -151,9 +154,17 @@ final class PrayerPanel {
 
     /** Network came back: retry a failed fetch (at most once a minute). */
     void onNetworkAvailable() {
+        if (!needsTimes()) return;
         if (month == null && !fetching && System.currentTimeMillis() - lastAttempt > 60_000) {
             fetch(YearMonth.now());
         }
+    }
+
+    /** The hidden card still supplies the month cache when azan/reminders are enabled. */
+    private boolean needsTimes() {
+        return LauncherSettings.flag(ctx, LauncherSettings.SHOW_PRAYER)
+                || LauncherSettings.flag(ctx, LauncherSettings.AZAN)
+                || LauncherSettings.choice(ctx, LauncherSettings.PRAYER_REMINDER) > 0;
     }
 
     // ---------------------------------------------------------------- display

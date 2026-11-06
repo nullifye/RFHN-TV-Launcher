@@ -121,6 +121,10 @@ final class RemoteSettings {
                                 : (buttons == 1 ? "1 button" : buttons + " buttons") + " with new actions: all back to normal")
                         .put("button", "Reset").put("done", "Every button back to normal")
                         .put("ask", "Put every remote button back to normal? Their new actions are removed.")));
+        cats.put(category("Misc", "Compatibility and accessibility",
+                toggle(AccessibilityKeeper.SETTING, "Keep accessibility enabled",
+                        "Restores TV Home if the TV disables it. Turn this off first to disable accessibility manually")
+                        .put("value", AccessibilityKeeper.enabled(ctx))));
         return new JSONObject().put("ok", true).put("categories", cats);
     }
 
@@ -136,6 +140,10 @@ final class RemoteSettings {
         switch (row.getString("type")) {
             case "toggle":
                 if (!(v instanceof Boolean)) return "Expected on or off.";
+                if (AccessibilityKeeper.SETTING.equals(key)) {
+                    return AccessibilityKeeper.setEnabled(ctx, (Boolean) v) ? null
+                            : "Needs WRITE_SECURE_SETTINGS from the setup script.";
+                }
                 LauncherSettings.setFlag(ctx, key, (Boolean) v);
                 return null;
             case "choice": {

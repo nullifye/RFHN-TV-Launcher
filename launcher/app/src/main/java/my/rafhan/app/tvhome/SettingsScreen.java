@@ -45,18 +45,18 @@ final class SettingsScreen {
     private static final int TOGGLE = 0, CHOICE = 1, PICKER = 2, ACTION = 3, INFO = 4, CHECK = 5;
 
     private static final int HOME = 0, PRAYER = 1, WEATHER = 2, USAGE = 3, SAVER = 4, NET = 5, ALERTS = 6, STATUS = 7,
-            REMOTE = 8, BUTTONS = 9, HIDDEN = 10; // About: 11
+            REMOTE = 8, BUTTONS = 9, HIDDEN = 10, MISC = 11; // About: 12
     private static final String[] CATS = {"Home screen", "Prayer times", "Weather", "Most used", "Screen saver",
-            "Net traffic", "Notifications", "Info overlay", "Phone remote", "Button Mapper", "Running apps", "About"};
+            "Net traffic", "Notifications", "Info overlay", "Phone remote", "Button Mapper", "Running apps", "Misc", "About"};
     private static final String[] CAT_SUBS = {"Cards, clock and wallpaper", "Zone and card",
             "Forecast and air quality", "Your top apps this week", "What the TV shows when idle",
             "Where the TV's apps connect", "What the bell tells you",
             "Speed, uptime and clock over apps", "Control the TV from your phone",
-            "New actions for the remote's buttons", "Apps hidden from the list", "Version and TV settings"};
+            "New actions for the remote's buttons", "Apps hidden from the list", "Compatibility and accessibility", "Version and TV settings"};
     private static final int[] CAT_ICONS = {R.drawable.ic_tv, R.drawable.ic_crescent, R.drawable.ic_storm,
             R.drawable.ic_chart, R.drawable.ic_screensaver, R.drawable.ic_signal, R.drawable.ic_bell,
             R.drawable.ic_status_bar, R.drawable.ic_phone, R.drawable.ic_remote_buttons, R.drawable.ic_ram,
-            R.drawable.ic_info};
+            R.drawable.ic_settings, R.drawable.ic_info};
     /** Net traffic's connection list updates this often while it's on screen. */
     private static final long NET_REFRESH_MS = 3_000;
     private static final String LIVE_TV = "com.mediatek.wwtv.tvcenter";
@@ -613,6 +613,7 @@ final class SettingsScreen {
             case REMOTE: remoteRows(out); break;
             case BUTTONS: buttonRows(out); break;
             case HIDDEN: hiddenRows(out); break;
+            case MISC: miscRows(out); break;
             default: aboutRows(out); break;
         }
         return out;
@@ -941,6 +942,26 @@ final class SettingsScreen {
         } catch (RuntimeException e) {
             host.openTvSettings();
         }
+    }
+
+    /** Explicit opt-in; switch this off here before disabling the service in Android Settings. */
+    private void miscRows(List<Row> out) {
+        Row keep = new Row(TOGGLE, "Keep accessibility enabled");
+        keep.sub = "Restore TV Home if the TV turns it off. Turn this off first to disable accessibility manually";
+        keep.on = () -> AccessibilityKeeper.enabled(ctx);
+        keep.action = () -> {
+            if (!AccessibilityKeeper.setEnabled(ctx, !AccessibilityKeeper.enabled(ctx))) {
+                android.widget.Toast.makeText(ctx, "Needs WRITE_SECURE_SETTINGS from the setup script",
+                        android.widget.Toast.LENGTH_LONG).show();
+            }
+            main.postDelayed(() -> {
+                if (shown && picker == null && cat == MISC) refreshRows();
+            }, 2_000);
+        };
+        out.add(keep);
+        Row state = new Row(INFO, "Accessibility service");
+        state.value = () -> AccessibilityKeeper.status(ctx);
+        out.add(state);
     }
 
     /** "Add a button": the next key pressed (RemoteAccessibilityService) is the one, for 10 s. */

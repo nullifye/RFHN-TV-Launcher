@@ -71,7 +71,8 @@ public class RemoteAccessibilityService extends AccessibilityService {
         checkScheduled = true;
         Context app = ctx.getApplicationContext();
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (!isOn()) reconnect(app);
+            // The opt-in keeper restores missing settings itself, without an off/on cycle.
+            if (!isOn() && !AccessibilityKeeper.enabled(app)) reconnect(app);
         }, 10_000);
     }
 

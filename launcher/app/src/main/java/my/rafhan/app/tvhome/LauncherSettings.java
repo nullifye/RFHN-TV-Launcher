@@ -81,6 +81,19 @@ final class LauncherSettings {
         return ctx.getSharedPreferences("settings", Context.MODE_PRIVATE);
     }
 
+    /** Fresh 1 GB H713 projector installs start small. Never overwrite an existing user's choices. */
+    static void initializeDeviceDefaults(Context ctx) {
+        SharedPreferences p = prefs(ctx);
+        if (!p.getAll().isEmpty() || !ProjectorSupport.minimalDefaults(ctx)) return;
+        SharedPreferences.Editor edit = p.edit();
+        for (String key : new String[] {SHOW_PRAYER, SHOW_USAGE, SHOW_SYSTEM, SHOW_NOW,
+                SHOW_WEATHER, WEATHER_FX, REMOTE, AZAN, NET_BANNER, STATUS_BAR,
+                ALERT_UPDATE, ALERT_PLAY, ALERT_HDMI, ALERT_BT, ALERT_MEMORY}) {
+            edit.putBoolean(key, false);
+        }
+        edit.putInt(PRAYER_REMINDER, 0).putString(WALLPAPER, Wallpapers.NONE).apply();
+    }
+
     /** Not a stored setting: tells listeners (the azan in RemoteService) to play once now. */
     static void playAzanNow() {
         changed(AZAN_TEST);
@@ -197,6 +210,9 @@ final class LauncherSettings {
 
     /** With Auto, looks for the TV's zone (from its location) and keeps it and where the TV is. */
     static void detectZone(Context ctx) {
+        // With no prayer/weather features in use, don't request a location in the background.
+        if (!flag(ctx, SHOW_PRAYER) && !flag(ctx, SHOW_WEATHER) && !flag(ctx, AZAN)
+                && choice(ctx, PRAYER_REMINDER) == 0) return;
         if (!zoneAuto(ctx)) return;
         Context app = ctx.getApplicationContext();
         ZoneDetect.locate(app, here -> {

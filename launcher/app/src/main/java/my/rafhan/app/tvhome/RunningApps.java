@@ -36,9 +36,37 @@ final class RunningApps {
         }
     }
 
-    // "#30: prcp   FGS  27297:my.rafhan.app.radiostream/u0a274  activity=recents"
+    // Android 10: "#30: prcp FGS 27297:my.rafhan.app.radiostream/u0a274 activity=recents"
+    // Allwinner 11 also pads single-digit indices and adds a capability column:
+    // "# 7: prcp FGS --- 4493:com.softmedia.receiver/u0a69".
     private static final Pattern LINE = Pattern.compile(
-            "#\\d+:\\s+(\\S+(?:\\+\\s*\\d+)?)\\s+(\\S+)\\s+(\\d+):([\\w.]+)(?::[\\w.]+)?/\\S+(.*)");
+            "^#\\s*\\d+:\\s+(\\S+(?:\\+\\s*\\d+)?)\\s+(\\S+)\\s+(?:\\S+\\s+)?(\\d+):([\\w.]+)(?::[\\w.]+)?/\\S+(.*)$");
+
+    static final class ProcessRow {
+        final String pkg, adj, proc, rest;
+        final int pid;
+
+        ProcessRow(Matcher m) {
+            adj = m.group(1);
+            proc = m.group(2);
+            pid = Integer.parseInt(m.group(3));
+            pkg = m.group(4);
+            rest = m.group(5);
+        }
+    }
+
+    /** Pure parser shared by the reader and tests using real firmware output. */
+    static ProcessRow parseLine(String line) {
+        if (line == null) return null;
+        Matcher m = LINE.matcher(line.trim());
+        if (!m.matches()) return null;
+        try {
+            ProcessRow row = new ProcessRow(m);
+            return row.pid > 0 ? row : null;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
 
     private static final String PREFS = "running_apps", HIDDEN = "hidden";
 
@@ -80,16 +108,16 @@ final class RunningApps {
             Process p = new ProcessBuilder("dumpsys", "activity", "lru").redirectErrorStream(true).start();
             try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
                 for (String line; (line = r.readLine()) != null; ) {
-                    Matcher m = LINE.matcher(line.trim());
-                    if (!m.find()) continue;
-                    String pkg = m.group(4);
-                    int pid = Integer.parseInt(m.group(3));
+                    ProcessRow row = parseLine(line);
+                    if (row == null) continue;
+                    String pkg = row.pkg;
+                    int pid = row.pid;
                     AppEntry e = launchable.get(pkg);
                     if (e == null || pkg.equals(ctx.getPackageName()) || pid <= 0) continue;
                     App a = byPkg.get(pkg);
                     if (a == null) byPkg.put(pkg, a = new App(e));
                     a.pids.add(pid);
-                    int rank = rank(m.group(1), m.group(2), m.group(5));
+                    int rank = rank(row.adj, row.proc, row.rest);
                     if (rank > a.rank || a.state.isEmpty()) {
                         a.rank = rank;
                         a.state = label(rank);

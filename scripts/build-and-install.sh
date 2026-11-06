@@ -40,6 +40,22 @@ case "$STATE" in
   *) die "can't reach the TV at $TV ($STATE). Check its IP, that USB/network debugging is on, and that both are on the same network." ;;
 esac
 echo "$TV" > .tv   # reached it: the next runs (and the other scripts) don't need TV=
+
+# Replacing a running launcher can take the TV's Wi-Fi/ADB link down for a few seconds. A network
+# TV stuck "offline" needs a fresh connection, not just another connect, so reconnect and retry
+# instead of letting the next step fail with "device offline".
+reconnect() {
+  case "$TV" in *:*) adb disconnect "$TV" >/dev/null 2>&1 || true; adb connect "$TV" >/dev/null 2>&1 || true ;; esac
+}
+wait_device() {
+  local i
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    [ "$(A get-state 2>/dev/null | tr -d '\r')" = device ] && return 0
+    reconnect
+    sleep 1
+  done
+  return 1
+}
 SDK="$(A shell getprop ro.build.version.sdk | tr -d '\r')"
 [ "${SDK:-0}" -ge 26 ] 2>/dev/null || die "the TV runs Android SDK ${SDK:-?}; this launcher needs Android 8.0 (SDK 26) or newer."
 
@@ -70,12 +86,7 @@ BEFORE="$(updated || true)"
 INSTALL="$(A shell pm install -r /data/local/tmp/tvhome.apk 2>&1 | tr -d '\r' || true)"
 # Replacing the running launcher can drop the TV's ADB connection for a moment (a VPN it was
 # running goes away and the network changes): reconnect before the remaining steps.
-for _ in 1 2 3 4 5 6 7 8 9 10; do
-  [ "$(A get-state 2>/dev/null | tr -d '\r')" = device ] && break
-  # A network TV stuck "offline" needs a fresh connection, not just another connect.
-  case "$TV" in *:*) adb disconnect "$TV" >/dev/null 2>&1 || true; adb connect "$TV" >/dev/null 2>&1 || true ;; esac
-  sleep 1
-done
+wait_device || true
 A shell rm -f /data/local/tmp/tvhome.apk || true
 # The connection can drop before pm's "Success" arrives: the package's new install time says it worked.
 case "$INSTALL" in *Success*) ;; *)
@@ -93,12 +104,16 @@ Or sign your builds with the project's release key (docs/development.md)." ;;
   *) die "the TV refused the install (above)." ;;
 esac
 
+# The install can still be settling: wait again before the steps below, so one dropped link
+# doesn't leave the run half-done (the install itself already succeeded at this point).
+wait_device || die "the TV's connection dropped after installing and did not come back. Run it again; the install itself succeeded."
+
 # The Net traffic monitor's native engine isn't in the APK (it keeps the APK small). A release
 # install downloads it from the GitHub release; a local build's engine is pushed here instead,
 # next to the app, where the app checks it against the fingerprints in this APK before using it.
 ENGINE=launcher/app/build/outputs/netengine/release
 if [ -d "$ENGINE" ]; then
-  ABI="$(A shell getprop ro.product.cpu.abi | tr -d '\r')"
+  ABI="$(A shell getprop ro.product.cpu.abi 2>/dev/null | tr -d '\r' || true)"
   DEST="/sdcard/Android/data/$PKG/files/netengine"
   if A shell mkdir -p "$DEST" 2>/dev/null; then
     for f in "$ENGINE"/netengine-"$ABI"-*.so; do
@@ -151,7 +166,7 @@ case "$CUR" in
   # Either spelling: Android rewrites the list in the short form ($PKG/.RemoteAccessibilityService)
   # when it drops an uninstalled app's service.
   *"$PKG/"*)
-    OTHERS="$(printf %s "$CUR" | tr ':' '\n' | grep -v "^$PKG/" | paste -sd: -)"
+    OTHERS="$(printf %s "$CUR" | tr ':' '\n' | grep -v "^$PKG/" | paste -sd: - || true)"
     if [ -n "$OTHERS" ]; then opt settings put secure enabled_accessibility_services "$OTHERS"
     else opt settings delete secure enabled_accessibility_services; fi
     sleep 1
