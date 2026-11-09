@@ -292,14 +292,18 @@ final class WeatherPanel {
 
     /**
      * The names a MET warning would use for the place: its own, and for Auto the prayer zone's
-     * areas too (the warnings list districts: "Klang", "Kuala Langat").
+     * state and areas too. MET usually lists districts ("Selangor (Klang, Kuala Langat …)"), but
+     * sometimes names a state on its own ("… • Selangor • …"), so the state is matched as well.
      */
     private List<String> warningPlaces(Weather.Place place) {
         List<String> out = new java.util.ArrayList<>();
         out.add(place.name);
         if (LauncherSettings.weatherPlace(ctx).isEmpty()) {
             String[] z = RemoteSettings.zoneEntry(ctx, LauncherSettings.zone(ctx)); // state, code, areas
-            if (z != null) for (String a : z[2].split(",")) out.add(a.trim());
+            if (z != null) {
+                out.add(z[0]); // the state, for a warning that names it without districts
+                for (String a : z[2].split(",")) out.add(a.trim());
+            }
         }
         return out;
     }

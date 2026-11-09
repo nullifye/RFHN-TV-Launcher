@@ -207,6 +207,8 @@ public class WeatherTest {
         assertEquals("Thunderstorms warning", Weather.warningName(w));
         assertEquals(LocalDateTime.of(2026, 10, 31, 20, 0), w.to);
         assertNotNull(Weather.activeWarning(all, evening, java.util.Arrays.asList("Shah Alam", "Kuala Langat")));
+        // The state on its own matches too (warningPlaces adds it, for a warning that names no district).
+        assertNotNull(Weather.activeWarning(all, evening, java.util.Arrays.asList("Selangor")));
         assertNull(Weather.activeWarning(all, evening, java.util.Arrays.asList("Kuching"))); // not named
         assertNull(Weather.activeWarning(all, LocalDateTime.of(2026, 10, 31, 20, 30),
                 java.util.Arrays.asList("Klang"))); // over
