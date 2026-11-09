@@ -45,18 +45,20 @@ final class SettingsScreen {
     private static final int TOGGLE = 0, CHOICE = 1, PICKER = 2, ACTION = 3, INFO = 4, CHECK = 5;
 
     private static final int HOME = 0, PRAYER = 1, WEATHER = 2, USAGE = 3, SAVER = 4, NET = 5, ALERTS = 6, STATUS = 7,
-            REMOTE = 8, BUTTONS = 9, HIDDEN = 10, MISC = 11; // About: 12
+            REMOTE = 8, BUTTONS = 9, HIDDEN = 10, SPEED = 11, MISC = 12; // About: 13
     private static final String[] CATS = {"Home screen", "Prayer times", "Weather", "Most used", "Screen saver",
-            "Net traffic", "Notifications", "Info overlay", "Phone remote", "Button Mapper", "Running apps", "Misc", "About"};
+            "Net traffic", "Notifications", "Info overlay", "Phone remote", "Button Mapper", "Running apps",
+            "Speed test", "Misc", "About"};
     private static final String[] CAT_SUBS = {"Cards, clock and wallpaper", "Zone and card",
             "Forecast and air quality", "Your top apps this week", "What the TV shows when idle",
             "Where the TV's apps connect", "What the bell tells you",
             "Speed, uptime and clock over apps", "Control the TV from your phone",
-            "New actions for the remote's buttons", "Apps hidden from the list", "Compatibility and accessibility", "Version and TV settings"};
+            "New actions for the remote's buttons", "Apps hidden from the list",
+            "Download speed and latency", "Compatibility and accessibility", "Version and TV settings"};
     private static final int[] CAT_ICONS = {R.drawable.ic_tv, R.drawable.ic_crescent, R.drawable.ic_storm,
             R.drawable.ic_chart, R.drawable.ic_screensaver, R.drawable.ic_signal, R.drawable.ic_bell,
             R.drawable.ic_status_bar, R.drawable.ic_phone, R.drawable.ic_remote_buttons, R.drawable.ic_ram,
-            R.drawable.ic_settings, R.drawable.ic_info};
+            R.drawable.ic_speed, R.drawable.ic_settings, R.drawable.ic_info};
     /** Net traffic's connection list updates this often while it's on screen. */
     private static final long NET_REFRESH_MS = 3_000;
     private static final String LIVE_TV = "com.mediatek.wwtv.tvcenter";
@@ -123,6 +125,15 @@ final class SettingsScreen {
     private int pickerFrom;
     private final java.util.ArrayDeque<Object[]> pickerStack = new java.util.ArrayDeque<>(); // {rows, title, from}
     private boolean confirmForget;
+    // Speed test (SpeedTest): the run in flight, its live speed/latency, the last error, the results.
+    private boolean confirmSpeed; // "something's playing" two-step confirm
+    private boolean confirmClear; // "clear history" two-step confirm
+    private SpeedTest speedTest;
+    private boolean speedRunning;
+    private double speedLiveMbps;
+    private int speedLivePing;    // -1 until the latency phase finishes
+    private String speedError;
+    private List<SpeedHistory.Result> speedResults;
     // Button Mapper: waiting for "Press a button" (RemoteAccessibilityService.capture), and why
     // the last button pressed couldn't be added.
     private boolean capturing, shown;
@@ -270,6 +281,12 @@ final class SettingsScreen {
             RemoteAccessibilityService.capture(null);
             capturing = false;
         }
+        if (speedTest != null) { // a running test: let it go, don't keep saturating the line
+            speedTest.cancel();
+            speedTest = null;
+            speedRunning = false;
+        }
+        main.removeCallbacks(speedTick);
     }
 
     /** What the highlight frames. */
@@ -296,6 +313,8 @@ final class SettingsScreen {
     private void move(int d) {
         confirmForget = false;
         confirmPhone = null;
+        confirmSpeed = false;
+        confirmClear = false;
         if (col == 0) {
             int c = cat + d;
             if (c < 0 || c >= CATS.length) return;
@@ -586,6 +605,15 @@ final class SettingsScreen {
     };
     private String netShown = "";
 
+    /** While a speed test runs, the rows (the live number) refresh a couple of times a second. */
+    private final Runnable speedTick = new Runnable() {
+        @Override
+        public void run() {
+            if (cat != SPEED || picker != null || !rowList.isShown() || !speedRunning) return;
+            refreshRows(); // render() posts the next tick while speedRunning
+        }
+    };
+
     private static boolean netBusy() {
         return TrafficMonitor.preparing || TrafficMonitor.stopping;
     }
@@ -597,6 +625,129 @@ final class SettingsScreen {
         for (TrafficHistory.Entry x : e) bytes += x.sent + x.received;
         return TrafficMonitor.running + "|" + TrafficMonitor.preparing + "|" + TrafficMonitor.stopping + "|"
                 + TrafficMonitor.status + "|" + e.size() + "|" + bytes + "|" + TrafficMonitor.destinations.size();
+    }
+
+    // ---------------------------------------------------------------- Speed test
+
+    private static final int[] SPEED_SOURCES = {0, 1, 2};
+    private static final String[] SPEED_SOURCE_NAMES = {"Cloudflare", "Netflix", "Unifi Malaysia"};
+
+    /**
+     * Settings → Speed test (SpeedTest): a source to test from, a Run row with the live download
+     * speed, the last run's latency, and the last 10 results (SpeedHistory) to compare.
+     */
+    private void speedRows(List<Row> out) {
+        if (speedResults == null) speedResults = SpeedHistory.load(ctx);
+        SpeedHistory.Result last = speedResults.isEmpty() ? null : speedResults.get(0);
+
+        out.add(choice(LauncherSettings.SPEED_SOURCE, "Test from",
+                "Cloudflare (nearest edge), Netflix (streaming) or Unifi (TM's nearest server)", SPEED_SOURCES, SPEED_SOURCE_NAMES));
+
+        Row run = new Row(ACTION, speedRunning ? "Testing…" : "Run speed test");
+        if (speedRunning) {
+            if (speedLivePing < 0) {
+                run.sub = "Measuring latency…";
+                run.value = () -> "…";
+            } else {
+                run.sub = "Measuring download… leave this page to stop";
+                run.value = () -> speedLiveMbps <= 0 ? speedLivePing + " ms"
+                        : String.format(Locale.US, "%.1f Mbps", speedLiveMbps);
+            }
+        } else if (confirmSpeed) {
+            run.sub = "Something's playing — a test may stutter it. Press OK again to run anyway";
+            run.value = () -> "Run?";
+        } else {
+            run.sub = speedError != null ? speedError
+                    : last == null ? "Download speed and latency" : "Last run " + speedAgo(last.timeMs);
+            run.value = () -> last == null ? "" : String.format(Locale.US, "%.0f Mbps", last.downMbps);
+        }
+        run.action = this::runSpeedTest;
+        out.add(run);
+
+        if (!speedRunning && last != null) {
+            out.add(detail("Latency", last.pingMs + " ms", "Delay before video starts; lower is snappier"));
+        }
+
+        if (!speedResults.isEmpty()) {
+            for (int i = 0; i < speedResults.size(); i++) {
+                SpeedHistory.Result r = speedResults.get(i);
+                Row h = new Row(INFO, String.format(Locale.US, "%.1f Mbps · %d ms", r.downMbps, r.pingMs));
+                if (i == 0) h.heading = "History";
+                String net = r.ethernet ? "Ethernet" : r.netName.isEmpty() ? "Wi-Fi" : "Wi-Fi (" + r.netName + ")";
+                h.sub = (r.source.isEmpty() ? "" : r.source + " · ") + net + " · " + speedAgo(r.timeMs);
+                out.add(h);
+            }
+            Row clear = new Row(ACTION, confirmClear ? "Press OK again to clear history" : "Clear history");
+            clear.action = () -> {
+                if (!confirmClear) {
+                    confirmClear = true;
+                    refreshRows();
+                    return;
+                }
+                confirmClear = false;
+                speedResults.clear();
+                SpeedHistory.save(ctx, speedResults);
+                refreshRows();
+            };
+            out.add(clear);
+        }
+    }
+
+    private void runSpeedTest() {
+        if (speedRunning) return;
+        android.media.AudioManager am = ctx.getSystemService(android.media.AudioManager.class);
+        if (!confirmSpeed && am != null && am.isMusicActive()) { // radio, a video: warn before saturating
+            confirmSpeed = true;
+            refreshRows();
+            return;
+        }
+        confirmSpeed = false;
+        speedError = null;
+        speedRunning = true;
+        speedLiveMbps = 0;
+        speedLivePing = -1;
+        if (speedResults == null) speedResults = SpeedHistory.load(ctx);
+        refreshRows();
+        SpeedTest.Source src = SpeedTest.Source.of(LauncherSettings.choice(ctx, LauncherSettings.SPEED_SOURCE));
+        speedTest = new SpeedTest();
+        speedTest.start(src, new SpeedTest.Listener() {
+            @Override
+            public void onLatency(int ms) {
+                speedLivePing = ms;
+            }
+
+            @Override
+            public void onProgress(double m) {
+                speedLiveMbps = m; // the tick shows it
+            }
+
+            @Override
+            public void onResult(double down, int ping) {
+                speedRunning = false;
+                speedTest = null;
+                speedLiveMbps = down;
+                SysInfo.Net n = SysInfo.network(ctx);
+                SpeedHistory.add(speedResults, new SpeedHistory.Result(System.currentTimeMillis(), src.label, down, ping,
+                        n.ethernet, n.name), SpeedHistory.MAX);
+                SpeedHistory.save(ctx, speedResults);
+                refreshRows();
+            }
+
+            @Override
+            public void onError(String message) {
+                speedRunning = false;
+                speedTest = null;
+                speedError = message;
+                refreshRows();
+            }
+        });
+    }
+
+    private static String speedAgo(long timeMs) {
+        long d = System.currentTimeMillis() - timeMs;
+        if (d < 60_000) return "just now";
+        return android.text.format.DateUtils.getRelativeTimeSpanString(timeMs, System.currentTimeMillis(),
+                android.text.format.DateUtils.MINUTE_IN_MILLIS).toString();
     }
 
     private List<Row> rowsFor(int c) {
@@ -613,6 +764,7 @@ final class SettingsScreen {
             case REMOTE: remoteRows(out); break;
             case BUTTONS: buttonRows(out); break;
             case HIDDEN: hiddenRows(out); break;
+            case SPEED: speedRows(out); break;
             case MISC: miscRows(out); break;
             default: aboutRows(out); break;
         }
@@ -1546,6 +1698,8 @@ final class SettingsScreen {
             netShown = netState();
             main.postDelayed(netTick, netBusy() ? 500 : NET_REFRESH_MS); // runs again from here
         }
+        main.removeCallbacks(speedTick);
+        if (cat == SPEED && picker == null && speedRunning) main.postDelayed(speedTick, 500); // live readout
         for (int i = 0; i < catViews.size(); i++) {
             // The open category stays marked while its rows have focus.
             catViews.get(i).setBackgroundResource(i == cat && col == 1 ? R.drawable.row_selected : 0);

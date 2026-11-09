@@ -180,6 +180,19 @@ Press **Up** on the top bar and the home screen slides away. A screen with three
 - **USB debugging off:** the launcher can only use Android's background kill (`KILL_BACKGROUND_PROCESSES`). It can't stop apps that are on screen or running a service, and the screen says so. Memory isn't shown.
 - **Refresh:** the list is read when the screen opens and after each close. Nothing runs while the screen is closed.
 
+## Speed test
+
+**Settings → Speed test** (under Running apps) measures the TV's download speed and latency. It needs no USB debugging — it's plain HTTP from the launcher — and keeps the last 10 results so they can be compared.
+
+- **Test from:** pick the source in the row at the top:
+  - **Cloudflare** — the nearest Cloudflare edge (usually Kuala Lumpur); a good "internet" baseline.
+  - **Netflix** — fast.com's servers, which on a Malaysian line sit inside the ISP (a Netflix cache), so it reflects streaming.
+  - **Unifi Malaysia** — TM's own speedtest server, the nearest one picked automatically from Unifi's server list (over HTTPS), so the latency is tiny and it shows your line's local best.
+- **Run speed test:** a few quick latency round-trips, then a ~10-second download over a few connections. The speed climbs live as it runs; the latency is the quickest round-trip (shown below the Run row). If audio or video is playing when you start, it asks first (press OK again) rather than stutter it.
+- **History:** the last 10 runs, newest first, each as "93.1 Mbps · 5 ms" tagged with its source and the network it ran on (Wi-Fi name, or Ethernet) and how long ago. **Clear history** (press OK twice) empties the list.
+- On this TV's Unifi line, for example: Cloudflare ~52 ms, but the Unifi Klang server and Netflix cache answer in ~4–5 ms — the download speeds are all close to the line's capacity.
+- **No phone remote:** like Net traffic, the speed test is on the TV only.
+
 ## Settings (gear)
 
 **Quick actions:** hold OK (or press Menu) on the gear for a short menu under it:
@@ -211,6 +224,7 @@ The gear at the end of the top bar opens the launcher's Settings: categories on 
 | Phone remote | Remote on/off (the banner and bell keep working when it's off), its address, forget all paired phones (press OK twice), and each paired phone with when it was last used and its own Forget (OK twice) |
 | Button Mapper | The buttons with new actions, Add a button (press it), Add the Back button, long-press time (Short / Medium / Long), double-press time (Fast / Medium / Slow); see [Button Mapper](#button-mapper) |
 | Running apps | Apps hidden from the running-apps screen; OK shows one again |
+| Speed test | Test from (Cloudflare / Netflix / Unifi Malaysia), Run speed test (download + latency, live while it runs), the last run's latency, and the last 10 results tagged with their source. See [Speed test](#speed-test) |
 | About | Version, install time, APK size, Check for updates (shows the last check's answer, from here or the bell's daily check: "You have the latest version", or the row becomes "Update to x.y.z" to download and install it, settings kept), TV settings |
 
 ## Button Mapper

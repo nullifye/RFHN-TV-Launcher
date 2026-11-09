@@ -160,6 +160,7 @@ You need an Android TV or Google TV running Android 8.0 or newer, and a computer
 | The gear | Settings: wallpaper, prayer zone, azan, cards, screen saver, notifications, phone remote |
 | Hold OK on the gear | Quick actions: start screen saver, sleep timer, sleep now, restart, shut down |
 | Settings → Net traffic | Start or stop the connection monitor; OK on a connection for its details |
+| Settings → Speed test | Download speed and latency from Cloudflare, Netflix or Unifi Malaysia, with the last 10 runs |
 | Back / Home | Back to the dock |
 
 **Phone remote:** open `http://<TV IP>:8486` in your phone's browser on the same Wi-Fi and pair with the PIN shown on the TV. Settings → Phone remote shows the exact address. Five tabs:

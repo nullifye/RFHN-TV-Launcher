@@ -25,6 +25,7 @@ final class LauncherSettings {
             USAGE_EXCLUDED = "usage_excluded", WALL_DIM = "wallpaper_dim",
             ALERT_UPDATE = "alert_update", ALERT_PLAY = "alert_play", ALERT_HDMI = "alert_hdmi", ALERT_BT = "alert_bluetooth",
             ALERT_MEMORY = "alert_memory", MEMORY_LEVEL = "memory_level", NET_BANNER = "net_banner",
+            SPEED_SOURCE = "speed_source", // Speed test: 0 Cloudflare, 1 Unifi Malaysia, 2 Netflix
             REMOTE = "remote_on", WALLPAPER = "wallpaper", WEEK_START = "week_start",
             AZAN = "azan", AZAN_TEST = "azan_test",
             PRAYER_REMINDER = "prayer_reminder",
