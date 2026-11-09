@@ -79,8 +79,8 @@ jobs:
       matrix:
         include:
           - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, exe: tvhome-tui, test: true }
-          - { os: macos-14, target: aarch64-apple-darwin, exe: tvhome-tui, test: true }
-          - { os: macos-14, target: x86_64-apple-darwin, exe: tvhome-tui, test: false }
+          - { os: macos-15, target: aarch64-apple-darwin, exe: tvhome-tui, test: true }
+          - { os: macos-15, target: x86_64-apple-darwin, exe: tvhome-tui, test: false }
           - { os: windows-latest, target: x86_64-pc-windows-msvc, exe: tvhome-tui.exe, test: true }
           # Android phones, in Termux: 64-bit, and 32-bit for older phones. Built with the
           # runner's Android NDK; API 24 (Android 7.0) is Termux's minimum.
