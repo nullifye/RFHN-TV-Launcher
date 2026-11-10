@@ -112,6 +112,12 @@ public class MainActivity extends Activity {
     static final String ACTION_QUICK_MENU = "my.rafhan.app.tvhome.action.QUICK_MENU";
     /** A remote button set to "TV Home settings": home, with Settings open. */
     static final String ACTION_SETTINGS = "my.rafhan.app.tvhome.action.SETTINGS";
+    /**
+     * A remote button mapped to Home, pressed while the launcher is already in front: return to the
+     * dock. The accessibility GLOBAL_ACTION_HOME doesn't, because it cycles the activity through
+     * onStop, so onNewIntent's "already home" reset is guarded out by hiddenSinceResume.
+     */
+    static final String ACTION_GO_HOME = "my.rafhan.app.tvhome.action.GO_HOME";
     private static final int REQUEST_VPN = 72;
     private boolean wantInputs, wantNetTraffic, wantQuickMenu, wantSettings;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -2202,6 +2208,15 @@ public class MainActivity extends Activity {
         }
         if (ACTION_SETTINGS.equals(intent.getAction())) {
             wantSettings = true;
+            return;
+        }
+        // A Home-mapped button pressed while the launcher is in front (isHome() is true, so it's
+        // resumed): go back to the dock unconditionally, the way the real Home key does.
+        if (ACTION_GO_HOME.equals(intent.getAction())) {
+            if (editMode != EDIT_NONE) return; // finish (OK) or cancel (Back) an edit first
+            if (section == MENU) closeMenu();
+            if (!dock.isEmpty()) moveFocus(DOCK, dockIdx);
+            else moveFocus(TOP, topIdx);
             return;
         }
         // Home pressed while already home: close the menu and go back to the dock.

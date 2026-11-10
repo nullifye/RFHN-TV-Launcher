@@ -80,7 +80,7 @@ final class ButtonActions implements PressDetector.Buttons {
         }
         switch (action) {
             case ButtonMap.NONE: return;
-            case ButtonMap.HOME: RemoteAccessibilityService.global(AccessibilityService.GLOBAL_ACTION_HOME); return;
+            case ButtonMap.HOME: goHome(); return;
             case ButtonMap.BACK: RemoteAccessibilityService.global(AccessibilityService.GLOBAL_ACTION_BACK); return;
             case ButtonMap.RECENTS: RemoteAccessibilityService.global(AccessibilityService.GLOBAL_ACTION_RECENTS); return;
             case ButtonMap.INPUTS: start(new Intent(ctx, InputsActivity.class)); return;
@@ -151,7 +151,7 @@ final class ButtonActions implements PressDetector.Buttons {
     private void normal(int code) {
         switch (code) {
             case KeyEvent.KEYCODE_BACK: RemoteAccessibilityService.global(AccessibilityService.GLOBAL_ACTION_BACK); return;
-            case KeyEvent.KEYCODE_HOME: RemoteAccessibilityService.global(AccessibilityService.GLOBAL_ACTION_HOME); return;
+            case KeyEvent.KEYCODE_HOME: goHome(); return;
             case KeyEvent.KEYCODE_APP_SWITCH: RemoteAccessibilityService.global(AccessibilityService.GLOBAL_ACTION_RECENTS); return;
             case KeyEvent.KEYCODE_NOTIFICATION: RemoteAccessibilityService.global(AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS); return;
             case KeyEvent.KEYCODE_TV_INPUT: start(new Intent(ctx, InputsActivity.class)); return; // what TV Home does with it
@@ -238,6 +238,16 @@ final class ButtonActions implements PressDetector.Buttons {
         } catch (RuntimeException e) {
             toast("Couldn't open it");
         }
+    }
+
+    /**
+     * Home. When the launcher is already in front its app list / running apps are just inner
+     * screens, and GLOBAL_ACTION_HOME doesn't return them to the dock (see MainActivity.ACTION_GO_HOME),
+     * so ask the launcher directly; from inside another app, the system action brings it to the front.
+     */
+    private void goHome() {
+        if (RemoteBridge.isHome()) start(new Intent(ctx, MainActivity.class).setAction(MainActivity.ACTION_GO_HOME));
+        else RemoteAccessibilityService.global(AccessibilityService.GLOBAL_ACTION_HOME);
     }
 
     private void toast(String s) {
