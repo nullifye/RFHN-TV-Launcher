@@ -5,7 +5,7 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 # associated documentation files, to deal in the Software without restriction, subject to including
 # this copyright notice and permission notice in all copies or substantial portions of the Software.
-# 1758 packages; safe = pre-ticked in Clean up.
+# 1819 packages; safe = pre-ticked in Clean up.
 
 [[app]]
 package = "ag.kinom"
@@ -65,10 +65,10 @@ note = "OEM background services, testing, and tracking (Skyworth / Realtek) (dis
 
 [[app]]
 package = "android.autoinstalls.config.SW"
-label = "Play Auto Installs config for preloaded apps"
-category = "Skyworth retail demo, shop promos, auto-installs and first-run leftovers"
+label = "Play auto-install config for partner apps"
+category = "Also disabled on Unit 3 (Thomson)"
 advice = "caution"
-note = "Play Auto Installs config for preloaded apps (disabled on 2 devices in cleanyourtv)"
+note = "Play auto-install config for partner apps (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.Sony.BRAVIA_VU1"
@@ -103,7 +103,7 @@ package = "android.autoinstalls.config.fomovie"
 label = "Play auto-install of partner apps"
 category = "Google telemetry and partner auto-installs"
 advice = "caution"
-note = "Play auto-install of partner apps (sic, \"fomovie\") (disabled on 4 devices in cleanyourtv)"
+note = "Play auto-install of partner apps (sic, \"fomovie\") (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.formovie"
@@ -117,14 +117,14 @@ package = "android.autoinstalls.config.google.gtvpai"
 label = "Silently installs partner apps"
 category = "Preloaded apps and services"
 advice = "caution"
-note = "Silently installs partner apps (disabled on 50 devices in cleanyourtv)"
+note = "Silently installs partner apps (disabled on 58 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.haier.hanyang"
 label = "Haier auto-install stub"
-category = "Haier telemetry, share, and content apps"
+category = "Haier apps, auto-install and the boot-time app manager"
 advice = "caution"
-note = "Haier auto-install stub (disabled on 1 device in cleanyourtv)"
+note = "Haier auto-install stub (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.hisense"
@@ -138,7 +138,7 @@ package = "android.autoinstalls.config.hisense.hayward"
 label = "Silently installs promoted apps"
 category = "silent installs, store demo, setup leftovers, telemetry"
 advice = "caution"
-note = "Silently installs promoted apps (disabled on 2 devices in cleanyourtv)"
+note = "Silently installs promoted apps (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.hisense.huangshan"
@@ -178,9 +178,9 @@ note = "PAI partner auto-install stub (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "android.autoinstalls.config.homwee"
 label = "Partner-app auto-installs"
-category = "Telemetry, ads and recommendation rows"
+category = "telemetry, ads and recommendation rows"
 advice = "caution"
-note = "Partner-app auto-installs (disabled on 8 devices in cleanyourtv)"
+note = "Partner-app auto-installs (disabled on 9 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.ktc.pai"
@@ -215,7 +215,7 @@ package = "android.autoinstalls.config.scbc.device"
 label = "Play auto-installs of partner apps"
 category = "Content rows, promos and auto-installs"
 advice = "caution"
-note = "Play auto-installs of partner apps (disabled on 10 devices in cleanyourtv)"
+note = "Play auto-installs of partner apps (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.sdmc"
@@ -229,7 +229,7 @@ package = "android.autoinstalls.config.sei"
 label = "Play auto-install of partner apps"
 category = "Boot advertisements, silent installs, recommendation services"
 advice = "caution"
-note = "Play auto-install of partner apps (disabled on 5 devices in cleanyourtv)"
+note = "Play auto-install of partner apps (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.sharp"
@@ -250,7 +250,7 @@ package = "android.autoinstalls.config.skyworth"
 label = "Play Auto Installs config for preloaded apps"
 category = "Skyworth auto-installs, retail demo and setup leftovers"
 advice = "caution"
-note = "Play Auto Installs config for preloaded apps (disabled on 4 devices in cleanyourtv)"
+note = "Play Auto Installs config for preloaded apps (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.soc.amlogic"
@@ -264,14 +264,21 @@ package = "android.autoinstalls.config.sony.bravia"
 label = "Play auto-install of partner apps"
 category = "Sony and Google content, ads and promos"
 advice = "caution"
-note = "Play auto-install of partner apps (disabled on 26 devices in cleanyourtv)"
+note = "Play auto-install of partner apps (disabled on 28 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.tcl.device"
 label = "Partner-app auto installer"
 category = "Telemetry and analytics"
 advice = "caution"
-note = "Partner-app auto installer (disabled on 26 devices in cleanyourtv)"
+note = "Partner-app auto installer (disabled on 28 devices in cleanyourtv)"
+
+[[app]]
+package = "android.autoinstalls.config.technicolor"
+label = "Partner app installer"
+category = "TIM / Technicolor telemetry and remote device management"
+advice = "caution"
+note = "Partner app installer (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.tpv.device"
@@ -325,9 +332,9 @@ note = "Telemetry and partner auto-installs (disabled on 1 device in cleanyourtv
 [[app]]
 package = "android.autoinstalls.config.xiaomi.amelie"
 label = "Play auto-install of partner apps"
-category = "Xiaomi content, ads and recommendation rows"
+category = "PatchWall, content rows, sponsored rows"
 advice = "caution"
-note = "Play auto-install of partner apps (disabled on 14 devices in cleanyourtv)"
+note = "Play auto-install of partner apps (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "android.autoinstalls.config.xiaomi.mibox3"
@@ -423,9 +430,9 @@ note = "Preloaded news, video and remote-support apps (disabled on 1 device in c
 [[app]]
 package = "cm.aptoidetv.pt"
 label = "Aptoide TV store"
-category = "Preloaded news, video and remote-support apps"
+category = "com.netflix.ninja"
 advice = "caution"
-note = "Aptoide TV store (disabled on 2 devices in cleanyourtv)"
+note = "Aptoide TV store (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "cm.aptoidetv.pt.cvt_platform7"
@@ -454,6 +461,13 @@ label = "Usermanual"
 category = "Recommendations and content"
 advice = "caution"
 note = "Recommendations and content (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "cn.kgzn.asp.vstoresubclient"
+label = "\"vstore\" app-store bridge"
+category = "telemetry and ad/store bridges"
+advice = "caution"
+note = "\"vstore\" app-store bridge (INTERNET, READ_PHONE_STATE) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "cn.tcl.odm.android.vstoresubclient"
@@ -528,9 +542,9 @@ note = "Game (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.Smartdevice.emanual"
 label = "On-screen manual"
-category = "Not needed on a TV"
+category = "Skyworth content, ads and preloads"
 advice = "caution"
-note = "On-screen manual (disabled on 19 devices in cleanyourtv)"
+note = "On-screen manual (disabled on 26 devices in cleanyourtv)"
 
 [[app]]
 package = "com.aajtak.firetv"
@@ -617,11 +631,18 @@ advice = "caution"
 note = "YunOS advertising and telemetry (disabled on 1 device in cleanyourtv)"
 
 [[app]]
-package = "com.alphainventor.filemanager"
-label = "File Commander"
-category = "Visible preloads nobody uses, plus the Ambient screensaver"
+package = "com.allwinnertech.platinum.media"
+label = "Media"
+category = "com.netflix.ninja"
 advice = "caution"
-note = "File Commander (disabled on 3 devices in cleanyourtv)"
+note = "Com.netflix.ninja (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.alphainventor.filemanager"
+label = "File Manager"
+category = "Preloaded apps and demos"
+advice = "caution"
+note = "File Manager; re-enable to browse USB drives (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.amazon.aca"
@@ -1174,7 +1195,7 @@ package = "com.amazon.providers.contentsupport"
 label = "Content support provider"
 category = "Ads, sponsored rows, recommendations, promos, shopping"
 advice = "keep"
-note = "Content support provider (disabled on 13 devices in cleanyourtv)"
+note = "Content support provider (disabled on 12 devices in cleanyourtv)"
 
 [[app]]
 package = "com.amazon.recess"
@@ -1650,21 +1671,21 @@ package = "com.android.adservices.api"
 label = "Privacy Sandbox ad services"
 category = "Android ad and personalisation services"
 advice = "safe"
-note = "Privacy Sandbox ad services (disabled on 74 devices in cleanyourtv)"
+note = "Privacy Sandbox ad services (disabled on 84 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.backupconfirm"
-label = "Backupconfirm"
-category = "Background services nobody needs on a TV"
+label = "Backup confirmation dialogs"
+category = "Unused system services"
 advice = "caution"
-note = "Background services nobody needs on a TV (disabled on 15 devices in cleanyourtv)"
+note = "Backup confirmation dialogs (disabled on 19 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.bips"
 label = "Default print service"
 category = "Printing"
 advice = "caution"
-note = "Default print service (disabled on 9 devices in cleanyourtv)"
+note = "Default print service (disabled on 10 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.bluetoothmidiservice"
@@ -1690,9 +1711,9 @@ note = "Outdated stock browser (AOSP) (disabled on 3 devices in cleanyourtv)"
 [[app]]
 package = "com.android.calculator2"
 label = "Calculator2"
-category = "Apps nobody asked for"
+category = "Google / AOSP leftovers"
 advice = "caution"
-note = "Apps nobody asked for (disabled on 1 device in cleanyourtv)"
+note = "Google / AOSP leftovers (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.calllogbackup"
@@ -1706,14 +1727,14 @@ package = "com.android.camera2"
 label = "Camera, no camera on this box"
 category = "Preloaded apps"
 advice = "caution"
-note = "Camera, no camera on this box (disabled on 10 devices in cleanyourtv)"
+note = "Camera, no camera on this box (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.cameraextensions"
-label = "Cameraextensions"
+label = "Camera extensions"
 category = "Unused on a projector stick"
 advice = "caution"
-note = "Unused on a projector stick (disabled on 7 devices in cleanyourtv)"
+note = "Camera extensions; the set has no camera (disabled on 9 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.carrierconfig"
@@ -1725,23 +1746,23 @@ note = "Android cruft (none of it is in the core set the tools refuse) (disabled
 [[app]]
 package = "com.android.cellbroadcastreceiver"
 label = "Cellbroadcastreceiver"
-category = "AOSP apps and services with no use on a 1080p projector"
+category = "Google / AOSP leftovers"
 advice = "caution"
-note = "AOSP apps and services with no use on a 1080p projector (disabled on 1 device in cleanyourtv)"
+note = "Google / AOSP leftovers (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.cellbroadcastservice"
 label = "Cellbroadcastservice"
-category = "AOSP apps and services with no use on a 1080p projector"
+category = "Google / AOSP leftovers"
 advice = "caution"
-note = "AOSP apps and services with no use on a 1080p projector (disabled on 1 device in cleanyourtv)"
+note = "Google / AOSP leftovers (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.chrome"
 label = "Chrome"
-category = "Preloaded apps not used"
+category = "com.netflix.ninja"
 advice = "caution"
-note = "Preloaded apps not used (disabled on 2 devices in cleanyourtv)"
+note = "Com.netflix.ninja (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.companiondevicemanager"
@@ -1755,21 +1776,21 @@ package = "com.android.cts.ctsshim"
 label = "Android test shim"
 category = "Dead weight on a TV"
 advice = "caution"
-note = "Android test shim (disabled on 14 devices in cleanyourtv)"
+note = "Android test shim (disabled on 16 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.cts.priv.ctsshim"
 label = "Android test shim"
 category = "Dead weight on a TV"
 advice = "caution"
-note = "Android test shim (disabled on 13 devices in cleanyourtv)"
+note = "Android test shim (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.dreams.basic"
 label = "Stock \"colors\" screensaver"
 category = "Not needed on a TV"
 advice = "caution"
-note = "Stock \"colors\" screensaver (disabled on 27 devices in cleanyourtv)"
+note = "Stock \"colors\" screensaver (disabled on 32 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.dreams.phototable"
@@ -1781,65 +1802,65 @@ note = "Background services not needed (disabled on 2 devices in cleanyourtv)"
 [[app]]
 package = "com.android.dreams.web"
 label = "Web"
-category = "Screensaver and backup extras"
+category = "Google / AOSP leftovers"
 advice = "caution"
-note = "Screensaver and backup extras (disabled on 1 device in cleanyourtv)"
+note = "Google / AOSP leftovers (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.dynsystem"
 label = "Dynamic System Updates"
-category = "Unused on a projector stick"
+category = "Dead weight on a TV"
 advice = "caution"
-note = "Dynamic System Updates (disabled on 19 devices in cleanyourtv)"
+note = "Dynamic System Updates (disabled on 21 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.egg"
 label = "Easter egg"
-category = "Preloaded apps"
+category = "Google / AOSP leftovers"
 advice = "caution"
-note = "Easter egg (disabled on 4 devices in cleanyourtv)"
+note = "Easter egg (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.ext.adservices.api"
 label = "Api"
 category = "Xiaomi telemetry / ads / push"
-advice = "caution"
-note = "Xiaomi telemetry / ads / push (disabled on 1 device in cleanyourtv)"
+advice = "safe"
+note = "Xiaomi telemetry / ads / push (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.federatedcompute.services"
 label = "Federated learning for the above"
 category = "Android ad and personalisation services"
 advice = "safe"
-note = "Federated learning for the above (disabled on 63 devices in cleanyourtv)"
+note = "Federated learning for the above (disabled on 74 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.gallery3d"
 label = "Legacy photo viewer"
 category = "Preloaded apps"
 advice = "caution"
-note = "Legacy photo viewer (disabled on 12 devices in cleanyourtv)"
+note = "Legacy photo viewer (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.health.connect.backuprestore"
 label = "Health Connect backup"
 category = "Not needed on a TV"
 advice = "caution"
-note = "Health Connect backup (disabled on 31 devices in cleanyourtv)"
+note = "Health Connect backup (disabled on 36 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.healthconnect.controller"
 label = "Health Connect"
 category = "Not needed on a TV"
 advice = "caution"
-note = "Health Connect (disabled on 31 devices in cleanyourtv)"
+note = "Health Connect (disabled on 35 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.hotspot2.osulogin"
 label = "Passpoint hotspot sign-in"
-category = "Unused on a projector stick"
+category = "Unused system services"
 advice = "caution"
-note = "Passpoint hotspot sign-in (disabled on 15 devices in cleanyourtv)"
+note = "Passpoint hotspot sign-in (disabled on 18 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.hotwordenrollment.okgoogle"
@@ -1857,10 +1878,10 @@ note = "Google Assistant / Gemini (by choice) (disabled on 1 device in cleanyour
 
 [[app]]
 package = "com.android.htmlviewer"
-label = "Local HTML viewer"
+label = "Internal HTML viewer"
 category = "Unused system services"
 advice = "caution"
-note = "Local HTML viewer (disabled on 18 devices in cleanyourtv)"
+note = "Internal HTML viewer (disabled on 24 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.localtransport"
@@ -1874,7 +1895,7 @@ package = "com.android.managedprovisioning"
 label = "Enterprise work-profile provisioning"
 category = "Dead weight on a TV"
 advice = "caution"
-note = "Enterprise work-profile provisioning (disabled on 7 devices in cleanyourtv)"
+note = "Enterprise work-profile provisioning (disabled on 10 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.media.tools"
@@ -1909,21 +1930,21 @@ package = "com.android.music"
 label = "Music"
 category = "Apps nobody asked for"
 advice = "caution"
-note = "Apps nobody asked for (disabled on 6 devices in cleanyourtv)"
+note = "Apps nobody asked for (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.musicfx"
 label = "Musicfx"
-category = "Phone-style Android bloat"
+category = "Google / AOSP leftovers"
 advice = "caution"
-note = "Phone-style Android bloat (disabled on 3 devices in cleanyourtv)"
+note = "Google / AOSP leftovers (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.nearby.halfsheet"
 label = "Nearby pairing pop-up"
-category = "Services a streaming box never uses"
+category = "E. System packages not applicable on a TV"
 advice = "caution"
-note = "Nearby pairing pop-up (disabled on 3 devices in cleanyourtv)"
+note = "Nearby pairing pop-up (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.nfc"
@@ -1944,14 +1965,14 @@ package = "com.android.ondevicepersonalization.services"
 label = "On-device ad personalisation"
 category = "Android ad and personalisation services"
 advice = "safe"
-note = "On-device ad personalisation (disabled on 67 devices in cleanyourtv)"
+note = "On-device ad personalisation (disabled on 77 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.onetimeinitializer"
 label = "Onetimeinitializer"
 category = "Android cruft (none of it is in the core set the tools refuse)"
 advice = "caution"
-note = "Android cruft (none of it is in the core set the tools refuse) (disabled on 3 devices in cleanyourtv)"
+note = "Android cruft (none of it is in the core set the tools refuse) (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.pacprocessor"
@@ -1965,14 +1986,14 @@ package = "com.android.printservice.recommendation"
 label = "Recommendation"
 category = "Printing"
 advice = "safe"
-note = "Printing (disabled on 4 devices in cleanyourtv)"
+note = "Printing (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.printspooler"
 label = "Printing"
 category = "Preloaded apps"
 advice = "caution"
-note = "Printing (disabled on 118 devices in cleanyourtv)"
+note = "Printing (disabled on 136 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.protips"
@@ -1984,16 +2005,16 @@ note = "Android cruft (none of it is in the core set the tools refuse) (disabled
 [[app]]
 package = "com.android.providers.blockednumber"
 label = "Blockednumber"
-category = "AOSP apps and services with no use on a 1080p projector"
+category = "Google / AOSP leftovers"
 advice = "keep"
-note = "AOSP apps and services with no use on a 1080p projector (disabled on 1 device in cleanyourtv)"
+note = "Google / AOSP leftovers (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.providers.calendar"
 label = "Calendar provider"
 category = "Background services nobody needs on a TV"
 advice = "keep"
-note = "Calendar provider (disabled on 33 devices in cleanyourtv)"
+note = "Calendar provider (disabled on 36 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.providers.contacts"
@@ -2005,9 +2026,9 @@ note = "Contacts provider (disabled on 13 devices in cleanyourtv)"
 [[app]]
 package = "com.android.providers.userdictionary"
 label = "User dictionary"
-category = "Providers and services a TV does not use"
+category = "Google / AOSP leftovers"
 advice = "keep"
-note = "User dictionary (disabled on 7 devices in cleanyourtv)"
+note = "User dictionary (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.proxyhandler"
@@ -2028,28 +2049,28 @@ package = "com.android.se"
 label = "Secure Element"
 category = "Dead weight on a TV"
 advice = "caution"
-note = "Secure Element (eSIM, NFC payments). This TV has (disabled on 8 devices in cleanyourtv)"
+note = "Secure Element (eSIM, NFC payments). This TV has (disabled on 10 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.settings.intelligence"
-label = "The search box inside Settings. The menus keep"
-category = "microphone, so it idles. Keep it if you use Talkback."
+label = "The search box inside Settings"
+category = "Android leftovers a TV does not use; TV Settings still opened afterwards"
 advice = "keep"
-note = "The search box inside Settings. The menus keep (disabled on 8 devices in cleanyourtv)"
+note = "The search box inside Settings; the menus keep working (disabled on 13 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.sharedstoragebackup"
-label = "Sharedstoragebackup"
-category = "Background services nobody needs on a TV"
+label = "Shared-storage backup transport"
+category = "Unused system services"
 advice = "caution"
-note = "Background services nobody needs on a TV (disabled on 15 devices in cleanyourtv)"
+note = "Shared-storage backup transport (disabled on 18 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.simappdialog"
 label = "SIM toolkit"
 category = "Phone and setup leftovers"
 advice = "caution"
-note = "SIM toolkit (disabled on 1 device in cleanyourtv)"
+note = "SIM toolkit (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.smspush"
@@ -2061,9 +2082,16 @@ note = "WAP push manager, no SMS on a TV box (disabled on 6 devices in cleanyour
 [[app]]
 package = "com.android.soundpicker"
 label = "Ringtone / sound picker"
-category = "Providers and services a TV does not use"
+category = "Google / AOSP leftovers"
 advice = "caution"
-note = "Ringtone / sound picker (disabled on 4 devices in cleanyourtv)"
+note = "Ringtone / sound picker (disabled on 5 devices in cleanyourtv)"
+
+[[app]]
+package = "com.android.statementservice"
+label = "Statementservice"
+category = "Unused on a television"
+advice = "caution"
+note = "Unused on a television (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.android.tcl.messagebox"
@@ -2091,14 +2119,14 @@ package = "com.android.tv.feedbackconsent"
 label = "Feedback consent prompt"
 category = "Telemetry and feedback"
 advice = "safe"
-note = "Feedback consent prompt (disabled on 87 devices in cleanyourtv)"
+note = "Feedback consent prompt (disabled on 99 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.uwb.resources"
 label = "Resources"
-category = "Features a TV stick does not use"
+category = "E. System packages not applicable on a TV"
 advice = "caution"
-note = "Features a TV stick does not use (disabled on 1 device in cleanyourtv)"
+note = "E. System packages not applicable on a TV (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.virtualmachine.res"
@@ -2110,23 +2138,23 @@ note = "Features a TV stick does not use (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.android.wallpaper.livepicker"
 label = "Live wallpaper picker"
-category = "Background services not needed"
+category = "Unused system apps and demo services"
 advice = "caution"
-note = "Live wallpaper picker (disabled on 6 devices in cleanyourtv)"
+note = "Live wallpaper picker (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.wallpaperbackup"
 label = "Wallpaper backup agent"
-category = "Background services nobody needs on a TV"
+category = "Unused system services"
 advice = "caution"
-note = "Wallpaper backup agent (disabled on 27 devices in cleanyourtv)"
+note = "Wallpaper backup agent (disabled on 32 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.wallpapercropper"
 label = "Wallpapercropper"
-category = "AOSP apps and services with no use on a 1080p projector"
+category = "Google / AOSP leftovers"
 advice = "caution"
-note = "AOSP apps and services with no use on a 1080p projector (disabled on 1 device in cleanyourtv)"
+note = "Google / AOSP leftovers (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.android.ytb"
@@ -2166,9 +2194,9 @@ note = "APKPure store (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.apowersoft.mirror.tv"
 label = "Mirror"
-category = "Cast / paid screen-share"
+category = "com.netflix.ninja"
 advice = "caution"
-note = "Cast / paid screen-share (disabled on 2 devices in cleanyourtv)"
+note = "Com.netflix.ninja (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.app.webapplication"
@@ -2235,10 +2263,10 @@ note = "MOKA background telemetry service (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.apps.channels"
-label = "The SCBC \"S-Channels\" content app"
+label = "\"S-Channel\" content rows on Home"
 category = "Content rows, promos and auto-installs"
-advice = "caution"
-note = "The SCBC \"S-Channels\" content app (disabled on 5 devices in cleanyourtv)"
+advice = "safe"
+note = "\"S-Channel\" content rows on Home (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.apps.clear"
@@ -2252,14 +2280,14 @@ package = "com.apps.eshow"
 label = "E-SHOW in-store demo / promo"
 category = "Content rows, promos and auto-installs"
 advice = "caution"
-note = "E-SHOW in-store demo / promo (disabled on 7 devices in cleanyourtv)"
+note = "E-SHOW in-store demo / promo (disabled on 9 devices in cleanyourtv)"
 
 [[app]]
 package = "com.apps.esticker"
 label = "ShowService overlay, demo stickers"
 category = "OEM leftovers (factory/demo/test utilities, com.apps.*)"
 advice = "safe"
-note = "ShowService overlay, demo stickers (disabled on 8 devices in cleanyourtv)"
+note = "ShowService overlay, demo stickers (disabled on 10 devices in cleanyourtv)"
 
 [[app]]
 package = "com.apps.esticker3"
@@ -2271,9 +2299,9 @@ note = "In-store feature sticker animation (disabled on 3 devices in cleanyourtv
 [[app]]
 package = "com.apps.factory.ui"
 label = "Factory"
-category = "Junk overlays and factory tools (never launched during discovery)"
+category = "Factory tools: only disabled, never started"
 advice = "keep"
-note = "Junk overlays and factory tools (never launched during discovery) (disabled on 2 devices in cleanyourtv)"
+note = "Factory tools: only disabled, never started (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.apps.function.audiolink"
@@ -2287,7 +2315,7 @@ package = "com.apps.function.gdpr"
 label = "SCBC data-consent agent"
 category = "SCBC / Google telemetry and feedback"
 advice = "safe"
-note = "SCBC data-consent agent (disabled on 8 devices in cleanyourtv)"
+note = "SCBC data-consent agent (disabled on 9 devices in cleanyourtv)"
 
 [[app]]
 package = "com.apps.mk.gameui"
@@ -2329,7 +2357,7 @@ package = "com.apps.scast"
 label = "A second casting receiver alongside FastCast"
 category = "Preloaded apps and casting (personal choice: comment out any you use)"
 advice = "caution"
-note = "A second casting receiver alongside FastCast (kept above) (disabled on 4 devices in cleanyourtv)"
+note = "A second casting receiver alongside FastCast (kept above) (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.apps.timeclock"
@@ -2357,7 +2385,14 @@ package = "com.apps.wifihotspot"
 label = "TV as a Wi-Fi hotspot"
 category = "Not needed on a TV"
 advice = "keep"
-note = "TV as a Wi-Fi hotspot (disabled on 12 devices in cleanyourtv)"
+note = "TV as a Wi-Fi hotspot (disabled on 16 devices in cleanyourtv)"
+
+[[app]]
+package = "com.apps.wwalexa"
+label = "Alexa"
+category = "Personal choice: voice assistants (comment out to keep them)"
+advice = "caution"
+note = "Alexa (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.arcelik.arserviceapp"
@@ -2432,16 +2467,16 @@ note = "Preloaded games (user-space apps: disable-user is enough, and reversible
 [[app]]
 package = "com.at.factory.androidtvaidlservice"
 label = "Factory test service"
-category = "Manufacturer factory / test only apps"
+category = "Retail demo / store display"
 advice = "keep"
-note = "Factory test service (disabled on 2 devices in cleanyourtv)"
+note = "Factory test service (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.at.factory.factorymanager"
-label = "Factory test manager"
-category = "Manufacturer factory / test only apps"
+label = "HKC_FactoryManager"
+category = "Retail demo / store display"
 advice = "keep"
-note = "Factory test manager (disabled on 2 devices in cleanyourtv)"
+note = "HKC_FactoryManager (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.atmaca.atmretailmode"
@@ -2452,10 +2487,10 @@ note = "Shop demo mode (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.audiocn.karaoke.global.micmanager"
-label = "Karaoke microphone app"
-category = "Features not used in this home (by choice)"
+label = "Karaoke mic manager"
+category = "com.kick.mobile                   # Kick"
 advice = "caution"
-note = "Karaoke microphone app (disabled on 1 device in cleanyourtv)"
+note = "Karaoke mic manager (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.audiocn.karaoke.micmanager"
@@ -2605,6 +2640,13 @@ advice = "caution"
 note = "UK broadcaster apps and USB recording (off by choice) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.chihihx.store"
+label = "Store"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.chocolabs.app.chocotv.tv"
 label = "Chocotv"
 category = "Not used (owner's choice)"
@@ -2630,7 +2672,7 @@ package = "com.cltv.fast"
 label = "FAST channels: ad-supported channel rows"
 category = "Content and ad services"
 advice = "safe"
-note = "FAST channels: ad-supported channel rows (disabled on 10 devices in cleanyourtv)"
+note = "FAST channels: ad-supported channel rows (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "com.cnn.mobile.android.tv"
@@ -2679,7 +2721,7 @@ package = "com.community.oneroom"
 label = "Community OneRoom"
 category = "India-specific preloads (never asked for)"
 advice = "caution"
-note = "Community OneRoom (disabled on 1 device in cleanyourtv)"
+note = "Community OneRoom (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.coocaa.NewStoreSystem"
@@ -2707,7 +2749,7 @@ package = "com.coocaa.demonow.lightining"
 label = "\"Demo Now\" retail mode"
 category = "Skyworth content, ads, demos and preloads"
 advice = "safe"
-note = "\"Demo Now\" retail mode (disabled on 7 devices in cleanyourtv)"
+note = "\"Demo Now\" retail mode (disabled on 10 devices in cleanyourtv)"
 
 [[app]]
 package = "com.coocaa.educate"
@@ -2847,7 +2889,7 @@ package = "com.coocaa.theme_package_ccos_nine"
 label = "Theme package"
 category = "Vendor content / preinstalled bloat"
 advice = "caution"
-note = "Theme package (disabled on 1 device in cleanyourtv)"
+note = "Theme package (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.coocaa.theme_package_ccos_seven"
@@ -2875,7 +2917,7 @@ package = "com.coocaa.tvmanager"
 label = "Cleaner / memory manager"
 category = "Vendor bloat / browser / guide"
 advice = "caution"
-note = "Cleaner / memory manager (disabled on 2 devices in cleanyourtv)"
+note = "Cleaner / memory manager (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.coocaa.tvpi"
@@ -2903,7 +2945,7 @@ package = "com.creative.fastscreen.tv"
 label = "FastCast / Miracast screen mirroring"
 category = "Casting and games (disabled by user choice)"
 advice = "caution"
-note = "FastCast / Miracast screen mirroring (disabled on 3 devices in cleanyourtv)"
+note = "FastCast / Miracast screen mirroring (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.crunchyroll.crunchyroid"
@@ -2963,10 +3005,10 @@ note = "Ad service, the largest app process after Play services (~27 MB) (disabl
 
 [[app]]
 package = "com.cvte.haier.tv.appmanager"
-label = "Boot receiver that manages Haier apps"
-category = "Haier telemetry, share, and content apps"
+label = "Appmanager"
+category = "Haier apps, auto-install and the boot-time app manager"
 advice = "caution"
-note = "Boot receiver that manages Haier apps (disabled on 1 device in cleanyourtv)"
+note = "Boot receiver: re-enabled disabled apps at every boot until this was off (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.cvte.industries"
@@ -3013,9 +3055,9 @@ note = "Proprietary app store (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.cvte.tv.at"
 label = "Factory auto-test activity"
-category = "Manufacturer factory / test only apps"
+category = "Retail demo / store display"
 advice = "keep"
-note = "Factory auto-test activity (disabled on 2 devices in cleanyourtv)"
+note = "Factory auto-test activity (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.cvte.tv.audiotest"
@@ -3029,14 +3071,42 @@ package = "com.cvte.tv.fac.aging"
 label = "Factory aging test"
 category = "Manufacturer factory / test only apps"
 advice = "keep"
-note = "Factory aging test (disabled on 1 device in cleanyourtv)"
+note = "Factory aging test (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.cvte.tv.fac.menu"
 label = "Factory menu"
 category = "Manufacturer factory / test only apps"
 advice = "keep"
-note = "Factory menu (disabled on 1 device in cleanyourtv)"
+note = "Factory menu (disabled on 2 devices in cleanyourtv)"
+
+[[app]]
+package = "com.cvte.tv.hisensefac"
+label = "Hisense factory tool"
+category = "These must NEVER be opened, only disabled. See header warning."
+advice = "keep"
+note = "Hisense factory tool (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.cvte.tv.hkcfac"
+label = "HKC_FACTORY_AT"
+category = "Retail demo / store display"
+advice = "keep"
+note = "HKC_FACTORY_AT (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.cvte.tv.hotel"
+label = "HKC_AnTv"
+category = "Hotel mode"
+advice = "caution"
+note = "HKC_AnTv (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.cvte.tv.infoprovider"
+label = "CVTE device-info and telemetry service"
+category = "Manufacturer telemetry and analytics"
+advice = "caution"
+note = "CVTE device-info and telemetry service (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.cvte.tv.launcher"
@@ -3177,6 +3247,13 @@ label = "DAZN"
 category = "(see examples/tcl-beyondtv-rt2851)."
 advice = "caution"
 note = "DAZN (disabled on 2 devices in cleanyourtv)"
+
+[[app]]
+package = "com.dd.bugreport"
+label = "Bugreport"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.ddnational.prasarbharati"
@@ -3362,10 +3439,10 @@ note = "Factory test app; claims HOME at priority 0 (disabled on 2 devices in cl
 
 [[app]]
 package = "com.duokan.videodaily"
-label = "Video daily promos"
-category = "Ads / promoted content"
+label = "Short-video promos, bundles the Mi ad SDK"
+category = "Xiaomi telemetry / ads / push"
 advice = "caution"
-note = "Video daily promos (disabled on 6 devices in cleanyourtv)"
+note = "Short-video promos, bundles the Mi ad SDK (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.ecloud.eairplay"
@@ -3393,7 +3470,7 @@ package = "com.electronic.manual"
 label = "On-TV e-manual"
 category = "Manufacturer and Google preloads"
 advice = "safe"
-note = "On-TV e-manual (disabled on 6 devices in cleanyourtv)"
+note = "On-TV e-manual (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.eltelon.zapping"
@@ -3407,7 +3484,14 @@ package = "com.emotn.browser"
 label = "Emotn browser preload"
 category = "Preloaded apps"
 advice = "caution"
-note = "Emotn browser preload (the launcher itself is a separate owner-installed app) (disabled on 1 device in cleanyourtv)"
+note = "Emotn browser preload (the launcher itself is a separate owner-installed app) (disabled on 2 devices in cleanyourtv)"
+
+[[app]]
+package = "com.epic.docubay"
+label = "DocuBay, partner preinstall"
+category = "Preloads"
+advice = "caution"
+note = "DocuBay, partner preinstall (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.epson.onlinemeetings"
@@ -3425,10 +3509,10 @@ note = "Personal choice: preloaded streaming apps not used (disabled on 1 device
 
 [[app]]
 package = "com.esaba.downloader"
-label = "Background APK/content downloader, boot-started"
-category = "TCL promo, push messages, content rows and store demo"
+label = "SABA URL downloader preload"
+category = "org.obs.mhegservice               # MHEG-5 (UK Freeview) — not used in LatAm"
 advice = "caution"
-note = "Background APK/content downloader, boot-started (disabled on 1 device in cleanyourtv)"
+note = "SABA URL downloader preload (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.eshare.tutorial"
@@ -3459,11 +3543,25 @@ advice = "caution"
 note = "Utility apps the owner does not use; keep any you use (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.example.android.bluetoothlegatt"
+label = "Leftover AOSP BLE sample app"
+category = "telemetry and ad/store bridges"
+advice = "keep"
+note = "Leftover AOSP BLE sample app (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.example.copydatatotv"
 label = "Factory test app, persistent"
 category = "ODM leftovers and third-party preloads"
 advice = "keep"
 note = "Factory test app, persistent (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.example.testad"
+label = "Testad"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.example.tvcapture"
@@ -3478,6 +3576,13 @@ label = "Expressluck factory test"
 category = "Store demo mode and factory test app"
 advice = "keep"
 note = "Expressluck factory test; the factory menu itself is kept (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.expressluck.tvhelpmanual"
+label = "On-screen manual"
+category = "Preloaded apps, demos and unused services"
+advice = "caution"
+note = "On-screen manual (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.expressvpn.vpn"
@@ -3531,9 +3636,9 @@ note = "Preinstalled games and clients (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.figc.vivoazzurrotv"
 label = "Vivoazzurrotv"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.fireos.arcus.proxy"
@@ -3615,16 +3720,16 @@ note = "Gaana (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.gameloft.android.GAND.GloftMTHP"
 label = "GloftMTHP"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.gameloft.android.GAND.GloftPOHP"
 label = "GloftPOHP"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.gameloft.android.HEP.GloftANHP"
@@ -3708,14 +3813,14 @@ package = "com.google.android.apps.mediashell"
 label = "Chromecast built-in"
 category = "Optional features, off by owner's choice"
 advice = "caution"
-note = "Chromecast built-in (disabled on 54 devices in cleanyourtv)"
+note = "Chromecast built-in (disabled on 55 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.apps.nbu.smartconnect.tv"
 label = "Data-saver VPN"
-category = "Background services and duplicates"
+category = "Background services"
 advice = "caution"
-note = "Data-saver VPN (disabled on 28 devices in cleanyourtv)"
+note = "Data-saver VPN (disabled on 33 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.apps.pixelmigrate"
@@ -3727,30 +3832,30 @@ note = "Phone and setup leftovers (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.google.android.apps.searchlite.overlay"
 label = "Overlay"
-category = "Re-enable if you use its accessibility/gesture or remote-key features."
+category = "Google / AOSP leftovers"
 advice = "caution"
-note = "Re-enable if you use its accessibility/gesture or remote-key features. (disabled on 1 device in cleanyourtv)"
+note = "Google / AOSP leftovers (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.apps.tachyon"
 label = "Google Meet / Duo"
 category = "Not used (by choice, per the owner)"
 advice = "caution"
-note = "Google Meet / Duo (disabled on 4 devices in cleanyourtv)"
+note = "Google Meet / Duo (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.apps.tv.dreamx"
 label = "Ambient mode screensaver"
 category = "settings put secure screensaver_components com.gathin.tvhome/.ClockDream"
 advice = "caution"
-note = "Ambient mode screensaver (disabled on 65 devices in cleanyourtv)"
+note = "Ambient mode screensaver (disabled on 72 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.apps.tv.launcherx"
 label = "Stock Google TV home"
 category = "Streaming apps not used in this home (by choice; keep the ones you use)"
 advice = "caution"
-note = "Stock Google TV home (disabled on 56 devices in cleanyourtv)"
+note = "Stock Google TV home (disabled on 61 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.apps.tv.launcherx.overlay"
@@ -3771,7 +3876,7 @@ package = "com.google.android.backdrop"
 label = "Ambient screensaver"
 category = "Preloaded apps"
 advice = "caution"
-note = "Ambient screensaver (disabled on 92 devices in cleanyourtv)"
+note = "Ambient screensaver (disabled on 105 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.backuptransport"
@@ -3785,7 +3890,7 @@ package = "com.google.android.boot.appsplashscreen"
 label = "Boot splash screen animator"
 category = "Telemetry and background services"
 advice = "caution"
-note = "Boot splash screen animator (disabled on 2 devices in cleanyourtv)"
+note = "Boot splash screen animator (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.carriersetup"
@@ -3810,10 +3915,10 @@ note = "The Play Store or Assistant misbehave. (disabled on 3 devices in cleanyo
 
 [[app]]
 package = "com.google.android.feedback"
-label = "Market Feedback Agent"
+label = "Send feedback"
 category = "Telemetry and feedback"
 advice = "safe"
-note = "Market Feedback Agent (disabled on 320 devices in cleanyourtv)"
+note = "Send feedback (disabled on 355 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.inputmethod.japanese"
@@ -3848,21 +3953,21 @@ package = "com.google.android.katniss"
 label = "Google Assistant / voice search"
 category = "Owner's choice: not used"
 advice = "caution"
-note = "Google Assistant / voice search (disabled on 128 devices in cleanyourtv)"
+note = "Google Assistant / voice search (disabled on 135 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.leanbacklauncher"
 label = "Leanbacklauncher"
 category = "Group 2: recommendation rows, retail demo, silent preload installs"
 advice = "caution"
-note = "Old Android TV launcher, no HOME activity on this build (disabled on 8 devices in cleanyourtv)"
+note = "Old Android TV launcher, no HOME activity on this build (disabled on 10 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.leanbacklauncher.partnercustomizer"
-label = "Sponsored leanback partner channels"
+label = "Partner rows for the Leanback launcher"
 category = "Viewing data, ads and auto-installs"
 advice = "caution"
-note = "Sponsored leanback partner channels (disabled on 15 devices in cleanyourtv)"
+note = "Partner rows for the Leanback launcher (disabled on 19 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.leanbacklauncher.partnerwidget"
@@ -3873,24 +3978,24 @@ note = "32S6500S unit only (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.leanbacklauncher.recommendations"
-label = "Needs TVINPUT_ALLOW=1, see header"
+label = "Recommendations"
 category = "Content, recommendation rows and promos"
-advice = "keep"
-note = "Needs TVINPUT_ALLOW=1, see header (disabled on 39 devices in cleanyourtv)"
+advice = "caution"
+note = "Recommendations for the Leanback launcher, which is not Home (disabled on 42 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.marvin.talkback"
 label = "Re-enable if you need the screen reader"
 category = "Preloaded apps"
 advice = "caution"
-note = "Re-enable if you need the screen reader (disabled on 77 devices in cleanyourtv)"
+note = "Re-enable if you need the screen reader (disabled on 85 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.music"
-label = "Google Play Music"
-category = "Preloaded apps"
+label = "Google Play Music, shut down in 2020"
+category = "Preloaded apps and tutorials"
 advice = "caution"
-note = "Google Play Music (service discontinued) (disabled on 22 devices in cleanyourtv)"
+note = "Google Play Music, shut down in 2020 (disabled on 24 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.ondevicepersonalization.services"
@@ -3904,21 +4009,21 @@ package = "com.google.android.onetimeinitializer"
 label = "One-time setup leftovers"
 category = "Telemetry and analytics"
 advice = "caution"
-note = "One-time setup leftovers (disabled on 71 devices in cleanyourtv)"
+note = "One-time setup leftovers (disabled on 80 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.partnersetup"
 label = "Partner-app attribution"
 category = "Preloaded apps and services"
 advice = "caution"
-note = "Partner-app attribution (disabled on 156 devices in cleanyourtv)"
+note = "Partner-app attribution (disabled on 181 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.play.games"
 label = "Play Games"
 category = "Preloaded apps"
 advice = "caution"
-note = "Play Games (disabled on 254 devices in cleanyourtv)"
+note = "Play Games (disabled on 280 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.speech.pumpkin"
@@ -3939,35 +4044,35 @@ package = "com.google.android.sss.authbridge"
 label = "Set-up-from-phone helper"
 category = "Promotion and recommendation rows"
 advice = "caution"
-note = "Set-up-from-phone helper (disabled on 7 devices in cleanyourtv)"
+note = "Set-up-from-phone helper (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.syncadapters.calendar"
 label = "Calendar sync"
-category = "Background services nobody needs on a TV"
+category = "Dead weight on a TV"
 advice = "caution"
-note = "Calendar sync (disabled on 127 devices in cleanyourtv)"
+note = "Calendar sync (disabled on 148 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.syncadapters.contacts"
-label = "Contacts sync"
-category = "Extras nobody used here"
+label = "Google Contacts sync"
+category = "Android leftovers a TV does not use; TV Settings still opened afterwards"
 advice = "caution"
-note = "Contacts sync (disabled on 9 devices in cleanyourtv)"
+note = "Google Contacts sync (disabled on 12 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.tts"
 label = "Text-to-speech"
 category = "Off by choice"
 advice = "caution"
-note = "Text-to-speech (disabled on 34 devices in cleanyourtv)"
+note = "Text-to-speech (disabled on 35 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.tungsten.setupwraith"
 label = "Its RecoveryActivity otherwise takes over Home"
 category = "com.google.android.apps.tv.launcherx"
 advice = "keep"
-note = "Its RecoveryActivity otherwise takes over Home (disabled on 150 devices in cleanyourtv)"
+note = "Its RecoveryActivity otherwise takes over Home (disabled on 162 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.tv"
@@ -3981,7 +4086,7 @@ package = "com.google.android.tv.assistant"
 label = "Assistant LED service"
 category = "TCL content, promos and background extras"
 advice = "caution"
-note = "Assistant LED service (disabled on 33 devices in cleanyourtv)"
+note = "Assistant LED service (disabled on 35 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.tv.axel"
@@ -3995,7 +4100,7 @@ package = "com.google.android.tv.bugreportsender"
 label = "Bug report uploader"
 category = "Telemetry, remote support and feedback"
 advice = "safe"
-note = "Bug report uploader (disabled on 59 devices in cleanyourtv)"
+note = "Bug report uploader (disabled on 66 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.tv.dfuservice"
@@ -4030,14 +4135,14 @@ package = "com.google.android.tvlauncher"
 label = "Stock launcher, replaced by launcher/"
 category = "Owner's choice: not used"
 advice = "caution"
-note = "Stock launcher, replaced by launcher/ (disabled on 45 devices in cleanyourtv)"
+note = "Stock launcher, replaced by launcher/ (disabled on 48 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.tvrecommendations"
 label = "Recommendation rows for the stock launcher"
 category = "Sony and Google content, ads and promos"
 advice = "caution"
-note = "Recommendation rows for the stock launcher (disabled on 165 devices in cleanyourtv)"
+note = "Recommendation rows for the stock launcher (disabled on 182 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.tvtutorials"
@@ -4051,7 +4156,7 @@ package = "com.google.android.videos"
 label = "Play Movies & TV"
 category = "Preloaded apps"
 advice = "caution"
-note = "Play Movies & TV (disabled on 181 devices in cleanyourtv)"
+note = "Play Movies & TV (disabled on 200 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.voicesearch"
@@ -4072,14 +4177,14 @@ package = "com.google.android.youtube.tvkids"
 label = "YouTube Kids"
 category = "Owner's choice: not used"
 advice = "caution"
-note = "YouTube Kids (disabled on 7 devices in cleanyourtv)"
+note = "YouTube Kids (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.youtube.tvmusic"
 label = "YouTube Music"
 category = "Preloaded apps"
 advice = "caution"
-note = "YouTube Music (disabled on 150 devices in cleanyourtv)"
+note = "YouTube Music (disabled on 162 devices in cleanyourtv)"
 
 [[app]]
 package = "com.google.android.youtube.tvunplugged"
@@ -4093,7 +4198,7 @@ package = "com.graymatrix.did"
 label = "ZEE5"
 category = "Streaming apps not used in this home (by choice; keep the ones you use)"
 advice = "caution"
-note = "ZEE5 (disabled on 4 devices in cleanyourtv)"
+note = "ZEE5 (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.grundig.tv.channel"
@@ -4121,7 +4226,14 @@ package = "com.haier.apps"
 label = "Haier promo content app"
 category = "Haier content, IoT, cleaner, e-manual"
 advice = "safe"
-note = "Haier promo content app (disabled on 6 devices in cleanyourtv)"
+note = "Haier promo content app (disabled on 8 devices in cleanyourtv)"
+
+[[app]]
+package = "com.haier.apps.evoSmart"
+label = "Store / partner promo"
+category = "Haier apps, auto-install and the boot-time app manager"
+advice = "caution"
+note = "Store / partner promo (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.haier.emanual"
@@ -4233,7 +4345,7 @@ package = "com.haier.tvhousekeeper"
 label = "\"TV housekeeper\" cleaner"
 category = "Haier content, IoT, cleaner, e-manual"
 advice = "caution"
-note = "\"TV housekeeper\" cleaner (disabled on 5 devices in cleanyourtv)"
+note = "\"TV housekeeper\" cleaner (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.haier.uhome.messageboard"
@@ -4279,10 +4391,10 @@ note = "Haier promos, retail and webview ad shells (disabled on 1 device in clea
 
 [[app]]
 package = "com.haierubic.usmartdevice"
-label = "Haier smart-device / IoT service"
+label = "Haier smart-device service"
 category = "Haier content, IoT, cleaner, e-manual"
 advice = "caution"
-note = "Haier smart-device / IoT service (disabled on 6 devices in cleanyourtv)"
+note = "Haier smart-device service (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.haystack.android"
@@ -4646,7 +4758,7 @@ package = "com.hisense.business.ad"
 label = "Ad SDK"
 category = "BATCH 2 — advertising, home operator rows and content feeds"
 advice = "safe"
-note = "Ad SDK (disabled on 6 devices in cleanyourtv)"
+note = "Ad SDK (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.hisense.cloudfalcon"
@@ -4702,7 +4814,7 @@ package = "com.hisense.hitv.das"
 label = "DasApp: DataReportReceiver only"
 category = "Hisense telemetry, reporting and push"
 advice = "caution"
-note = "DasApp: DataReportReceiver only (disabled on 5 devices in cleanyourtv)"
+note = "DasApp: DataReportReceiver only (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.hisense.hitv.hicloud.account"
@@ -4730,7 +4842,7 @@ package = "com.hisense.logupload"
 label = "Log uploader"
 category = "Hisense telemetry, reporting and push"
 advice = "safe"
-note = "Log uploader (disabled on 6 devices in cleanyourtv)"
+note = "Log uploader (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.hisense.myapplication"
@@ -4751,7 +4863,7 @@ package = "com.hisense.platformreport"
 label = "Usage/telemetry reporting"
 category = "Comment out any line you want to keep."
 advice = "safe"
-note = "Usage/telemetry reporting (disabled on 5 devices in cleanyourtv)"
+note = "Usage/telemetry reporting (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.hisense.remoteupgrade"
@@ -4765,7 +4877,7 @@ package = "com.hisense.service.ad"
 label = "Ad service"
 category = "BATCH 2 — advertising, home operator rows and content feeds"
 advice = "safe"
-note = "Ad service (disabled on 6 devices in cleanyourtv)"
+note = "Ad service (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.hisense.service.hproxy"
@@ -4964,11 +5076,18 @@ advice = "caution"
 note = "Ginga (Latin-America ISDB-T middleware), inert on an EU DVB set (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.hkc.tv.hkc_help"
+label = "HKC_Help"
+category = "Tests and leftovers"
+advice = "caution"
+note = "HKC_Help (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.homwee.aipont"
 label = "Aipont"
 category = "Telemetry, ads and recommendation rows"
 advice = "safe"
-note = "AI PONT brand portal and its recommendation channels (disabled on 9 devices in cleanyourtv)"
+note = "AI PONT brand portal and its recommendation channels (disabled on 10 devices in cleanyourtv)"
 
 [[app]]
 package = "com.homwee.alexacontrol"
@@ -5003,7 +5122,7 @@ package = "com.homwee.help"
 label = "E-manual"
 category = "Changhong / Homwee store and help"
 advice = "safe"
-note = "E-manual (disabled on 17 devices in cleanyourtv)"
+note = "E-manual (disabled on 19 devices in cleanyourtv)"
 
 [[app]]
 package = "com.homwee.mmp.fileexplorer"
@@ -5035,10 +5154,10 @@ note = "Miracast / AirPlay (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.homwee.store"
-label = "Changhong app-store service"
+label = "Homwee app store"
 category = "Changhong / Homwee store and help"
 advice = "caution"
-note = "Changhong app-store service (disabled on 17 devices in cleanyourtv)"
+note = "Homwee app store (content + ads) (disabled on 19 devices in cleanyourtv)"
 
 [[app]]
 package = "com.homwee.upgrade"
@@ -5115,28 +5234,28 @@ package = "com.htc.hyk_test"
 label = "Factory test app"
 category = "Factory and burn-in test apps"
 advice = "keep"
-note = "Factory test app (disabled on 3 devices in cleanyourtv)"
+note = "Factory test app (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.htc.samescreen"
 label = "Htc_cast mirroring"
 category = "Casting and screen mirroring; re-enable the ones you cast with"
 advice = "caution"
-note = "Htc_cast mirroring (disabled on 1 device in cleanyourtv)"
+note = "Htc_cast mirroring (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.htc.screensaver"
 label = "Stock screensaver"
 category = "Telemetry, stock bloat and unneeded services"
 advice = "caution"
-note = "Stock screensaver; ClockDream replaces it (disabled on 2 devices in cleanyourtv)"
+note = "Stock screensaver (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.htc.storeos"
 label = "HTC app store"
 category = "HTC ad overlay, telemetry and app store"
 advice = "caution"
-note = "HTC app store (disabled on 4 devices in cleanyourtv)"
+note = "HTC app store (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.huawei.appmarket"
@@ -5179,6 +5298,69 @@ label = "Nftv"
 category = "Relax, fitness, karaoke, watch and account leftovers (off by choice)"
 advice = "caution"
 note = "Relax, fitness, karaoke, watch and account leftovers (off by choice) (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.hx.apkbridge"
+label = "Apkbridge"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.hx.appcleaner"
+label = "Appcleaner"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.hx.devicemonitor"
+label = "Devicemonitor"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.hx.httpspeedtest"
+label = "Httpspeedtest"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.hx.httpvideotest"
+label = "Httpvideotest"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.hx.projectortest"
+label = "Projectortest"
+category = "Factory / burn-in (disable only; do not launch)"
+advice = "caution"
+note = "Factory / burn-in (disable only; do not launch) (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.hx.usermanual"
+label = "Usermanual"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.hx.videotest"
+label = "Videotest"
+category = "Ads, cleaners, vendor junk"
+advice = "caution"
+note = "Ads, cleaners, vendor junk (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.hxdevicetest"
+label = "Hxdevicetest"
+category = "Factory / burn-in (disable only; do not launch)"
+advice = "caution"
+note = "Factory / burn-in (disable only; do not launch) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.hysd.vafocus"
@@ -5273,17 +5455,17 @@ note = "Instagram for TV, installed by the Play Store at setup (disabled on 3 de
 
 [[app]]
 package = "com.instantbits.cast.receiver"
-label = "Receiver"
-category = "Screen mirroring receivers (off by choice; Chromecast kept)"
+label = "Web Video Cast receiver"
+category = "Preloaded apps and demos"
 advice = "caution"
-note = "Screen mirroring receivers (off by choice; Chromecast kept) (disabled on 1 device in cleanyourtv)"
+note = "Web Video Cast receiver (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.internet.tvbrowser"
-label = "Generic TV browser"
-category = "India-specific preloads (never asked for)"
+label = "Web browser"
+category = "Preloaded apps and demos"
 advice = "caution"
-note = "Generic TV browser (disabled on 3 devices in cleanyourtv)"
+note = "Web browser (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.ionitech.airscreen"
@@ -5437,7 +5619,7 @@ package = "com.jio.media.stb.ondemand"
 label = "JioCinema / JioTV"
 category = "Streaming apps not used in this home (by choice; keep the ones you use)"
 advice = "caution"
-note = "JioCinema / JioTV (disabled on 8 devices in cleanyourtv)"
+note = "JioCinema / JioTV (disabled on 9 devices in cleanyourtv)"
 
 [[app]]
 package = "com.jio.screensaver"
@@ -5559,6 +5741,55 @@ advice = "caution"
 note = "Com.jamdeo.tv.vod (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.kgzn.castscreen"
+label = "Vendor screen share"
+category = "vendor extras the owner declined"
+advice = "caution"
+note = "Vendor screen share (RECORD_AUDIO, CAMERA, location) (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.kgzn.castscreen.overlay"
+label = "Its overlay helper"
+category = "vendor extras the owner declined"
+advice = "caution"
+note = "Its overlay helper (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.kgzn.inforeport"
+label = "Vendor reporting service"
+category = "telemetry and ad/store bridges"
+advice = "caution"
+note = "Vendor reporting service (INTERNET, boot receiver) (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.kgzn.mslauncher"
+label = "Stock home"
+category = "preloaded streaming apps the owner does not use"
+advice = "caution"
+note = "Stock home; tools/disable.sh skips it until another launcher answers HOME (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.kgzn.oobe"
+label = "Vendor out-of-box setup wizard"
+category = "preloaded streaming apps the owner does not use"
+advice = "caution"
+note = "Vendor out-of-box setup wizard (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.kgzn.serialport"
+label = "Serialport"
+category = "preloaded streaming apps the owner does not use"
+advice = "caution"
+note = "Serial-port service holding INTERNET and LOCATION (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.kgzn.tv.factory"
+label = "Vendor factory app"
+category = "preloaded streaming apps the owner does not use"
+advice = "keep"
+note = "Vendor factory app (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.kick.mobile"
 label = "Kick"
 category = "Preloaded apps not used on this set; comment out anything you use"
@@ -5588,17 +5819,17 @@ note = "Realtek karaoke (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.ktc.serialport"
-label = "Serialport"
-category = "OEM factory/production-line test tools"
+label = "KTCAutoTest serial console, runs from boot"
+category = "A. Telemetry / analytics / ad services"
 advice = "caution"
-note = "OEM factory/production-line test tools (disabled on 1 device in cleanyourtv)"
+note = "KTCAutoTest serial console, runs from boot (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.ktc.tv.factory"
-label = "Factory"
-category = "OEM factory/production-line test tools"
+label = "KtcFactoryKeyService, runs from boot"
+category = "A. Telemetry / analytics / ad services"
 advice = "keep"
-note = "OEM factory/production-line test tools (disabled on 1 device in cleanyourtv)"
+note = "KtcFactoryKeyService, runs from boot (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.ktcp.tvvideo"
@@ -5664,6 +5895,13 @@ advice = "caution"
 note = "MHshare (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.mcontent"
+label = "Content feed"
+category = "Haier apps, auto-install and the boot-time app manager"
+advice = "caution"
+note = "Content feed (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.mediatek.AirplayAPK"
 label = "AirPlay"
 category = "voice and casting (owner keeps Chromecast and Miracast)"
@@ -5689,7 +5927,7 @@ package = "com.mediatek.agent"
 label = "MediaTek diagnostics agent"
 category = "Telemetry, remote support, logging and diagnostics"
 advice = "caution"
-note = "MediaTek diagnostics agent (disabled on 3 devices in cleanyourtv)"
+note = "MediaTek diagnostics agent (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.airplaydaemon"
@@ -5703,14 +5941,14 @@ package = "com.mediatek.android.leanbacklauncher.partnercustomizer"
 label = "Partner rows for the stock launcher"
 category = "Partner rows on the stock home screen"
 advice = "caution"
-note = "Partner rows for the stock launcher (disabled on 18 devices in cleanyourtv)"
+note = "Partner rows for the stock launcher (disabled on 22 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.androidbox"
 label = "WFDSinkTest, Wi-Fi Display test app"
 category = "Preloaded apps and demos"
 advice = "caution"
-note = "WFDSinkTest, Wi-Fi Display test app (disabled on 7 devices in cleanyourtv)"
+note = "WFDSinkTest, Wi-Fi Display test app (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.backgrounddetection"
@@ -5718,6 +5956,13 @@ label = "MediaTek telemetry"
 category = "Telemetry, diagnostics and Android 14 ad / privacy services"
 advice = "safe"
 note = "MediaTek telemetry (disabled on 4 devices in cleanyourtv)"
+
+[[app]]
+package = "com.mediatek.bootvideo"
+label = "Boot video"
+category = "preloaded streaming apps the owner does not use"
+advice = "caution"
+note = "Boot video (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.dialservice"
@@ -5731,7 +5976,7 @@ package = "com.mediatek.dmagent"
 label = "MediaTek device management agent"
 category = "Telemetry, remote support, logging and diagnostics"
 advice = "caution"
-note = "MediaTek device management agent (disabled on 3 devices in cleanyourtv)"
+note = "MediaTek device management agent (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.dmp.mediaplayer"
@@ -5753,6 +5998,13 @@ label = "Isdbtuner"
 category = "Already disabled at the factory on this unit"
 advice = "keep"
 note = "Already disabled at the factory on this unit (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.mediatek.loadingequalizer"
+label = "Boot loading animation"
+category = "preloaded streaming apps the owner does not use"
+advice = "caution"
+note = "Boot loading animation (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.miracast"
@@ -5794,7 +6046,7 @@ package = "com.mediatek.support.webview"
 label = "Duplicate webview"
 category = "Duplicate webviews and browsers (com.google.android.webview is the active one)"
 advice = "keep"
-note = "Duplicate webview; com.google.android.webview is active (disabled on 4 devices in cleanyourtv)"
+note = "Duplicate webview; com.google.android.webview is active (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.testpq"
@@ -5815,14 +6067,14 @@ package = "com.mediatek.tv.freeviewplay"
 label = "Freeview Play"
 category = "mediashell, tv.remote.service and GMS, all left enabled."
 advice = "caution"
-note = "Freeview Play (UK only, useless outside the UK) (disabled on 5 devices in cleanyourtv)"
+note = "Freeview Play (UK only, useless outside the UK) (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.tv.launcher.partner"
 label = "Partner rows on the stock home"
 category = "Telemetry, partner rows, retail demo, preloads"
 advice = "caution"
-note = "Partner rows on the stock home (disabled on 4 devices in cleanyourtv)"
+note = "Partner rows on the stock home (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.tv.oneworld.tvcenter"
@@ -5836,7 +6088,7 @@ package = "com.mediatek.tv.retaildemo"
 label = "Retail demo mode"
 category = "Telemetry, partner rows, retail demo, preloads"
 advice = "safe"
-note = "Retail demo mode (disabled on 6 devices in cleanyourtv)"
+note = "Retail demo mode (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mediatek.tv.systemupdater"
@@ -5860,6 +6112,13 @@ advice = "caution"
 note = "MediaTek's USB media player. Skipped by the (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
+package = "com.mediatek.wwtv.setupwizard"
+label = "TV setup wizard"
+category = "C. OEM preloads not used"
+advice = "keep"
+note = "TV setup wizard (setup already done) (disabled on 3 devices in cleanyourtv)"
+
+[[app]]
 package = "com.mediatek.wwtv.tvrecommendation"
 label = "Tvrecommendation"
 category = "Recommendation and content services"
@@ -5871,7 +6130,7 @@ package = "com.mediatek.wwtv.webview"
 label = "Vendor web view shell"
 category = "Preloaded apps"
 advice = "keep"
-note = "Vendor web view shell (disabled on 4 devices in cleanyourtv)"
+note = "Vendor web view shell (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.meetingroom"
@@ -5941,7 +6200,7 @@ package = "com.mitv.cloudcontrol"
 label = "Cloudcontrol"
 category = "Xiaomi telemetry / push / cloud control"
 advice = "caution"
-note = "Cloud control: starts on connectivity, remotely pushes apps (disabled on 7 devices in cleanyourtv)"
+note = "Cloud control: starts on connectivity, remotely pushes apps (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mitv.download.service"
@@ -5962,7 +6221,7 @@ package = "com.mitv.gallery"
 label = "Mi Gallery"
 category = "Preloaded apps"
 advice = "caution"
-note = "Mi Gallery; Media Player still opens USB photos (disabled on 22 devices in cleanyourtv)"
+note = "Mi Gallery; Media Player still opens USB photos (disabled on 25 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mitv.milinkservice"
@@ -5983,7 +6242,7 @@ package = "com.mitv.overseaservice"
 label = "Overseas service partner helper"
 category = "Xiaomi telemetry / ads / push"
 advice = "safe"
-note = "Overseas service partner helper (disabled on 2 devices in cleanyourtv)"
+note = "Overseas service partner helper (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mitv.screensaver"
@@ -5995,37 +6254,37 @@ note = "Xiaomi screensaver; the launcher's clock screensaver takes over (disable
 [[app]]
 package = "com.mitv.shoplugin"
 label = "TV Taobao shopping plugin"
-category = "Ads / promoted content / shopping"
+category = "Xiaomi telemetry / ads / push"
 advice = "caution"
-note = "TV Taobao shopping plugin (disabled on 8 devices in cleanyourtv)"
+note = "TV Taobao shopping plugin (disabled on 10 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mitv.toolhouse"
 label = "Toolhouse"
 category = "Preloaded apps (WPS cn.wps.moffice_i18n_TV kept at owner request)"
 advice = "caution"
-note = "Preloaded apps (WPS cn.wps.moffice_i18n_TV kept at owner request) (disabled on 8 devices in cleanyourtv)"
+note = "Preloaded apps (WPS cn.wps.moffice_i18n_TV kept at owner request) (disabled on 9 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mitv.tvhome.atv"
 label = "PatchWall"
 category = "PatchWall, content rows, sponsored rows"
 advice = "caution"
-note = "PatchWall (disabled on 30 devices in cleanyourtv)"
+note = "PatchWall (disabled on 31 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mitv.tvhome.michannel"
 label = "Mi content rows"
 category = "PatchWall, content rows, promos, auto-installs"
 advice = "safe"
-note = "Mi content rows (disabled on 23 devices in cleanyourtv)"
+note = "Mi content rows (disabled on 24 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mitv.tvhome.mitvplus"
 label = "Mi TV+ ad-funded channels"
-category = "PatchWall, content rows, promos, auto-installs"
+category = "PatchWall, content rows, sponsored rows"
 advice = "safe"
-note = "Mi TV+ ad-funded channels (disabled on 23 devices in cleanyourtv)"
+note = "Mi TV+ ad-funded channels (disabled on 24 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mitv.tvhome.oemtab"
@@ -6053,21 +6312,21 @@ package = "com.mitv.videoplayer"
 label = "Mi video player"
 category = "Preloaded apps"
 advice = "caution"
-note = "Mi video player (disabled on 14 devices in cleanyourtv)"
+note = "Mi video player (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "com.miui.analytics"
 label = "OneTrack analytics SDK host"
 category = "Xiaomi telemetry / push / cloud control"
 advice = "safe"
-note = "OneTrack analytics SDK host (disabled on 6 devices in cleanyourtv)"
+note = "OneTrack analytics SDK host (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.miui.hybrid.tv"
 label = "Hybrid runtime container"
 category = "Xiaomi telemetry / ads / push"
 advice = "caution"
-note = "Hybrid runtime container (disabled on 2 devices in cleanyourtv)"
+note = "Hybrid runtime container (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.miui.misightservice"
@@ -6081,7 +6340,7 @@ package = "com.miui.tv.analytics"
 label = "TV usage statistics"
 category = "Xiaomi + Google telemetry"
 advice = "safe"
-note = "TV usage statistics (disabled on 41 devices in cleanyourtv)"
+note = "TV usage statistics (disabled on 44 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mk.tv.booster"
@@ -6095,7 +6354,7 @@ package = "com.mk.tv.meeting.service"
 label = "Meeting"
 category = "Ads, content rows, auto-installs and demo/signage"
 advice = "caution"
-note = "Digital-signage service with an accessibility service (disabled on 4 devices in cleanyourtv)"
+note = "Digital-signage service with an accessibility service (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mk.tv.networkspeed"
@@ -6123,7 +6382,7 @@ package = "com.mobisystems.office"
 label = "Office suite"
 category = "Preloaded apps"
 advice = "caution"
-note = "Office suite (disabled on 3 devices in cleanyourtv)"
+note = "Office suite (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.movenda.omadm.tv"
@@ -6144,14 +6403,14 @@ package = "com.mphotool.airplay"
 label = "AirPlay receiver"
 category = "Casting and screen mirroring; re-enable the ones you cast with"
 advice = "caution"
-note = "AirPlay receiver (disabled on 1 device in cleanyourtv)"
+note = "AirPlay receiver (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mphotool.dlna"
 label = "DLNA receiver"
 category = "Casting and screen mirroring; re-enable the ones you cast with"
 advice = "caution"
-note = "DLNA receiver (disabled on 1 device in cleanyourtv)"
+note = "DLNA receiver (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mphotool.usbcastserver"
@@ -6172,14 +6431,14 @@ package = "com.mstar.android.tv.disclaimercustomization"
 label = "Disclaimer screen used only by first-run setup"
 category = "Skyworth content, ads, demos and preloads"
 advice = "caution"
-note = "Disclaimer screen used only by first-run setup (disabled on 37 devices in cleanyourtv)"
+note = "Disclaimer screen used only by first-run setup (disabled on 47 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mstar.netflixobserver"
 label = "MNetflixObserver measurement service"
 category = "Hisense telemetry and viewing-data collection"
 advice = "caution"
-note = "MNetflixObserver measurement service (Netflix app untouched) (disabled on 2 devices in cleanyourtv)"
+note = "MNetflixObserver measurement service (Netflix app untouched) (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mtc.emanual"
@@ -6205,9 +6464,9 @@ note = "Not used (by choice) (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.mxtech.videoplayer.ad"
 label = "Videoplayer"
-category = "Streaming / media apps the owner does not use; keep any you use"
+category = "com.netflix.ninja"
 advice = "caution"
-note = "Streaming / media apps the owner does not use; keep any you use (disabled on 2 devices in cleanyourtv)"
+note = "Com.netflix.ninja (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.mxtech.videoplayer.television"
@@ -6255,8 +6514,8 @@ note = "Nero SwiftLink mirroring (disabled on 1 device in cleanyourtv)"
 package = "com.nes.bugreportsender"
 label = "NES bug report mailer"
 category = "Ad tech, telemetry and feedback"
-advice = "caution"
-note = "NES bug report mailer (INTERNET, GET_ACCOUNTS) (disabled on 1 device in cleanyourtv)"
+advice = "safe"
+note = "NES bug report mailer (INTERNET, GET_ACCOUNTS) (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.nes.coreservice"
@@ -6277,14 +6536,14 @@ package = "com.nes.dvb.playtest"
 label = "DVB factory play test"
 category = "Factory/test leftovers and preloads nobody uses on a TV"
 advice = "keep"
-note = "DVB factory play test (disabled on 3 devices in cleanyourtv)"
+note = "DVB factory play test (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.nes.leanbacklauncher.partnercustomizer"
 label = "Partnercustomizer"
 category = "Content and ad services"
 advice = "caution"
-note = "Nokia's Shop/Discover row config for the stock launcher (disabled on 2 devices in cleanyourtv)"
+note = "Nokia's Shop/Discover row config for the stock launcher (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.nes.skywayclient"
@@ -6844,7 +7103,7 @@ package = "com.qterics.da.product"
 label = "Qterics device agent"
 category = "Telemetry, remote support and feedback"
 advice = "safe"
-note = "Qterics device agent (disabled on 39 devices in cleanyourtv)"
+note = "Qterics device agent (disabled on 42 devices in cleanyourtv)"
 
 [[app]]
 package = "com.realsil.ota"
@@ -6863,9 +7122,9 @@ note = "Broadcast tuner apps not used here (DTMB, ISDB, ATSC) (disabled on 1 dev
 [[app]]
 package = "com.realtek.factorytools"
 label = "Factorytools"
-category = "Junk overlays and factory tools (never launched during discovery)"
+category = "Factory tools: only disabled, never started"
 advice = "keep"
-note = "Junk overlays and factory tools (never launched during discovery) (disabled on 2 devices in cleanyourtv)"
+note = "Factory tools: only disabled, never started (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.realtek.kara"
@@ -6886,7 +7145,7 @@ package = "com.realtek.leanbacklauncher.partnercustomizer"
 label = "Partnercustomizer"
 category = "Manufacturer content"
 advice = "caution"
-note = "Partner config that injects apps and rows into the home screen (disabled on 14 devices in cleanyourtv)"
+note = "Partner config that injects apps and rows into the home screen (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "com.realtek.miracast"
@@ -7110,7 +7369,7 @@ package = "com.seraphic.hbbtv.app"
 label = "HbbTV app"
 category = "Not needed on a TV"
 advice = "caution"
-note = "HbbTV app; India has no HbbTV (disabled on 2 devices in cleanyourtv)"
+note = "HbbTV app; India has no HbbTV (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.seraphic.media.tv.interactive.app"
@@ -7124,7 +7383,7 @@ package = "com.seraphic.webview"
 label = "HbbTV engine core"
 category = "Not needed on a TV"
 advice = "keep"
-note = "HbbTV engine core (disabled on 1 device in cleanyourtv)"
+note = "HbbTV engine core (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sharplabs.dmt.aas.analyticsservice"
@@ -7148,11 +7407,18 @@ advice = "caution"
 note = "Singa (karaoke) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.sky.market"
+label = "Second unit: preloaded Skyworth app store"
+category = "Skyworth content, ads and telemetry"
+advice = "caution"
+note = "Second unit: preloaded Skyworth app store (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.sky.ott.client.androidtv.SkyIT"
 label = "SkyIT"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.skysoft.kkbox.android"
@@ -7192,9 +7458,9 @@ note = "Blockchain preload (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.skyworth.device"
 label = "Device information and location reporting"
-category = "Telemetry (optional)"
+category = "Verified safe across cold boots; disables device telemetry, package monitoring,"
 advice = "caution"
-note = "Device information and location reporting (disabled on 1 device in cleanyourtv)"
+note = "Device information and location reporting (SensorsData analytics) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.skyworth.emanual"
@@ -7313,28 +7579,28 @@ package = "com.smartdevice.acr.recommendation"
 label = "ACR — listens to ambient audio for ad targeting"
 category = "Skyworth content, ads and preloads"
 advice = "safe"
-note = "ACR — listens to ambient audio for ad targeting (disabled on 3 devices in cleanyourtv)"
+note = "ACR — listens to ambient audio for ad targeting (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.aftersale"
 label = "Aftersale"
 category = "Skyworth telemetry and activation"
 advice = "caution"
-note = "\"after-sale\" service: boot + network receivers, can install APKs (disabled on 12 devices in cleanyourtv)"
+note = "\"after-sale\" service: boot + network receivers, can install APKs (disabled on 14 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.common.demonow"
 label = "\"Demo Now\" store demo app"
 category = "Skyworth auto-installs, retail demo and setup leftovers"
 advice = "caution"
-note = "\"Demo Now\" store demo app (disabled on 4 devices in cleanyourtv)"
+note = "\"Demo Now\" store demo app (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.dailymanage"
 label = "TV Guard / cleaner"
 category = "Telemetry and after-sale push"
 advice = "caution"
-note = "TV Guard / cleaner (disabled on 10 devices in cleanyourtv)"
+note = "TV Guard / cleaner (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.dailyshortcut"
@@ -7345,31 +7611,31 @@ note = "Skyworth retail / demo / junk (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.demonow"
-label = "In-store demo mode"
-category = "Skyworth retail and preload"
+label = "Retail store demo"
+category = "Skyworth retail demo and manual"
 advice = "caution"
-note = "In-store demo mode (disabled on 1 device in cleanyourtv)"
+note = "Retail store demo (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.dtv.icast"
 label = "Miracast + DLNA"
-category = "Skyworth content, ads and telemetry"
+category = "Miracast / DLNA (by choice; Chromecast kept)"
 advice = "caution"
-note = "Miracast + DLNA (disabled on 6 devices in cleanyourtv)"
+note = "Miracast + DLNA (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.epopplayer"
 label = "EPop shop demo player"
 category = "Skyworth content, ads, demos and preloads"
 advice = "caution"
-note = "EPop shop demo player (disabled on 8 devices in cleanyourtv)"
+note = "EPop shop demo player (disabled on 10 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.factory"
 label = "Factory"
 category = "factory / service / manuals"
 advice = "keep"
-note = "Factory / service / manuals (disabled on 2 devices in cleanyourtv)"
+note = "Factory / service / manuals (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.firewall"
@@ -7383,7 +7649,7 @@ package = "com.smartdevice.leanbacklauncher.customizer"
 label = "Customizer"
 category = "Skyworth content, ads, demos and preloads"
 advice = "caution"
-note = "Partner config that injects rows into the home screen (disabled on 17 devices in cleanyourtv)"
+note = "Partner config that injects rows into the home screen (disabled on 22 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.myapp"
@@ -7397,14 +7663,14 @@ package = "com.smartdevice.recommendation"
 label = "Coocaa recommendation rows"
 category = "Skyworth content, ads, demos and preloads"
 advice = "safe"
-note = "Coocaa recommendation rows; bundles Sensors Data analytics (disabled on 14 devices in cleanyourtv)"
+note = "Coocaa recommendation rows; bundles Sensors Data analytics (disabled on 17 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.recordactivation"
 label = "Records first activation"
 category = "Skyworth telemetry and activation"
 advice = "caution"
-note = "Records first activation (disabled on 7 devices in cleanyourtv)"
+note = "Records first activation (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.smartdevice.setupwraith"
@@ -7428,6 +7694,13 @@ advice = "caution"
 note = "Coocaa iCast AirPlay/mirroring app, starts at boot. (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
+package = "com.smartdevice.tvworkwithalexa"
+label = "Second unit: Alexa voice companion"
+category = "Skyworth content, ads and telemetry"
+advice = "caution"
+note = "Second unit: Alexa voice companion (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.smarts.smartagentpassivestb"
 label = "Smartagentpassivestb"
 category = "TIM / Technicolor telemetry and remote device management"
@@ -7444,9 +7717,9 @@ note = "Updateos, a second updater (not in tcl-q10g-pro; stayed disabled, update
 [[app]]
 package = "com.softwinner.ImageParser"
 label = "Stock image viewer"
-category = "Allwinner/Softwinner vendor apps not used on this model"
+category = "com.softwinner.awlivetv"
 advice = "caution"
-note = "Stock image viewer (disabled on 1 device in cleanyourtv)"
+note = "Stock image viewer (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.TvdFileManager"
@@ -7467,7 +7740,7 @@ package = "com.softwinner.agingdragonbox"
 label = "Factory burn-in agent"
 category = "Factory and burn-in test apps"
 advice = "keep"
-note = "Factory burn-in agent (disabled on 2 devices in cleanyourtv)"
+note = "Factory burn-in agent (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.awlivetv"
@@ -7479,30 +7752,30 @@ note = "Live TV tuner UI; this model has no tuner (disabled on 1 device in clean
 [[app]]
 package = "com.softwinner.awlogsettings"
 label = "Log-capture settings"
-category = "Telemetry, stock bloat and unneeded services"
+category = "com.softwinner.awlivetv"
 advice = "caution"
-note = "Log-capture settings (disabled on 2 devices in cleanyourtv)"
+note = "Log-capture settings (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.dragonatt"
 label = "Dragonatt"
 category = "Factory and burn-in test apps"
 advice = "caution"
-note = "Factory and burn-in test apps (disabled on 1 device in cleanyourtv)"
+note = "Factory and burn-in test apps (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.dragonbox"
 label = "Dragonbox"
 category = "Factory and burn-in test apps"
 advice = "caution"
-note = "Factory and burn-in test apps (disabled on 2 devices in cleanyourtv)"
+note = "Factory and burn-in test apps (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.miracastReceiver"
 label = "Miracast"
-category = "Casting and screen mirroring; re-enable the ones you cast with"
+category = "com.netflix.ninja"
 advice = "caution"
-note = "Miracast (disabled on 2 devices in cleanyourtv)"
+note = "Miracast (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.provision"
@@ -7514,16 +7787,16 @@ note = "Provisioning app; re-enable before a factory reset (disabled on 1 device
 [[app]]
 package = "com.softwinner.screenshot"
 label = "Quick Settings screenshot tile"
-category = "Allwinner/Softwinner vendor apps not used on this model"
+category = "com.softwinner.awlivetv"
 advice = "caution"
-note = "Quick Settings screenshot tile (disabled on 1 device in cleanyourtv)"
+note = "Quick Settings screenshot tile (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.settingsassist"
 label = "Settings OTA activity"
-category = "Allwinner/Softwinner vendor apps not used on this model"
+category = "com.softwinner.awlivetv"
 advice = "caution"
-note = "Settings OTA activity; re-enable with the OTA packages (disabled on 1 device in cleanyourtv)"
+note = "Settings OTA activity; re-enable with the OTA packages (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.settingssetup"
@@ -7535,16 +7808,23 @@ note = "Provisioning receiver; re-enable before a factory reset (disabled on 1 d
 [[app]]
 package = "com.softwinner.theme.color"
 label = "Allwinner theme overlay"
-category = "Allwinner/Softwinner vendor apps not used on this model"
+category = "com.softwinner.awlivetv"
 advice = "caution"
-note = "Allwinner theme overlay (disabled on 1 device in cleanyourtv)"
+note = "Allwinner theme overlay (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.theme.icon"
 label = "Allwinner theme overlay"
-category = "Allwinner/Softwinner vendor apps not used on this model"
+category = "com.softwinner.awlivetv"
 advice = "caution"
-note = "Allwinner theme overlay (disabled on 1 device in cleanyourtv)"
+note = "Allwinner theme overlay (disabled on 2 devices in cleanyourtv)"
+
+[[app]]
+package = "com.softwinner.tv.factorymenu"
+label = "Factorymenu"
+category = "Factory / burn-in (disable only; do not launch)"
+advice = "keep"
+note = "Factory / burn-in (disable only; do not launch) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.softwinner.update"
@@ -7572,7 +7852,7 @@ package = "com.sony.dtv.QuickSetupCustomizer"
 label = "Partner customisation for first setup"
 category = "setup leftovers and unused services"
 advice = "caution"
-note = "Partner customisation for first setup (disabled on 3 devices in cleanyourtv)"
+note = "Partner customisation for first setup (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.accessibility.tutorial"
@@ -7628,21 +7908,21 @@ package = "com.sony.dtv.b2b.frameworkextension"
 label = "Frameworkextension"
 category = "Commercial and B2B services"
 advice = "caution"
-note = "Commercial and B2B services (disabled on 5 devices in cleanyourtv)"
+note = "Commercial and B2B services (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.b2b.hotelmode"
 label = "Hotel mode service"
 category = "Commercial and B2B services"
 advice = "caution"
-note = "Hotel mode service (disabled on 15 devices in cleanyourtv)"
+note = "Hotel mode service (disabled on 16 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.b2b.importexport"
 label = "B2B settings import/export"
 category = "Commercial and B2B services"
 advice = "caution"
-note = "B2B settings import/export (disabled on 12 devices in cleanyourtv)"
+note = "B2B settings import/export (disabled on 13 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.b2b.ipcontrolsettings"
@@ -7663,14 +7943,14 @@ package = "com.sony.dtv.b2b.noderuntime.normal"
 label = "Node.js runtime for hotel apps"
 category = "Commercial and B2B services"
 advice = "caution"
-note = "Node.js runtime for hotel apps (disabled on 10 devices in cleanyourtv)"
+note = "Node.js runtime for hotel apps (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.b2b.noderuntime.privilege"
 label = "Privilege"
 category = "Commercial and B2B services"
 advice = "caution"
-note = "Commercial and B2B services (disabled on 10 devices in cleanyourtv)"
+note = "Commercial and B2B services (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.b2b.noderuntimeextension.bpk"
@@ -7705,14 +7985,14 @@ package = "com.sony.dtv.b2b.prosettings"
 label = "Pro mode settings"
 category = "Commercial and B2B services"
 advice = "caution"
-note = "Pro mode settings (disabled on 12 devices in cleanyourtv)"
+note = "Pro mode settings (disabled on 13 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.b2b.rs232csupport"
 label = "RS-232C control"
 category = "Commercial and B2B services"
 advice = "caution"
-note = "RS-232C control; re-enable if something drives the TV over serial (disabled on 14 devices in cleanyourtv)"
+note = "RS-232C control; re-enable if something drives the TV over serial (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.b2b.softap"
@@ -7726,21 +8006,21 @@ package = "com.sony.dtv.b2b.vendorprotocol"
 label = "Vendorprotocol"
 category = "Telemetry, remote support and feedback"
 advice = "caution"
-note = "SDDP model/MAC/IP broadcast for Control4-style home (disabled on 20 devices in cleanyourtv)"
+note = "SDDP model/MAC/IP broadcast for Control4-style home (disabled on 22 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.b2b.webappruntimedrm"
 label = "Webappruntimedrm"
 category = "Commercial and B2B services"
 advice = "caution"
-note = "Commercial and B2B services (disabled on 5 devices in cleanyourtv)"
+note = "Commercial and B2B services (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.bivlinfo"
 label = "BIVL content service list"
 category = "Sony and Google content, ads and promos"
 advice = "caution"
-note = "BIVL content service list (feeds Discover) (disabled on 20 devices in cleanyourtv)"
+note = "BIVL content service list (feeds Discover) (disabled on 22 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.bravialifehack"
@@ -7778,11 +8058,32 @@ advice = "caution"
 note = "Sony extras, disabled by choice (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.sony.dtv.browser.ceb"
+label = "Ceb"
+category = "Unused Google preloads (owner's choice)"
+advice = "caution"
+note = "Unused Google preloads (owner's choice) (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.sony.dtv.browser.webappruntime"
+label = "Webappruntime"
+category = "Unused Google preloads (owner's choice)"
+advice = "caution"
+note = "Unused Google preloads (owner's choice) (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.sony.dtv.browser.webappruntimeextension"
 label = "Webappruntimeextension"
 category = "Broadcast and unused extensions"
 advice = "caution"
-note = "Broadcast and unused extensions (disabled on 2 devices in cleanyourtv)"
+note = "Broadcast and unused extensions (disabled on 3 devices in cleanyourtv)"
+
+[[app]]
+package = "com.sony.dtv.browser.webappservice"
+label = "Webappservice"
+category = "Unused Google preloads (owner's choice)"
+advice = "caution"
+note = "Unused Google preloads (owner's choice) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.calibrationmonitor"
@@ -7803,7 +8104,7 @@ package = "com.sony.dtv.customersupport"
 label = "Help tile"
 category = "Preloaded apps"
 advice = "safe"
-note = "Help tile (disabled on 31 devices in cleanyourtv)"
+note = "Help tile (disabled on 33 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.customersupport.provider.res"
@@ -7817,7 +8118,7 @@ package = "com.sony.dtv.da.service"
 label = "Sony device agent / remote support"
 category = "Telemetry, remote support and feedback"
 advice = "safe"
-note = "Sony device agent / remote support (disabled on 39 devices in cleanyourtv)"
+note = "Sony device agent / remote support (disabled on 42 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.demo"
@@ -7831,21 +8132,21 @@ package = "com.sony.dtv.demomode"
 label = "Shop demo mode"
 category = "Retail demo"
 advice = "safe"
-note = "Shop demo mode (disabled on 15 devices in cleanyourtv)"
+note = "Shop demo mode (disabled on 16 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.demosupport"
 label = "Retail demo support"
 category = "Retail demo"
 advice = "safe"
-note = "Retail demo support (disabled on 33 devices in cleanyourtv)"
+note = "Retail demo support (disabled on 35 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.demosystemsupport"
 label = "Retail demo system support"
 category = "demo / shop mode"
 advice = "safe"
-note = "Retail demo system support (disabled on 22 devices in cleanyourtv)"
+note = "Retail demo system support (disabled on 23 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.deviceadminsettings"
@@ -7859,14 +8160,14 @@ package = "com.sony.dtv.dialservice"
 label = "DIAL discovery for YouTube/Netflix casting"
 category = "Casting, mirroring and DLNA (network listeners), off by owner's choice"
 advice = "caution"
-note = "DIAL discovery for YouTube/Netflix casting (disabled on 1 device in cleanyourtv)"
+note = "DIAL discovery for YouTube/Netflix casting (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.discovery"
 label = "Sony Discover content bar"
 category = "Sony and Google content, ads and promos"
 advice = "caution"
-note = "Sony Discover content bar (disabled on 19 devices in cleanyourtv)"
+note = "Sony Discover content bar (disabled on 21 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.discovery.plugin.wasuplugin"
@@ -7943,7 +8244,7 @@ package = "com.sony.dtv.imanual"
 label = "I-Manual"
 category = "Preloaded apps"
 advice = "caution"
-note = "I-Manual (disabled on 18 devices in cleanyourtv)"
+note = "I-Manual (disabled on 20 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.indiametarecommendation"
@@ -8048,7 +8349,7 @@ package = "com.sony.dtv.multiscreendemo"
 label = "Shop-mode demo"
 category = "Retail demo"
 advice = "safe"
-note = "Shop-mode demo (disabled on 37 devices in cleanyourtv)"
+note = "Shop-mode demo (disabled on 39 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.mysony"
@@ -8069,7 +8370,7 @@ package = "com.sony.dtv.networkapp.wifidirect"
 label = "Screen mirroring app"
 category = "Optional features, off by owner's choice"
 advice = "keep"
-note = "Screen mirroring app (disabled on 10 devices in cleanyourtv)"
+note = "Screen mirroring app (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.networkrecommendation"
@@ -8088,16 +8389,16 @@ note = "\"BRAVIA notifications\" inbox (disabled on 4 devices in cleanyourtv)"
 [[app]]
 package = "com.sony.dtv.osat.album"
 label = "Re-enable to view photos from USB"
-category = "USB media players, casting and camera"
+category = "Preloaded apps and tutorials"
 advice = "caution"
-note = "Re-enable to view photos from USB (disabled on 4 devices in cleanyourtv)"
+note = "Re-enable to view photos from USB (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.osat.music"
 label = "Re-enable to play music from USB"
 category = "Preloaded apps"
 advice = "caution"
-note = "Re-enable to play music from USB (disabled on 16 devices in cleanyourtv)"
+note = "Re-enable to play music from USB (disabled on 18 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.osat.music.toast"
@@ -8109,16 +8410,16 @@ note = "Sony extras, disabled by choice (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.sony.dtv.osat.video"
 label = "Re-enable to play videos from USB"
-category = "USB media players, casting and camera"
+category = "Preloaded apps and tutorials"
 advice = "caution"
-note = "Re-enable to play videos from USB (disabled on 4 devices in cleanyourtv)"
+note = "Re-enable to play videos from USB (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.promos"
 label = "My BRAVIA promos"
 category = "Sony and Google content, ads and promos"
 advice = "safe"
-note = "My BRAVIA promos (disabled on 25 devices in cleanyourtv)"
+note = "My BRAVIA promos (disabled on 27 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.qq"
@@ -8126,6 +8427,13 @@ label = "QQ音乐 preload, with Tencent remote-device service"
 category = "`pm enable <package>` and please report it."
 advice = "caution"
 note = "QQ音乐 preload, with Tencent remote-device service (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.sony.dtv.quicksetup"
+label = "Quicksetup"
+category = "Low-value leftovers"
+advice = "caution"
+note = "Low-value leftovers (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.recapp"
@@ -8209,7 +8517,7 @@ package = "com.sony.dtv.serviceinformation"
 label = "Serviceinformation"
 category = "Broadcast and unused extensions"
 advice = "caution"
-note = "Broadcast and unused extensions (disabled on 2 devices in cleanyourtv)"
+note = "Broadcast and unused extensions (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.servicemode.tuner"
@@ -8230,7 +8538,7 @@ package = "com.sony.dtv.smarthelp"
 label = "Sony help tile"
 category = "Preloaded apps"
 advice = "safe"
-note = "Sony help tile (disabled on 34 devices in cleanyourtv)"
+note = "Sony help tile (disabled on 36 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.smarthomesettings"
@@ -8244,7 +8552,7 @@ package = "com.sony.dtv.smartmediaapp"
 label = "Media Player, re-enable to play USB files"
 category = "Preloaded apps"
 advice = "caution"
-note = "Media Player, re-enable to play USB files (disabled on 7 devices in cleanyourtv)"
+note = "Media Player, re-enable to play USB files (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.sonybugreportsys"
@@ -8258,21 +8566,21 @@ package = "com.sony.dtv.sonyloglevelsettingsys"
 label = "System log level daemon"
 category = "Telemetry, remote support, logging and diagnostics"
 advice = "caution"
-note = "System log level daemon (disabled on 4 devices in cleanyourtv)"
+note = "System log level daemon (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.sonyloglevelsettingvnd"
 label = "Vendor log level daemon"
 category = "Telemetry, remote support, logging and diagnostics"
 advice = "caution"
-note = "Vendor log level daemon (disabled on 3 devices in cleanyourtv)"
+note = "Vendor log level daemon (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.sonyselect"
 label = "Sony Select app store/promo tile"
 category = "Sony and Google content, ads and promos"
 advice = "caution"
-note = "Sony Select app store/promo tile (disabled on 37 devices in cleanyourtv)"
+note = "Sony Select app store/promo tile (disabled on 40 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.sonyselect.overlay"
@@ -8291,16 +8599,16 @@ note = "Sony Shelf recommendation row (disabled on 3 devices in cleanyourtv)"
 [[app]]
 package = "com.sony.dtv.sonytab"
 label = "Sony content tab / partner rows"
-category = "home-screen ads and promos"
+category = "Sony promos and content feeds"
 advice = "safe"
-note = "Sony content tab / partner rows (disabled on 15 devices in cleanyourtv)"
+note = "Sony content tab / partner rows (disabled on 16 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.touchpad.tutorial"
 label = "Touchpad remote tutorial"
 category = "Preloaded apps and tutorials"
 advice = "caution"
-note = "Touchpad remote tutorial (disabled on 5 devices in cleanyourtv)"
+note = "Touchpad remote tutorial (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.dtv.tuningconfirmation_dvbt"
@@ -8412,14 +8720,14 @@ package = "com.sony.huey.dlna.module"
 label = "DLNA renderer"
 category = "features not used (off by choice)"
 advice = "caution"
-note = "DLNA renderer (disabled on 15 devices in cleanyourtv)"
+note = "DLNA renderer (disabled on 16 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.huey.dlna.renderersettings"
 label = "Renderersettings"
 category = "Optional features, off by owner's choice"
 advice = "caution"
-note = "Optional features, off by owner's choice (disabled on 14 devices in cleanyourtv)"
+note = "Optional features, off by owner's choice (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sony.rvu"
@@ -8447,7 +8755,7 @@ package = "com.sonyericsson.dlna"
 label = "DLNA media server/renderer"
 category = "features not used (off by choice)"
 advice = "caution"
-note = "DLNA media server/renderer (disabled on 15 devices in cleanyourtv)"
+note = "DLNA media server/renderer (disabled on 16 devices in cleanyourtv)"
 
 [[app]]
 package = "com.sonyericsson.dlna.dtcpplayer"
@@ -8622,7 +8930,7 @@ package = "com.tcl.UpdatePeripheral"
 label = "Re-enable to update a TCL soundbar"
 category = "Preloaded apps and services"
 advice = "caution"
-note = "Re-enable to update a TCL soundbar (disabled on 20 devices in cleanyourtv)"
+note = "Re-enable to update a TCL soundbar (disabled on 21 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.airplay2"
@@ -8636,7 +8944,7 @@ package = "com.tcl.android.webview"
 label = "Unused, Google WebView is the active provider"
 category = "Preloads and background extras"
 advice = "keep"
-note = "Unused, Google WebView is the active provider (disabled on 17 devices in cleanyourtv)"
+note = "Unused, Google WebView is the active provider (disabled on 18 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.appmarket2"
@@ -8664,7 +8972,7 @@ package = "com.tcl.assistant"
 label = "TCL voice service"
 category = "TCL content, promos and background extras"
 advice = "caution"
-note = "TCL voice service (disabled on 26 devices in cleanyourtv)"
+note = "TCL voice service (disabled on 28 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.atomic.servicecenter"
@@ -8685,21 +8993,21 @@ package = "com.tcl.bi"
 label = "TCL BI analytics"
 category = "Telemetry and analytics"
 advice = "safe"
-note = "TCL BI analytics (disabled on 37 devices in cleanyourtv)"
+note = "TCL BI analytics (disabled on 41 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.bootadservice"
 label = "Full-screen ad before Home"
 category = "Ad and telemetry reporting"
 advice = "safe"
-note = "Full-screen ad before Home (disabled on 6 devices in cleanyourtv)"
+note = "Full-screen ad before Home (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.browser"
-label = "Found installed as a user app"
+label = "Second web browser"
 category = "Preloaded apps"
 advice = "caution"
-note = "Found installed as a user app; may not be on every unit (disabled on 26 devices in cleanyourtv)"
+note = "Second web browser (disabled on 30 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.c2dm.client"
@@ -8741,7 +9049,7 @@ package = "com.tcl.copydatatotv"
 label = "Phone-to-TV data migration"
 category = "TCL content, promos and background extras"
 advice = "caution"
-note = "Phone-to-TV data migration (disabled on 18 devices in cleanyourtv)"
+note = "Phone-to-TV data migration (disabled on 19 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.cyberui"
@@ -8752,31 +9060,31 @@ note = "TCL's own launcher/content service, unused (disabled on 7 devices in cle
 
 [[app]]
 package = "com.tcl.dashboard"
-label = "TCL Home panel and its promos"
+label = "TCL dashboard / promo backend"
 category = "TCL content, ads and promos"
 advice = "safe"
-note = "TCL Home panel and its promos (disabled on 34 devices in cleanyourtv)"
+note = "TCL dashboard / promo backend (disabled on 37 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.eletronicpolicy"
 label = "E-warranty sheet"
 category = "TCL content, mirroring, updaters and bundled players"
 advice = "caution"
-note = "E-warranty sheet (disabled on 1 device in cleanyourtv)"
+note = "E-warranty sheet (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.esticker"
 label = "Retail demo stickers"
 category = "Retail demo / hotel mode"
 advice = "safe"
-note = "Retail demo stickers (disabled on 73 devices in cleanyourtv)"
+note = "Retail demo stickers (disabled on 77 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.eva"
 label = "TCL voice assistant layer"
 category = "Extras nobody asked for"
 advice = "caution"
-note = "TCL voice assistant layer (Katniss handles voice without it) (disabled on 5 devices in cleanyourtv)"
+note = "TCL voice assistant layer (Katniss handles voice without it) (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.exhibit"
@@ -8784,6 +9092,13 @@ label = "Store demo"
 category = "Retail demo / hotel mode"
 advice = "caution"
 note = "Store demo (disabled on 24 devices in cleanyourtv)"
+
+[[app]]
+package = "com.tcl.externaldevice.update"
+label = "USB accessory updater"
+category = "Background services and preloaded extras"
+advice = "caution"
+note = "USB accessory updater (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.factory.view"
@@ -8809,9 +9124,9 @@ note = "Karaoke (disabled on 5 devices in cleanyourtv)"
 [[app]]
 package = "com.tcl.gallery"
 label = "USB photo gallery + TCL screensaver"
-category = "Off by choice on this unit"
+category = "Background services and preloaded extras"
 advice = "caution"
-note = "USB photo gallery + TCL screensaver (disabled on 15 devices in cleanyourtv)"
+note = "USB photo gallery + TCL screensaver (disabled on 17 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.gamebar"
@@ -8832,14 +9147,14 @@ package = "com.tcl.guard"
 label = "TCL \"cleaner\" / app manager"
 category = "Preloaded apps and services"
 advice = "caution"
-note = "TCL \"cleaner\" / app manager (disabled on 48 devices in cleanyourtv)"
+note = "TCL \"cleaner\" / app manager (disabled on 51 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.hearaid"
 label = "Hearing test / accessibility helper"
 category = "Extras nobody asked for"
 advice = "caution"
-note = "Hearing test / accessibility helper (disabled on 14 devices in cleanyourtv)"
+note = "Hearing test / accessibility helper (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.hotelmenu"
@@ -8867,7 +9182,7 @@ package = "com.tcl.interactive"
 label = "TCL TIAS background service"
 category = "TCL content, ads and promos"
 advice = "caution"
-note = "TCL TIAS background service (disabled on 18 devices in cleanyourtv)"
+note = "TCL TIAS background service (disabled on 19 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.keyhelp"
@@ -8881,7 +9196,7 @@ package = "com.tcl.logkit"
 label = "Log capture and upload"
 category = "TCL tracking and analytics"
 advice = "safe"
-note = "Log capture and upload (disabled on 35 devices in cleanyourtv)"
+note = "Log capture and upload (disabled on 37 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.m"
@@ -8902,7 +9217,7 @@ package = "com.tcl.messagebox"
 label = "TCL push messages and promos"
 category = "TCL content, ads and promos"
 advice = "safe"
-note = "TCL push messages and promos (disabled on 61 devices in cleanyourtv)"
+note = "TCL push messages and promos (disabled on 64 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.micmanager"
@@ -8923,14 +9238,14 @@ package = "com.tcl.notereminder"
 label = "Notes/reminders"
 category = "preloaded apps and services not used"
 advice = "caution"
-note = "Notes/reminders (disabled on 15 devices in cleanyourtv)"
+note = "Notes/reminders (disabled on 16 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.ocean.instructions"
 label = "E-manual"
 category = "Preloaded apps and services"
 advice = "safe"
-note = "E-manual (disabled on 34 devices in cleanyourtv)"
+note = "E-manual (disabled on 36 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.overseasappshow"
@@ -8944,7 +9259,7 @@ package = "com.tcl.partnercustomizer"
 label = "TCL tweaks to Google TV home rows"
 category = "TCL content, ads and promos"
 advice = "safe"
-note = "TCL tweaks to Google TV home rows (disabled on 52 devices in cleanyourtv)"
+note = "TCL tweaks to Google TV home rows (disabled on 54 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.partnercustomizer.resource"
@@ -8993,7 +9308,7 @@ package = "com.tcl.repairguide"
 label = "Repair-guide app"
 category = "Preloaded apps and services"
 advice = "caution"
-note = "Repair-guide app (disabled on 27 devices in cleanyourtv)"
+note = "Repair-guide app (disabled on 28 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.samba"
@@ -9007,7 +9322,7 @@ package = "com.tcl.smartalexa"
 label = "Alexa"
 category = "Preloaded apps and services"
 advice = "caution"
-note = "Alexa (disabled on 38 devices in cleanyourtv)"
+note = "Alexa (disabled on 41 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.smartlink.core"
@@ -9035,7 +9350,7 @@ package = "com.tcl.t_solo"
 label = "Bluetooth \"listen alone\""
 category = "Extras nobody asked for"
 advice = "keep"
-note = "Bluetooth \"listen alone\" (disabled on 24 devices in cleanyourtv)"
+note = "Bluetooth \"listen alone\" (disabled on 25 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.tclmusic"
@@ -9063,21 +9378,21 @@ package = "com.tcl.ttvs"
 label = "Ttvs"
 category = "TCL tracking and analytics"
 advice = "caution"
-note = "Samba TV ACR viewing tracking, TCL \"BI\" analytics, Alexa core, T-Cast (disabled on 20 devices in cleanyourtv)"
+note = "Samba TV ACR viewing tracking, TCL \"BI\" analytics, Alexa core, T-Cast (disabled on 19 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.tv.plus"
 label = "TCL TV+ content app"
 category = "TCL content, ads and promos"
 advice = "caution"
-note = "TCL TV+ content app (disabled on 7 devices in cleanyourtv)"
+note = "TCL TV+ content app (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.tv.tclchannel"
-label = "TCL Channel, bundles Google Mobile Ads"
-category = "TCL content, ads and promos"
-advice = "safe"
-note = "TCL Channel, bundles Google Mobile Ads (disabled on 2 devices in cleanyourtv)"
+label = "TCL Channel"
+category = "TCL and Google content, ads and recommendation rows"
+advice = "caution"
+note = "TCL Channel (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.tv.tclhome_master"
@@ -9091,7 +9406,7 @@ package = "com.tcl.tv.tclhome_passive"
 label = "Pushes TCL content to the home screen at boot"
 category = "TCL content, ads and promos"
 advice = "caution"
-note = "Pushes TCL content to the home screen at boot (disabled on 45 devices in cleanyourtv)"
+note = "Pushes TCL content to the home screen at boot (disabled on 47 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.tvhealthcheck"
@@ -9112,14 +9427,14 @@ package = "com.tcl.tvweishi"
 label = "TCL \"TV Guard\" cleaner"
 category = "After the launcher is installed"
 advice = "caution"
-note = "TCL \"TV Guard\" cleaner (disabled on 14 devices in cleanyourtv)"
+note = "TCL \"TV Guard\" cleaner (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.ui_mediaCenter"
 label = "USB media player"
 category = "Preloads and background extras"
 advice = "caution"
-note = "USB media player (disabled on 37 devices in cleanyourtv)"
+note = "USB media player (disabled on 38 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.usagestats"
@@ -9140,7 +9455,7 @@ package = "com.tcl.usercenter"
 label = "TCL account sign-in nags"
 category = "TCL tracking and analytics"
 advice = "safe"
-note = "TCL account sign-in nags (disabled on 51 devices in cleanyourtv)"
+note = "TCL account sign-in nags (disabled on 54 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.versionUpdateApp"
@@ -9182,7 +9497,7 @@ package = "com.tcl.waterfall.overseas"
 label = "TCL movie/show recommendation browser"
 category = "TCL content, ads and promos"
 advice = "caution"
-note = "TCL movie/show recommendation browser (disabled on 56 devices in cleanyourtv)"
+note = "TCL movie/show recommendation browser (disabled on 60 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tcl.waterfall.resource"
@@ -9208,9 +9523,9 @@ note = "Whole-net search with VOD promotions (disabled on 5 devices in cleanyour
 [[app]]
 package = "com.tcl.xian.StartandroidService"
 label = "Background reporting service"
-category = "Ad and telemetry reporting"
+category = "TCL and Google telemetry"
 advice = "caution"
-note = "Background reporting service (disabled on 6 devices in cleanyourtv)"
+note = "Background reporting service (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.teamsmart.videomanager.tv"
@@ -9234,11 +9549,39 @@ advice = "safe"
 note = "TIM / Technicolor telemetry and remote device management (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
+package = "com.technicolor.app.ota"
+label = "Ota"
+category = "TIM / Technicolor telemetry and remote device management"
+advice = "caution"
+note = "ApplicationOta: silent background partner APK installer (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.technicolor.autoperiodicreboot"
+label = "Forced periodic scheduled reboot daemon"
+category = "TIM / Technicolor telemetry and remote device management"
+advice = "caution"
+note = "Forced periodic scheduled reboot daemon (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.technicolor.cputemperature"
 label = "Cputemperature"
 category = "TIM / Technicolor telemetry and remote device management"
 advice = "safe"
 note = "TIM / Technicolor telemetry and remote device management (disabled on 2 devices in cleanyourtv)"
+
+[[app]]
+package = "com.technicolor.project.releasenote"
+label = "Pop-up release notes"
+category = "TIM / Technicolor telemetry and remote device management"
+advice = "caution"
+note = "Pop-up release notes (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "com.technicolor.zta"
+label = "Technicolor Zero-Touch provisioning"
+category = "TIM / Technicolor telemetry and remote device management"
+advice = "caution"
+note = "Technicolor Zero-Touch provisioning (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.technicolor.zwavereceiver"
@@ -9287,7 +9630,7 @@ package = "com.tianci.ad"
 label = "Tianci"
 category = "Ads / telemetry / tracking"
 advice = "caution"
-note = "Coocaa ad SDK: boot/shutdown/screensaver/landing ads (disabled on 7 devices in cleanyourtv)"
+note = "Coocaa ad SDK: boot/shutdown/screensaver/landing ads (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tianci.appstore"
@@ -9302,6 +9645,13 @@ label = "Silent auto-install service"
 category = "Ads / telemetry / tracking"
 advice = "caution"
 note = "Silent auto-install service (remote app pushing) (disabled on 4 devices in cleanyourtv)"
+
+[[app]]
+package = "com.tianci.de"
+label = "Tianci"
+category = "Verified safe across cold boots; disables device telemetry, package monitoring,"
+advice = "caution"
+note = "Tianci Data Engine daemons listening for package changes (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.tianci.family.photograph"
@@ -9322,7 +9672,7 @@ package = "com.tianci.localmedia"
 label = "\"Media\" tile: plays files from a USB drive"
 category = "# installed: check `pm list packages -3` before uncommenting"
 advice = "caution"
-note = "\"Media\" tile: plays files from a USB drive (disabled on 2 devices in cleanyourtv)"
+note = "\"Media\" tile: plays files from a USB drive (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.tianci.push"
@@ -9460,16 +9810,16 @@ note = "Alexa extras (voice search itself stays on) (disabled on 1 device in cle
 [[app]]
 package = "com.upst.hayu"
 label = "Hayu"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.utsmta.app"
 label = "Factory test, listens for USB sticks"
 category = "Factory/test leftovers and preloads nobody uses on a TV"
 advice = "keep"
-note = "Factory test, listens for USB sticks (disabled on 4 devices in cleanyourtv)"
+note = "Factory test, listens for USB sticks (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.valvesoftware.steamlink"
@@ -9481,9 +9831,9 @@ note = "Steam Link (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.vativision.vativisionapp"
 label = "Vativisionapp"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.vectorunit.purple.googleplay"
@@ -9511,49 +9861,49 @@ package = "com.vestel.smartcenter"
 label = "No UI, holds GET_TASKS"
 category = "Vestel telemetry, logging and \"cleaner\""
 advice = "caution"
-note = "No UI, holds GET_TASKS (sees which apps you run) + INTERNET (disabled on 4 devices in cleanyourtv)"
+note = "No UI, holds GET_TASKS (sees which apps you run) + INTERNET (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vestel.smartlogger"
 label = "Vestel logging service"
 category = "Vestel telemetry, logging and \"cleaner\""
 advice = "caution"
-note = "Vestel logging service (disabled on 3 devices in cleanyourtv)"
+note = "Vestel logging service (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vestel.tv.eib"
-label = "Eib"
-category = "Vestel telemetry and junk"
-advice = "caution"
-note = "E-User Manual viewer: one activity, no services or receivers (disabled on 1 device in cleanyourtv)"
+label = "The on-screen e-manual"
+category = "Apps the third unit does not use"
+advice = "safe"
+note = "The on-screen e-manual (its label was confirmed on screen) (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vestel.tv.speedup"
-label = "Speedup"
+label = "\"speed up\" cleaner"
 category = "Vestel telemetry, logging and \"cleaner\""
 advice = "caution"
-note = "\"speed up\" cleaner, holds READ_LOGS + DUMP + INTERNET (disabled on 5 devices in cleanyourtv)"
+note = "\"speed up\" cleaner (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vestel.vestelreporter"
 label = "Vestelreporter"
 category = "Vestel telemetry, logging and \"cleaner\""
 advice = "caution"
-note = "Vestel reporter: INTERNET + BOOT_COMPLETED, no UI (disabled on 7 devices in cleanyourtv)"
+note = "Vestel reporter: INTERNET + BOOT_COMPLETED, no UI (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vewd.core.browser"
-label = "Vewd web browser"
-category = "through the tuner."
+label = "The Vewd browser"
+category = "Apps the third unit does not use"
 advice = "caution"
-note = "Vewd web browser (disabled on 2 devices in cleanyourtv)"
+note = "The Vewd browser (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vewd.core.integration.dia"
 label = "Vewd"
 category = "Asia-Pacific unit: Sony agents and promo surfaces not covered above"
 advice = "caution"
-note = "Vewd (disabled on 8 devices in cleanyourtv)"
+note = "Vewd (disabled on 9 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vewd.core.service"
@@ -9606,10 +9956,10 @@ note = "AI picture book (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vk.tv"
-label = "Tv"
-category = "Preloaded apps (comment out any you use)"
+label = "VK Video"
+category = "preloaded streaming apps the owner does not use"
 advice = "caution"
-note = "Preloaded apps (comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "VK Video (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vodafone.vodafoneplay"
@@ -9620,10 +9970,10 @@ note = "Vodafone Play (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.vt.alexa"
-label = "Hisense Alexa"
+label = "HiAlexa"
 category = "Streaming apps and voice, off by choice (comment out any you use)"
 advice = "caution"
-note = "Hisense Alexa (Google Assistant is kept) (disabled on 4 devices in cleanyourtv)"
+note = "HiAlexa (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vt.ambiencephoto"
@@ -9642,14 +9992,14 @@ note = "Telemetry and tracking (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.vt.fte"
 label = "First-time setup hooks for the setup wizard"
-category = "Store/hotel demo mode and the first-time setup flow (setup already complete)"
+category = "Telemetry and tracking"
 advice = "caution"
 note = "First-time setup hooks for the setup wizard (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vt.hishow"
 label = "\"Family Moment\" screensaver and photo content"
-category = "Preloaded apps"
+category = "Hisense preloads and background helpers"
 advice = "caution"
 note = "\"Family Moment\" screensaver and photo content (disabled on 4 devices in cleanyourtv)"
 
@@ -9663,7 +10013,7 @@ note = "Room audio calibration prompt (RoomCalibration) (disabled on 1 device in
 [[app]]
 package = "com.vt.storemode"
 label = "Shop demo mode"
-category = "Store/hotel demo mode and the first-time setup flow (setup already complete)"
+category = "Telemetry and tracking"
 advice = "safe"
 note = "Shop demo mode (disabled on 4 devices in cleanyourtv)"
 
@@ -9684,7 +10034,7 @@ note = "AirPlay key check (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "com.vt.tv.b2b"
 label = "Hotel/business mode, starts at boot"
-category = "Demo, hotel and first-time setup modes"
+category = "Telemetry and tracking"
 advice = "caution"
 note = "Hotel/business mode, starts at boot (disabled on 2 devices in cleanyourtv)"
 
@@ -9696,6 +10046,13 @@ advice = "caution"
 note = "Calman calibration connector (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.vt.tv.customerlauncher"
+label = "Customerlauncher"
+category = "Hisense preloads and background helpers"
+advice = "caution"
+note = "OEMConfig: the tvlauncher.config/apprecs/widget providers behind the \"Hisense\" tab (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.vt.tv.dlna"
 label = "DLNA renderer"
 category = "Off by choice"
@@ -9705,7 +10062,7 @@ note = "DLNA renderer (disabled on 2 devices in cleanyourtv)"
 [[app]]
 package = "com.vt.tv.evservice"
 label = "Viewing-data"
-category = "Hisense telemetry"
+category = "Telemetry and tracking"
 advice = "safe"
 note = "Viewing-data (ACR) service (disabled on 4 devices in cleanyourtv)"
 
@@ -9718,10 +10075,10 @@ note = ".atsc.InteractMainService, ATSC (US) (disabled on 1 device in cleanyourt
 
 [[app]]
 package = "com.vt.tv.mediacenter"
-label = "Media Center: USB and DLNA file player"
-category = "75U75N owner's choices, all reversible: apps that unit's owner does not use"
+label = "USB media player"
+category = "Off by choice (comment out any you use)"
 advice = "caution"
-note = "Media Center: USB and DLNA file player (disabled on 1 device in cleanyourtv)"
+note = "USB media player (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.vt.tv.mobiledeviceconnectiontips"
@@ -9732,10 +10089,10 @@ note = "Miracast (\"Screen Casting\") (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.vt.tv.protector"
-label = "Protector"
-category = "Streaming apps and voice, off by choice (comment out any you use)"
+label = "\"Device Assistant\" cleaner with a boot receiver"
+category = "Hisense preloads and background helpers"
 advice = "caution"
-note = "DeviceAssistant: cache cleaner and \"turbo mode\", starts at boot (disabled on 3 devices in cleanyourtv)"
+note = "\"Device Assistant\" cleaner with a boot receiver (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.vt.tv.singlelisten"
@@ -9868,14 +10225,14 @@ package = "com.xgimi.atvwifiverify"
 label = "Factory Wi-Fi verification"
 category = "Store demo, factory and test tools"
 advice = "keep"
-note = "Factory Wi-Fi verification (disabled on 4 devices in cleanyourtv)"
+note = "Factory Wi-Fi verification (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xgimi.bugreportsender"
 label = "XGIMI bug report uploader"
 category = "Telemetry and feedback"
 advice = "safe"
-note = "XGIMI bug report uploader (disabled on 7 devices in cleanyourtv)"
+note = "XGIMI bug report uploader (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xgimi.burnin"
@@ -9931,7 +10288,7 @@ package = "com.xgimi.minitvfactory"
 label = "Factory menu, file transfer and burn-in services"
 category = "Store demo, factory and test tools"
 advice = "keep"
-note = "Factory menu, file transfer and burn-in services (disabled on 4 devices in cleanyourtv)"
+note = "Factory menu, file transfer and burn-in services (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xgimi.msgcenter"
@@ -9990,6 +10347,13 @@ advice = "caution"
 note = "Account/VIP/backup UI and provider (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.xgimi.yg.minitvfactory"
+label = "Second factory menu build"
+category = "Store demo, factory and test tools"
+advice = "keep"
+note = "Second factory menu build (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.xiaomi.account"
 label = "Mi account"
 category = "Shopping, payment and Mi account"
@@ -10029,7 +10393,7 @@ package = "com.xiaomi.android.tvsetup.partnercustomizer"
 label = "Partnercustomizer"
 category = "#1411). Comment the next line out if you use them."
 advice = "caution"
-note = "Partner customisation that seeds partner apps at setup (disabled on 3 devices in cleanyourtv)"
+note = "#1411). Comment the next line out if you use them. (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.eetv.litehome"
@@ -10043,14 +10407,14 @@ package = "com.xiaomi.floatingframe"
 label = "Floating promo overlay service"
 category = "PatchWall, content rows, sponsored rows"
 advice = "safe"
-note = "Floating promo overlay service (disabled on 10 devices in cleanyourtv)"
+note = "Floating promo overlay service (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.gamecenter.sdk.service.mibox"
 label = "Game center SDK"
 category = "Xiaomi background services"
 advice = "caution"
-note = "Game center SDK (disabled on 9 devices in cleanyourtv)"
+note = "Game center SDK (disabled on 11 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.mi_connect_service"
@@ -10078,7 +10442,7 @@ package = "com.xiaomi.mimusic2"
 label = "Mi Music"
 category = "Preloaded apps"
 advice = "caution"
-note = "Mi Music (disabled on 27 devices in cleanyourtv)"
+note = "Mi Music (disabled on 28 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.miplay"
@@ -10099,7 +10463,7 @@ package = "com.xiaomi.mitv.calendar"
 label = "Calendar"
 category = "Preloaded apps not used"
 advice = "caution"
-note = "Calendar (disabled on 6 devices in cleanyourtv)"
+note = "Calendar (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.mitv.csi"
@@ -10132,30 +10496,30 @@ note = "User handbook (disabled on 9 devices in cleanyourtv)"
 [[app]]
 package = "com.xiaomi.mitv.health"
 label = "MiHealth"
-category = "Preloaded apps (WPS cn.wps.moffice_i18n_TV kept at owner request)"
+category = "Preloaded apps"
 advice = "caution"
-note = "MiHealth (disabled on 3 devices in cleanyourtv)"
+note = "MiHealth (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.mitv.healthdiagnosis"
 label = "TV self-diagnosis"
-category = "Preloaded apps not used"
+category = "Preloaded apps"
 advice = "caution"
-note = "TV self-diagnosis (disabled on 4 devices in cleanyourtv)"
+note = "TV self-diagnosis (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.mitv.hyper.screensaver"
 label = "HyperOS screensaver Activity"
 category = "Preloaded apps (WPS cn.wps.moffice_i18n_TV kept at owner request)"
 advice = "caution"
-note = "HyperOS screensaver Activity; see device doc (disabled on 2 devices in cleanyourtv)"
+note = "HyperOS screensaver Activity; see device doc (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.mitv.karaoke.service"
 label = "Karaoke"
-category = "Off by choice: features this owner does not use (comment out what you do use)"
+category = "Preloaded apps"
 advice = "caution"
-note = "Karaoke (disabled on 5 devices in cleanyourtv)"
+note = "Karaoke (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.mitv.legal.webview"
@@ -10216,9 +10580,9 @@ note = "Background Xiaomi daemons and updaters (disabled on 1 device in cleanyou
 [[app]]
 package = "com.xiaomi.mitv.shop"
 label = "Xiaomi store"
-category = "Ads / promoted content / shopping"
+category = "Xiaomi telemetry / ads / push"
 advice = "caution"
-note = "Xiaomi store (disabled on 6 devices in cleanyourtv)"
+note = "Xiaomi store (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.mitv.smartpanel"
@@ -10239,14 +10603,14 @@ package = "com.xiaomi.mitv.tvmanager"
 label = "\"TV Manager\" cleaner"
 category = "Xiaomi background services"
 advice = "caution"
-note = "\"TV Manager\" cleaner (disabled on 29 devices in cleanyourtv)"
+note = "\"TV Manager\" cleaner (disabled on 30 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.mitv.tvpush.tvpushservice"
 label = "Push ads/notifications"
-category = "Xiaomi telemetry / push / cloud control"
+category = "Xiaomi telemetry / ads / push"
 advice = "safe"
-note = "Push ads/notifications (disabled on 6 devices in cleanyourtv)"
+note = "Push ads/notifications (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.mitv.tvvideocall"
@@ -10274,7 +10638,7 @@ package = "com.xiaomi.screenrecorder"
 label = "Screen recorder"
 category = "Preloaded apps not used"
 advice = "caution"
-note = "Screen recorder (disabled on 7 devices in cleanyourtv)"
+note = "Screen recorder (disabled on 9 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.setupwizard"
@@ -10288,28 +10652,28 @@ package = "com.xiaomi.smarthome.tv"
 label = "Mi Home"
 category = "Ads / promoted content / shopping"
 advice = "caution"
-note = "Mi Home; the remote's voice button still worked without it (disabled on 6 devices in cleanyourtv)"
+note = "Mi Home; the remote's voice button still worked without it (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.statistic"
 label = "Statistics upload"
 category = "Xiaomi + Google telemetry"
 advice = "safe"
-note = "Statistics upload (disabled on 33 devices in cleanyourtv)"
+note = "Statistics upload (disabled on 35 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.tv.gallery"
 label = "\"Pictorial\" wallpaper app"
 category = "Preloaded apps not used"
 advice = "caution"
-note = "\"Pictorial\" wallpaper app (disabled on 6 devices in cleanyourtv)"
+note = "\"Pictorial\" wallpaper app (disabled on 7 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.tvqs"
-label = "Tvqs"
+label = "Quality/performance reporting"
 category = "Xiaomi telemetry / ads / push"
-advice = "safe"
-note = "Quality system: uploads crash/perf/dropbox entries (disabled on 7 devices in cleanyourtv)"
+advice = "caution"
+note = "Quality/performance reporting (disabled on 9 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.tvqs.overseas"
@@ -10330,7 +10694,7 @@ package = "com.xiaomi.tweather"
 label = "Weather provider"
 category = "Preloaded apps not used"
 advice = "caution"
-note = "Weather provider; also feeds the Hyper screensaver (disabled on 5 devices in cleanyourtv)"
+note = "Weather provider; also feeds the Hyper screensaver (disabled on 6 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xiaomi.voicecontrol"
@@ -10362,17 +10726,17 @@ note = "Old SonyLIV 3.6 build; the Play Store com.sonyliv is kept (disabled on 2
 
 [[app]]
 package = "com.xiaomo.tv.milegal"
-label = "Static legal / privacy text screens"
+label = "Xiaomi legal / privacy screens"
 category = "Xiaomi background services"
 advice = "caution"
-note = "Static legal / privacy text screens (disabled on 15 devices in cleanyourtv)"
+note = "Xiaomi legal / privacy screens (disabled on 16 devices in cleanyourtv)"
 
 [[app]]
 package = "com.xm.webcontent"
-label = "Xiaomi promo web content"
+label = "Webview container for promotions"
 category = "PatchWall, content rows, sponsored rows"
-advice = "safe"
-note = "Xiaomi promo web content (disabled on 39 devices in cleanyourtv)"
+advice = "keep"
+note = "Webview container for promotions (disabled on 42 devices in cleanyourtv)"
 
 [[app]]
 package = "com.yablio.sendfilestotv"
@@ -10385,8 +10749,8 @@ note = "Send Files to TV (disabled on 1 device in cleanyourtv)"
 package = "com.yandex.android.advid"
 label = "Yandex advertising ID"
 category = "Yandex telemetry and leftovers"
-advice = "caution"
-note = "Yandex advertising ID (disabled on 1 device in cleanyourtv)"
+advice = "safe"
+note = "Yandex advertising ID (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.yandex.browser.tv"
@@ -10400,21 +10764,28 @@ package = "com.yandex.prebuiltstub"
 label = "Empty stub, no components"
 category = "Yandex telemetry and leftovers"
 advice = "caution"
-note = "Empty stub, no components (disabled on 1 device in cleanyourtv)"
+note = "Empty stub, no components (disabled on 2 devices in cleanyourtv)"
+
+[[app]]
+package = "com.yandex.tv.alice"
+label = "Alice"
+category = "Yandex telemetry and ads"
+advice = "caution"
+note = "Alice (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "com.yandex.tv.bugreportsender"
 label = "Bug report sender"
 category = "Yandex telemetry and leftovers"
-advice = "caution"
-note = "Bug report sender (disabled on 1 device in cleanyourtv)"
+advice = "safe"
+note = "Bug report sender (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.yandex.tv.daydream"
 label = "Yandex video screensaver"
 category = "Yandex telemetry and leftovers"
 advice = "caution"
-note = "Yandex video screensaver; the screensaver setting still names it (README.md) (disabled on 1 device in cleanyourtv)"
+note = "Yandex video screensaver; the screensaver setting still names it (README.md) (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.yandex.tv.home"
@@ -10428,7 +10799,7 @@ package = "com.yandex.tv.webplayer"
 label = "Yandex web player"
 category = "Yandex telemetry and leftovers"
 advice = "caution"
-note = "Yandex web player; YouTube and Kinopoisk play without it (disabled on 1 device in cleanyourtv)"
+note = "Yandex web player; YouTube and Kinopoisk play without it (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "com.yeelink.yeelightflow.hisense.overseas"
@@ -10592,6 +10963,13 @@ advice = "keep"
 note = "Content, ads and telemetry (Zeasn \"hikeen\" build) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "com.zeasn.deviceportal.asdprovider.ktc"
+label = "Zeasn ad/store ecosystem provider"
+category = "telemetry and ad/store bridges"
+advice = "keep"
+note = "Zeasn ad/store ecosystem provider (boot receiver) (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "com.zeasn.deviceportal.asdprovider.skyworth_hisi352"
 label = "Ad/portal service for the Whale launcher"
 category = "Zeasn ads and store"
@@ -10739,6 +11117,13 @@ advice = "caution"
 note = "Unused streaming apps — off by choice (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "de.stefanpledl.localcast"
+label = "LocalCast"
+category = "Preloaded apps and demos"
+advice = "caution"
+note = "LocalCast (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "deezer.android.tv"
 label = "Deezer"
 category = "Off by choice on the tested set (keep what you use)"
@@ -10825,9 +11210,16 @@ note = "TFOU Max (TF1 kids) (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "fusion.android.tv.demo"
 label = "Retail demo mode"
-category = "Skyworth content, ads, demos and preloads"
+category = "Store demo, factory and test tools"
 advice = "safe"
-note = "Retail demo mode (disabled on 66 devices in cleanyourtv)"
+note = "Retail demo mode (disabled on 79 devices in cleanyourtv)"
+
+[[app]]
+package = "fusion.android.tv.demo2"
+label = "/system_ext/app/HKC_RetailDisplay_polytron"
+category = "Retail demo / store display"
+advice = "caution"
+note = "/system_ext/app/HKC_RetailDisplay_polytron (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "hu.telekom.ttvtester"
@@ -10902,30 +11294,30 @@ note = "RaiPlay, Max). Comment out what you use. (disabled on 1 device in cleany
 [[app]]
 package = "it.rds.androidtv.rdssocialtv"
 label = "Rdssocialtv"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "it.sensiunici_atv"
 label = "Sensiunici atv"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "it.telecomitalia.calcio"
 label = "Calcio"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "it.telecomitalia.games"
 label = "Games"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "it.telecomitalia.iotcontroller"
@@ -10944,16 +11336,16 @@ note = "TIM smart home (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "it.telecomitalia.thefilmclub"
 label = "Thefilmclub"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "it.telecomitalia.timmusic_tv"
 label = "Timmusic tv"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "jp.co.rarity.tvweb"
@@ -11089,6 +11481,13 @@ advice = "caution"
 note = "Paravi (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "jp.sony.mybravia"
+label = "\"My BRAVIAからのおすすめ\" promo row on the stock home"
+category = "Sony and Google content, ads and promos"
+advice = "caution"
+note = "\"My BRAVIAからのおすすめ\" promo row on the stock home (Japan) (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "jp.unext.cocorovideo"
 label = "U-NEXT for COCORO VIDEO"
 category = "Preloaded streaming apps, off by owner's choice"
@@ -11096,11 +11495,18 @@ advice = "caution"
 note = "U-NEXT for COCORO VIDEO (the regular U-NEXT app stays) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "kgzn.factorymenu.ui"
+label = "Factory menu"
+category = "preloaded streaming apps the owner does not use"
+advice = "keep"
+note = "Factory menu (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "ktc.factorymenu.ui"
 label = "Factorymenu"
-category = "OEM factory/production-line test tools"
+category = "A. Telemetry / analytics / ad services"
 advice = "keep"
-note = "OEM factory/production-line test tools (disabled on 1 device in cleanyourtv)"
+note = "A. Telemetry / analytics / ad services (disabled on 2 devices in cleanyourtv)"
 
 [[app]]
 package = "limehd.ru.ctv"
@@ -11142,7 +11548,7 @@ package = "mediatek.factorymenu.ui"
 label = "Factory menu: disabled, never launched"
 category = "Preloaded apps"
 advice = "keep"
-note = "Factory menu: disabled, never launched (disabled on 7 devices in cleanyourtv)"
+note = "Factory menu: disabled, never launched (disabled on 13 devices in cleanyourtv)"
 
 [[app]]
 package = "mitv.service"
@@ -11233,7 +11639,7 @@ package = "org.chromium.webview_shell"
 label = "WebView test shell"
 category = "Background services and preloaded extras"
 advice = "keep"
-note = "WebView test shell (disabled on 7 devices in cleanyourtv)"
+note = "WebView test shell (disabled on 8 devices in cleanyourtv)"
 
 [[app]]
 package = "org.droidtv.amazonalexa"
@@ -11763,9 +12169,9 @@ note = "Preloads and background extras (disabled on 1 device in cleanyourtv)"
 [[app]]
 package = "ro.antenaplay.app"
 label = "Antenaplay"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "ro.pontes.forinaline"
@@ -11782,11 +12188,18 @@ advice = "caution"
 note = "Preloaded games (user-space apps: disable-user is enough, and reversible) (disabled on 1 device in cleanyourtv)"
 
 [[app]]
+package = "ru.haier.evo"
+label = "Evo"
+category = "Haier apps, auto-install and the boot-time app manager"
+advice = "caution"
+note = "Haier apps, auto-install and the boot-time app manager (disabled on 1 device in cleanyourtv)"
+
+[[app]]
 package = "ru.iptvremote.android.iptv"
 label = "Iptv"
-category = "Preloaded apps (off by choice; comment out any you use)"
+category = "com.dazn  # off on this set by the owner's choice; uncomment to disable it too"
 advice = "caution"
-note = "Preloaded apps (off by choice; comment out any you use) (disabled on 1 device in cleanyourtv)"
+note = "Com.dazn  # off on this set by the owner's choice; uncomment to disable it too (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "ru.ivi.client"
@@ -11800,7 +12213,7 @@ package = "ru.more.play"
 label = "Okko"
 category = "Screen sharing"
 advice = "caution"
-note = "Okko; re-installed and re-enabled by Sber at boot (disabled on 2 devices in cleanyourtv)"
+note = "Okko; re-installed and re-enabled by Sber at boot (disabled on 3 devices in cleanyourtv)"
 
 [[app]]
 package = "ru.mts.mtstv"
@@ -11808,6 +12221,13 @@ label = "KION"
 category = "Screen sharing"
 advice = "caution"
 note = "KION (disabled on 1 device in cleanyourtv)"
+
+[[app]]
+package = "ru.rt.video.app.tv"
+label = "Wink"
+category = "preloaded streaming apps the owner does not use"
+advice = "caution"
+note = "Wink (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "ru.sberdevices.bugreporter"
@@ -11982,7 +12402,14 @@ package = "screnmirroring.com"
 label = "Screen mirroring"
 category = "Optional features, off by owner's choice"
 advice = "caution"
-note = "Screen mirroring (Miracast) (disabled on 7 devices in cleanyourtv)"
+note = "Screen mirroring (Miracast) (disabled on 8 devices in cleanyourtv)"
+
+[[app]]
+package = "timvision.setup_wizard"
+label = "TIM setup wizard"
+category = "TIM / Technicolor telemetry and remote device management"
+advice = "caution"
+note = "TIM setup wizard (disabled on 1 device in cleanyourtv)"
 
 [[app]]
 package = "timvision.telemetry"
@@ -12014,24 +12441,24 @@ note = "Airtel Xstream (disabled on 5 devices in cleanyourtv)"
 
 [[app]]
 package = "tv.alphonso.alphonso_eula"
-label = "Alphonso ad tracking, reads app usage stats"
+label = "Alphonso ACR ad tracking"
 category = "Xiaomi + Google telemetry and ad tracking"
 advice = "safe"
-note = "Alphonso ad tracking, reads app usage stats (disabled on 3 devices in cleanyourtv)"
+note = "Alphonso ACR ad tracking (background service) (disabled on 4 devices in cleanyourtv)"
 
 [[app]]
 package = "tv.anoki.acr.anokiacroptin"
 label = "Automatic content recognition"
 category = "Telemetry and ad services"
 advice = "safe"
-note = "Automatic content recognition (disabled on 25 devices in cleanyourtv)"
+note = "Automatic content recognition (disabled on 33 devices in cleanyourtv)"
 
 [[app]]
 package = "tv.anoki.acr.controller"
 label = "Anoki automatic content recognition"
 category = "telemetry, ads and recommendation rows"
 advice = "safe"
-note = "Anoki automatic content recognition (disabled on 17 devices in cleanyourtv)"
+note = "Anoki automatic content recognition (disabled on 18 devices in cleanyourtv)"
 
 [[app]]
 package = "tv.arte.plus7"
@@ -12136,14 +12563,14 @@ package = "tv.samba.ssm"
 label = "Samba TV fingerprints what's on screen"
 category = "ACR viewing tracker"
 advice = "safe"
-note = "Samba TV fingerprints what's on screen (disabled on 36 devices in cleanyourtv)"
+note = "Samba TV fingerprints what's on screen (disabled on 38 devices in cleanyourtv)"
 
 [[app]]
 package = "tv.samba.ssm.ui"
-label = "Samba TV ACR viewing tracking"
+label = "Samba TV opt-in / privacy screens"
 category = "ACR viewing tracker"
-advice = "keep"
-note = "Samba TV ACR viewing tracking (enabled at the factory here) (disabled on 17 devices in cleanyourtv)"
+advice = "safe"
+note = "Samba TV opt-in / privacy screens (disabled on 18 devices in cleanyourtv)"
 
 [[app]]
 package = "tv.sweet.tvplayer"
@@ -12164,7 +12591,7 @@ package = "tv.wuaki.apptv"
 label = "Rakuten TV"
 category = "preloaded apps and services not used"
 advice = "caution"
-note = "Rakuten TV (disabled on 14 devices in cleanyourtv)"
+note = "Rakuten TV (disabled on 15 devices in cleanyourtv)"
 
 [[app]]
 package = "uk.co.freeview.amc_catchup"
