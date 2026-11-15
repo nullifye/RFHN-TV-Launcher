@@ -2150,6 +2150,23 @@ public class MainActivity extends Activity {
         tilesDropped = true;
     }
 
+    /**
+     * The system is short on memory: drop the grid tiles now instead of waiting out the onStop timer,
+     * so a slow TV gets the RAM back when it actually needs it. dropGridTiles() returns at once while
+     * Home is on screen (its {@code resumed} guard), so a RUNNING_LOW/CRITICAL that arrives while Home
+     * is still visible — RemoteService keeps the process foreground, so these do arrive — never blanks
+     * the screen the owner is looking at.
+     */
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        if (level >= TRIM_MEMORY_BACKGROUND || level == TRIM_MEMORY_RUNNING_LOW
+                || level == TRIM_MEMORY_RUNNING_CRITICAL) {
+            main.removeCallbacks(dropTiles);
+            dropGridTiles();
+        }
+    }
+
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
