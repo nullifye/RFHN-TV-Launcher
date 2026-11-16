@@ -15,7 +15,7 @@ final class RemoteBridge {
     }
 
     private static volatile Launcher launcher;
-    private static volatile boolean saver;
+    private static volatile boolean saver, tvFullscreen;
     private static final CopyOnWriteArrayList<Runnable> homeListeners = new CopyOnWriteArrayList<>();
 
     private RemoteBridge() {}
@@ -53,9 +53,22 @@ final class RemoteBridge {
         homeChanged();
     }
 
-    /** Home or the screen-saver preview is in front: nothing drawn over it (the info overlay). */
+    /**
+     * Live TV is (or no longer is) playing full screen. Home stays in front, but it's watched like
+     * any app, so the info overlay shows over it as over other apps. Main thread.
+     */
+    static void tvFullscreen(boolean on) {
+        if (tvFullscreen == on) return;
+        tvFullscreen = on;
+        homeChanged();
+    }
+
+    /**
+     * Home (unless Live TV is full screen) or the screen-saver preview is in front: nothing is
+     * drawn over it (the info overlay).
+     */
     static boolean coverNothing() {
-        return launcher != null || saver;
+        return (launcher != null && !tvFullscreen) || saver;
     }
 
     static boolean key(String k) {

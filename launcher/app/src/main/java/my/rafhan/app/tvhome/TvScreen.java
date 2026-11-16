@@ -446,6 +446,7 @@ final class TvScreen {
 
     private void setFullscreen(boolean on) {
         fullscreen = on;
+        RemoteBridge.tvFullscreen(on); // the info overlay, if switched on, shows over full screen TV
         if (tuned >= 0) selected = tuned; // full screen opens and closes on the channel that's on
         // Full screen: the stream at the player's own choice of quality, and nothing drawn behind
         // the picture (the list, guide and background would otherwise be redrawn every frame).

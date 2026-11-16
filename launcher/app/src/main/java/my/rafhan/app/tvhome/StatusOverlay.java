@@ -26,14 +26,14 @@ import java.util.Locale;
 
 /**
  * Settings → Info overlay: network speed, uptime, a clock and the time since leaving home, in a
- * thin bar over other apps (like the NetSpeedTime app), never over the home screen or the
- * screen-saver preview (the real screen saver is drawn above it anyway). Left, centre and right each show one of
- * them, at the top or bottom of the screen. Not focusable or touchable, so it can't take keys
- * from the app underneath.
+ * thin bar over other apps (like the NetSpeedTime app) and over Live TV full screen, never over
+ * the home screen or the screen-saver preview (the real screen saver is drawn above it anyway).
+ * Left, centre and right each show one of them, at the top or bottom of the screen. Not
+ * focusable or touchable, so it can't take keys from the app underneath.
  *
- * It only exists while it's wanted: switched on, screen on, home not in front. Then one tick a
- * second updates the clock; speed (TrafficStats deltas) every 2 s, uptime every minute. Hidden,
- * nothing runs.
+ * It only exists while it's wanted: switched on, screen on, home not in front (Live TV full
+ * screen counts as an app). Then one tick a second updates the clock; speed (TrafficStats
+ * deltas) every 2 s, uptime every minute. Hidden, nothing runs.
  */
 final class StatusOverlay implements LauncherSettings.Listener {
     private static final String[] KEYS = {LauncherSettings.STATUS_LEFT, LauncherSettings.STATUS_CENTER,
