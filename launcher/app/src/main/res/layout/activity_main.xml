@@ -264,6 +264,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Live TV, a screen above Running apps (Up from its first row). Filled by TvScreen. -->
+    <FrameLayout
+        android:id="@+id/livePage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <!-- The launcher's Settings (gear pill), filled by SettingsScreen; fades in over home. -->
     <FrameLayout
         android:id="@+id/settingsPage"

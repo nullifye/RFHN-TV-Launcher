@@ -77,7 +77,7 @@ import java.util.concurrent.Executors;
  * outcome: Up/Down move one row, Up from the dock goes to the top bar, row and bar ends stop.
  */
 public class MainActivity extends Activity {
-    private static final int TOP = 0, DOCK = 1, GRID = 2, MENU = 3, NOW = 4, UP = 5, SETTINGS = 6;
+    private static final int TOP = 0, DOCK = 1, GRID = 2, MENU = 3, NOW = 4, UP = 5, SETTINGS = 6, LIVE = 7;
     private static final float NOW_SCALE = 1.12f;
     /**
      * The card columns' width, dp: left (Prayer, Weather) and right (System, Most used, Now
@@ -138,6 +138,8 @@ public class MainActivity extends Activity {
     private SystemPanel system;
     private NowPlayingPanel nowPlaying;
     private UpScreen up;
+    private TvScreen liveTv; // Live TV, the screen above Running apps: built the first time it opens
+    private FrameLayout livePage;
     private SettingsScreen settingsScreen;
     private FrameLayout settingsPage;
     private FrameLayout upPage;
@@ -333,6 +335,8 @@ public class MainActivity extends Activity {
             else upIdx = clamp(upIdx, up.count());
             up.setFocused(upIdx);
         });
+        livePage = findViewById(R.id.livePage);
+        livePage.setTranslationY(-2f * screenH);
         usage = new UsagePanel(this, usageCard);
         // The weather on the glass: over the wallpaper, under everything else.
         weatherFx = new WeatherEffects(this, wallpaper);
@@ -859,7 +863,8 @@ public class MainActivity extends Activity {
             case GRID: return gridIdx;
             case NOW: return nowIdx;
             case UP: return upIdx;
-            case SETTINGS: return 0;
+            case SETTINGS:
+            case LIVE: return 0; // these screens keep their own focus
             default: return menuIdx;
         }
     }
@@ -875,20 +880,29 @@ public class MainActivity extends Activity {
             case NOW: nowIdx = newIndex; break;
             case UP: upIdx = newIndex; break;
             case SETTINGS: break; // SettingsScreen keeps its own focus
+            case LIVE: break; // and so does TvScreen
             default: menuIdx = newIndex; break;
         }
         applyLook(section, newIndex, true, true);
-        // The running-apps screen sits a screen above home: slide both down to show it.
-        if (onUpPage(oldSection) != onUpPage(newSection)) {
-            float y = onUpPage(newSection) ? screenH : 0;
+        // Running apps sits a screen above home and Live TV a screen above that: the pages slide
+        // down together to show the one focused.
+        int oldLevel = pageLevel(oldSection), newLevel = pageLevel(newSection);
+        if (oldLevel != newLevel) {
+            float y = newLevel * screenH;
             page.animate().translationY(y).setDuration(420).setInterpolator(new DecelerateInterpolator(2f)).start();
             upPage.animate().translationY(y - screenH).setDuration(420)
                     .setInterpolator(new DecelerateInterpolator(2f)).start();
-            setSystemVisible(!onUpPage(newSection));
-            nowPlaying.setVisible(!onUpPage(newSection));
-            showPeekFade(!onUpPage(newSection));
-            if (onUpPage(newSection)) up.reload();
-            else up.resetStatus();
+            livePage.animate().translationY(y - 2f * screenH).setDuration(420)
+                    .setInterpolator(new DecelerateInterpolator(2f)).start();
+            if ((oldLevel == 0) != (newLevel == 0)) {
+                setSystemVisible(newLevel == 0);
+                nowPlaying.setVisible(newLevel == 0);
+                showPeekFade(newLevel == 0);
+            }
+            if (newLevel == 1) up.reload();
+            else if (newLevel == 0) up.resetStatus();
+            if (newLevel == 2) liveTv().show();
+            else if (liveTv != null) liveTv.hide();
         }
         if (newSection == UP) up.setFocused(newIndex);
         // Settings (gear) fades in over home.
@@ -939,8 +953,20 @@ public class MainActivity extends Activity {
         return sec == GRID || (sec == MENU && menuReturnSection == GRID);
     }
 
+    /** Running apps or the Live TV screen above it is showing (home is slid away). */
     private boolean onUpPage(int sec) {
-        return sec == UP || (sec == MENU && menuReturnSection == UP);
+        return sec == UP || sec == LIVE || (sec == MENU && menuReturnSection == UP);
+    }
+
+    /** The Live TV screen, built on first use (its ~200 views aren't made for launchers that never open it). */
+    private TvScreen liveTv() {
+        if (liveTv == null) liveTv = new TvScreen(this, livePage, worker);
+        return liveTv;
+    }
+
+    /** How many screens above home: 0 home (and grid/settings), 1 Running apps, 2 Live TV. */
+    private int pageLevel(int sec) {
+        return sec == LIVE ? 2 : onUpPage(sec) ? 1 : 0;
     }
 
     /** Re-applies every focus visual without animation (after reloads / restore). */
@@ -1089,7 +1115,9 @@ public class MainActivity extends Activity {
             highlight.setVisibility(View.INVISIBLE);
             return;
         }
-        highlight.setVisibility((section == UP || section == SETTINGS) && v == null ? View.INVISIBLE : View.VISIBLE);
+        // Live TV draws its own focus (rows and the video ring).
+        highlight.setVisibility(section == LIVE || ((section == UP || section == SETTINGS) && v == null)
+                ? View.INVISIBLE : View.VISIBLE);
         if (v == null || v.getWidth() == 0) return;
         // Frame the highlight rides with: the menu (fixed), the grid (page slide + list scroll),
         // or the rest of the page (page slide).
@@ -1170,6 +1198,11 @@ public class MainActivity extends Activity {
             case KeyEvent.KEYCODE_DPAD_RIGHT:
                 if (down) onSide(1);
                 return true;
+            case KeyEvent.KEYCODE_CHANNEL_UP:
+            case KeyEvent.KEYCODE_CHANNEL_DOWN:
+                if (section != LIVE) return super.dispatchKeyEvent(e);
+                if (down) liveTv().zap(code == KeyEvent.KEYCODE_CHANNEL_UP ? 1 : -1);
+                return true;
             case KeyEvent.KEYCODE_MENU:
                 if (section == TOP && topIdx == PILL_SETTINGS && editMode == EDIT_NONE) {
                     if (down && e.getRepeatCount() == 0) openQuickMenu();
@@ -1221,6 +1254,10 @@ public class MainActivity extends Activity {
             settingsScreen.up();
             return;
         }
+        if (section == LIVE) {
+            liveTv().up();
+            return;
+        }
         switch (section) {
             case DOCK:
                 if (nowPlaying.isShown()) moveFocus(NOW, NowPlayingPanel.PLAY_PAUSE);
@@ -1234,6 +1271,7 @@ public class MainActivity extends Activity {
                 break;
             case UP:
                 if (upIdx > 0) moveFocus(UP, upIdx - 1);
+                else moveFocus(LIVE, 0); // above the first app: Live TV
                 break;
             case GRID:
                 if (gridIdx >= cols) moveFocus(GRID, gridIdx - cols);
@@ -1253,6 +1291,10 @@ public class MainActivity extends Activity {
         if (editMode != EDIT_NONE) return;
         if (section == SETTINGS) {
             settingsScreen.down();
+            return;
+        }
+        if (section == LIVE) {
+            liveTv().down();
             return;
         }
         int n = apps.size();
@@ -1287,6 +1329,11 @@ public class MainActivity extends Activity {
         if (section == SETTINGS) {
             if (dir < 0) settingsScreen.left();
             else settingsScreen.right();
+            return;
+        }
+        if (section == LIVE) {
+            if (dir < 0) liveTv().left();
+            else liveTv().right();
             return;
         }
         if (editMode == EDIT_MOVE) {
@@ -1331,6 +1378,9 @@ public class MainActivity extends Activity {
         switch (section) {
             case SETTINGS:
                 settingsScreen.select();
+                break;
+            case LIVE:
+                liveTv().select();
                 break;
             case UP:
                 int kind = up.kind(upIdx);
@@ -1377,6 +1427,8 @@ public class MainActivity extends Activity {
         if (section == MENU) closeMenu();
         else if (section == SETTINGS) {
             if (settingsScreen.back()) moveFocus(TOP, PILL_SETTINGS);
+        } else if (section == LIVE) {
+            if (!liveTv().back()) moveFocus(UP, up.count() == 0 ? 0 : Math.min(upIdx, up.count() - 1));
         } else if (section == UP) moveFocus(TOP, topIdx);
         else if (section == GRID || section == TOP || section == NOW) {
             if (!dock.isEmpty()) moveFocus(DOCK, dockIdx);
@@ -2078,7 +2130,7 @@ public class MainActivity extends Activity {
             wantQuickMenu = false;
             main.postDelayed(() -> {
                 if (section == MENU) closeMenu();
-                if (section == SETTINGS || section == UP) moveFocus(TOP, PILL_SETTINGS);
+                if (section == SETTINGS || section == UP || section == LIVE) moveFocus(TOP, PILL_SETTINGS);
                 openQuickMenu();
             }, 400);
         }
@@ -2099,6 +2151,7 @@ public class MainActivity extends Activity {
             }, 400);
         }
         resumed = true;
+        if (section == LIVE) liveTv().show(); // back from another app with Live TV still open
         hiddenSinceResume = false;
         IntentFilter tf = new IntentFilter(Intent.ACTION_TIME_TICK);
         tf.addAction(Intent.ACTION_TIME_CHANGED);
@@ -2164,6 +2217,7 @@ public class MainActivity extends Activity {
                 || level == TRIM_MEMORY_RUNNING_CRITICAL) {
             main.removeCallbacks(dropTiles);
             dropGridTiles();
+            if (liveTv != null) liveTv.trimMemory(); // its logos and guide, if it's closed
         }
     }
 
@@ -2255,6 +2309,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onStop() {
+        if (liveTv != null) liveTv.hide(); // no TV behind other apps; onResume restarts it if still on the screen
         hiddenSinceResume = true;
         main.postDelayed(dropTiles, 30_000);
         if (netCallback != null) {
@@ -2270,6 +2325,7 @@ public class MainActivity extends Activity {
         // and netRecheck all touch views. onStop normally unregisters the network callback; be
         // defensive for the paths where destroy arrives without it.
         main.removeCallbacksAndMessages(null);
+        if (liveTv != null) liveTv.hide();
         if (netCallback != null) {
             getSystemService(ConnectivityManager.class).unregisterNetworkCallback(netCallback);
             netCallback = null;

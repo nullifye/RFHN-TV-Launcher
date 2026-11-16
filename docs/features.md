@@ -170,7 +170,7 @@ Under the System card, in the Most used card's place (which comes back when play
 
 ## Running apps (Up from the top bar)
 
-Press **Up** on the top bar and the home screen slides away. A screen with three borderless columns comes down from above. Column 1 lists the running apps; columns 2 and 3 are empty for now.
+Press **Up** on the top bar and the home screen slides away. A screen with three borderless columns comes down from above. Column 1 lists the running apps; columns 2 and 3 are empty for now. **Up** on the first row opens [Live TV](#live-tv) above it.
 
 - **What's listed:** apps you can launch that have a process right now (from `dumpsys activity lru`, which uses the `DUMP` permission). Each row shows the icon, name, memory and state: **On screen**, **Service** (playing or running a foreground service), **Recent** or **Cached**. The most active apps come first, then the biggest.
 - **Left out:** the launcher itself, and apps with an enabled accessibility service (Button Mapper). Closing Button Mapper would stop the remote's remapped buttons.
@@ -179,6 +179,22 @@ Press **Up** on the top bar and the home screen slides away. A screen with three
 - **USB debugging on:** force close runs `am force-stop` over the launcher's loopback ADB connection, so it closes anything, including apps that are playing. Memory (resident size, from `/proc/<pid>/status`) is read the same way.
 - **USB debugging off:** the launcher can only use Android's background kill (`KILL_BACKGROUND_PROCESSES`). It can't stop apps that are on screen or running a service, and the screen says so. Memory isn't shown.
 - **Refresh:** the list is read when the screen opens and after each close. Nothing runs while the screen is closed.
+
+## Live TV
+
+The screen above Running apps (**Up** on its first row) plays RTM's channels live from [RTMKlik](https://rtmklik.rtm.gov.my/), with the programme guide.
+
+- **Channels:** 1 TV1, 2 TV2, 3 OKEY, 4 Berita RTM, 5 Sukan RTM, 6 Dewan Rakyat, 7 Dewan Negara, 8 RTM World, then RTMKlik's Feeling-feeling channels: 9 Roll, 10 Snap, 11 Apetito, 12 Lead, 13 Aura, 14 Fitrah, 15 JR. Each row shows the channel's logo, what's on now and how far through it is; **● LIVE** marks the one playing. The list scrolls to keep the selected channel in view.
+- **Video:** the selected channel plays on the right, with sound. Below it: what's on now (time, time left, progress, description) and the next two programmes. Times on another day show the day, e.g. **Tue 10:00**.
+- **Nothing plays until OK.** Up/Down only browse: the guide follows the selected channel while the video stays on the one you're watching (an **OK Watch …** tag on the video says what OK will switch to). The screen opens on the last channel watched, showing **Press OK to watch**.
+- **Remote:** **OK** on a channel plays it in the video; **OK** again on the channel that's playing goes full screen. **Right** moves to the video (white ring), where **OK** goes full screen; **Left** goes back to the list. **Back** leaves full screen, then returns to Running apps. **CH+ / CH−** switch channel straight away. The list fades at both edges and scrolls to keep the selected channel in view.
+- **Full screen:** Up/Down browse channels in the banner (channel, what's on with its progress, what's next) and **OK** switches to the one shown; without OK the banner goes back to the channel that's on when it hides after 5 seconds. **OK** on the channel that's on, or Left/Right, shows the banner again.
+- **Programme guide:** read from RTMKlik's schedule service for just these channels over today and tomorrow (about 100 KB), with RTMKlik's full guide snapshot as a fallback, when the screen opens and every 30 minutes while it's open. Only the programmes from two hours ago to a day and a half ahead are kept. Dewan Rakyat and Dewan Negara are live only while Parliament sits; otherwise they show RTM's notice.
+- **How it plays:** RTMKlik's own web player in Android System WebView, cropped to the video. The channels are DRM-protected, so the picture is licensed through the TV's Widevine the same way a browser would; WebView must be enabled and up to date. RTMKlik's ads play as they do on the website. A channel takes about 10–15 seconds to start.
+- **Picture quality:** the small video plays the smallest stream at least as tall as itself (720p on a 1080p TV, about a third of the data of 1080p); full screen goes back to the player's own choice (1080p when the connection allows). RTM's 480p stream shows as a thin strip on this TV, so a stream that comes out the wrong shape is never used again.
+- **Memory and CPU:** the browser exists only while the screen is open. It is released when you leave the screen or open another app, and starts again when you come back. The last channel is remembered. The screen itself is built the first time it opens, and while it's closed and the TV runs low on memory its logos and guide are dropped too. In full screen nothing behind the picture is drawn.
+- **When it can't play:** after 45 seconds without a picture (no network, channel off air) the video says so; choose the channel again to retry.
+- **No USB debugging needed.**
 
 ## Speed test
 
