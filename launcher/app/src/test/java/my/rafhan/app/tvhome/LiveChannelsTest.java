@@ -81,6 +81,58 @@ public class LiveChannelsTest {
         assertTrue(url.endsWith("&dateStart=2026-11-17&dateEnd=2026-11-18"));
     }
 
+    // Tonton's guide: listings by ChannelTag, times in epoch seconds; a tag not on the screen.
+    private static final String TONTON_JSON = "[{\"SourceChannel\":{\"ChannelTag\":\"TV3\"},\"ChannelSchedule\":{\"EventList\":["
+            + "{\"StartTimeUTC\":1794835800,\"EndTimeUTC\":1794839400,\"EventTitle\":\"MAJALAH 3\",\"ShortSynopsis\":null},"
+            + "{\"StartTimeUTC\":1794839400,\"EndTimeUTC\":1794841200,\"EventTitle\":\"Buletin Utama  \",\"ShortSynopsis\":\"Berita\"},"
+            + "{\"StartTimeUTC\":1795000000,\"EndTimeUTC\":1795003600,\"EventTitle\":\"Too far\"}]}},"
+            + "{\"SourceChannel\":{\"ChannelTag\":\"THRILL\"},\"ChannelSchedule\":{\"EventList\":["
+            + "{\"StartTimeUTC\":1794835800,\"EndTimeUTC\":1794839400,\"EventTitle\":\"X\"}]}}]";
+
+    @Test
+    public void parsesTontonsGuideBySlug() throws Exception {
+        long now = 1794837000_000L;
+        Map<String, List<LiveChannels.Programme>> g = LiveChannels.parseTonton(TONTON_JSON,
+                now - LiveChannels.KEEP_BEFORE_MS, now + LiveChannels.KEEP_AHEAD_MS);
+        assertEquals(1, g.size()); // THRILL isn't on the screen
+        List<LiveChannels.Programme> tv3 = g.get("tv3");
+        assertEquals(2, tv3.size()); // the 1795000000 one is past the window
+        assertEquals("MAJALAH 3", tv3.get(0).title);
+        assertEquals("", tv3.get(0).description); // null synopsis
+        assertEquals("Buletin Utama", tv3.get(1).title); // trimmed
+        assertEquals(1794839400_000L, tv3.get(1).start);
+    }
+
+    @Test
+    public void tontonGuideUrlAsksForItsChannels() {
+        String url = LiveChannels.tontonGuideUrl(1_000_000L, 2_000_000L);
+        assertTrue(url.startsWith(LiveChannels.TONTON_GUIDE));
+        assertTrue(url.endsWith("&filter_starttime=1000&filter_endtime=2000&filter_channels=TV3,NTV7,8TV,TV9,DS,FIFA,MLP"));
+    }
+
+    @Test
+    public void rtmGuideIgnoresOtherSitesSlugs() throws Exception {
+        String json = "{\"data\":[{\"timezone\":8,\"channelObj\":[{\"slug\":\"tv3\"}],\"schedule\":["
+                + "{\"dateTimeStart\":\"2026-11-16T19:30:00\",\"dateTimeEnd\":\"2026-11-16T20:00:00\",\"scheduleProgramTitle\":\"X\"}]}]}";
+        assertTrue(LiveChannels.parse(json).isEmpty());
+    }
+
+    @Test
+    public void savedChannelNumbersFromBeforeMapToTheirChannel() {
+        assertEquals("tv1", LiveChannels.legacyChannelSlug(0));
+        assertEquals("okey", LiveChannels.legacyChannelSlug(2)); // was 3rd, before TV3 came in
+        assertEquals("rtmklikjr", LiveChannels.legacyChannelSlug(14));
+        assertEquals("rtmklikjr", LiveChannels.legacyChannelSlug(99));
+    }
+
+    @Test
+    public void tontonSeesWindowsChromeOfTheSameVersion() {
+        String ua = LiveChannels.windowsUserAgent("Mozilla/5.0 (Linux; Android 10; MiTV-MOOQ0 Build/QTG3; wv) "
+                + "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/159.0.8154.4 Mobile Safari/537.36");
+        assertEquals("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                + "Chrome/159.0.8154.4 Safari/537.36", ua);
+    }
+
     @Test
     public void cleansEscapedQuotesAndLineBreaks() {
         assertEquals("titled \"Surreal Experiences\" here", LiveChannels.clean("titled \\\"Surreal Experiences\\\"\n here "));
@@ -96,7 +148,11 @@ public class LiveChannelsTest {
 
     @Test
     public void onlyListedChannelPagesArePlayable() {
-        assertEquals(15, LiveChannels.ALL.size());
+        assertEquals(22, LiveChannels.ALL.size());
+        assertEquals("tv3", LiveChannels.ALL.get(2).slug); // TV3 third, after TV2
+        assertTrue(LiveChannels.isChannelPage("https://watch.tonton.com.my/live/tv3"));
+        assertTrue(LiveChannels.isChannelPage("https://watch.tonton.com.my/live/mlp"));
+        assertFalse(LiveChannels.isChannelPage("https://watch.tonton.com.my/live/thrill"));
         java.util.Set<String> slugs = new java.util.HashSet<>(), pages = new java.util.HashSet<>();
         for (LiveChannels.Channel c : LiveChannels.ALL) {
             assertTrue(slugs.add(c.slug)); // the guide is keyed by slug

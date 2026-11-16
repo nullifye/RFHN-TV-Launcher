@@ -45,20 +45,20 @@ final class SettingsScreen {
     private static final int TOGGLE = 0, CHOICE = 1, PICKER = 2, ACTION = 3, INFO = 4, CHECK = 5;
 
     private static final int HOME = 0, PRAYER = 1, WEATHER = 2, USAGE = 3, SAVER = 4, NET = 5, ALERTS = 6, STATUS = 7,
-            REMOTE = 8, BUTTONS = 9, HIDDEN = 10, SPEED = 11, MISC = 12; // About: 13
+            REMOTE = 8, BUTTONS = 9, HIDDEN = 10, LIVE = 11, SPEED = 12, MISC = 13; // About: 14
     private static final String[] CATS = {"Home screen", "Prayer times", "Weather", "Most used", "Screen saver",
             "Net traffic", "Notifications", "Info overlay", "Phone remote", "Button Mapper", "Running apps",
-            "Speed test", "Misc", "About"};
+            "Live TV", "Speed test", "Misc", "About"};
     private static final String[] CAT_SUBS = {"Cards, clock and wallpaper", "Zone and card",
             "Forecast and air quality", "Your top apps this week", "What the TV shows when idle",
             "Where the TV's apps connect", "What the bell tells you",
             "Speed, uptime and clock over apps", "Control the TV from your phone",
             "New actions for the remote's buttons", "Apps hidden from the list",
-            "Download speed and latency", "Compatibility and accessibility", "Version and TV settings"};
+            "Channels and Tonton sign-in", "Download speed and latency", "Compatibility and accessibility", "Version and TV settings"};
     private static final int[] CAT_ICONS = {R.drawable.ic_tv, R.drawable.ic_crescent, R.drawable.ic_storm,
             R.drawable.ic_chart, R.drawable.ic_screensaver, R.drawable.ic_signal, R.drawable.ic_bell,
             R.drawable.ic_status_bar, R.drawable.ic_phone, R.drawable.ic_remote_buttons, R.drawable.ic_ram,
-            R.drawable.ic_speed, R.drawable.ic_settings, R.drawable.ic_info};
+            R.drawable.ic_tv, R.drawable.ic_speed, R.drawable.ic_settings, R.drawable.ic_info};
     /** Net traffic's connection list updates this often while it's on screen. */
     private static final long NET_REFRESH_MS = 3_000;
     private static final String LIVE_TV = "com.mediatek.wwtv.tvcenter";
@@ -764,6 +764,7 @@ final class SettingsScreen {
             case REMOTE: remoteRows(out); break;
             case BUTTONS: buttonRows(out); break;
             case HIDDEN: hiddenRows(out); break;
+            case LIVE: liveRows(out); break;
             case SPEED: speedRows(out); break;
             case MISC: miscRows(out); break;
             default: aboutRows(out); break;
@@ -1268,6 +1269,37 @@ final class SettingsScreen {
         if (out.isEmpty()) {
             Row r = new Row(INFO, "No hidden apps");
             r.sub = "Hold OK on an app in the running-apps screen (Up from the top bar) to hide it";
+            out.add(r);
+        }
+    }
+
+    /** Live TV: the screen on or off, Tonton's sign-in, and each station on or off. */
+    private void liveRows(List<Row> out) {
+        out.add(toggle(LauncherSettings.LIVE_TV, "Live TV screen",
+                "Up from the first app on the running-apps screen"));
+        boolean signedIn = TontonAccount.signedIn(ctx);
+        Row account = new Row(ACTION, signedIn ? "Tonton account" : "Sign in to Tonton");
+        account.heading = "Tonton";
+        account.sub = signedIn ? "TV3, NTV7, 8TV, TV9 and Tonton's other channels play with it"
+                : "For TV3, NTV7, 8TV, TV9 and Tonton's other channels. You sign in on Tonton's own page";
+        account.value = () -> TontonAccount.signedIn(ctx) ? "Signed in" : null;
+        account.action = () -> ctx.startActivity(new android.content.Intent(ctx, TontonSignInActivity.class));
+        out.add(account);
+        if (signedIn) {
+            Row out1 = new Row(ACTION, "Sign out of Tonton");
+            out1.sub = "Forgets the Tonton session on this TV";
+            out1.action = () -> {
+                row = 1; // back on the account row when the sign-out screen closes (this row goes)
+                ctx.startActivity(new android.content.Intent(ctx, TontonSignInActivity.class)
+                        .putExtra(TontonSignInActivity.SIGN_OUT, true));
+            };
+            out.add(out1);
+        }
+        boolean first = true;
+        for (LiveChannels.Channel c : LiveChannels.ALL) {
+            Row r = toggle(LauncherSettings.stationKey(c.slug), c.name, c.site.label);
+            if (first) r.heading = "Stations";
+            first = false;
             out.add(r);
         }
     }

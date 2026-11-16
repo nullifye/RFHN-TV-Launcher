@@ -964,6 +964,11 @@ public class MainActivity extends Activity {
         return liveTv;
     }
 
+    /** Settings → Live TV: the screen is switched on and has at least one station. */
+    private boolean liveTvOn() {
+        return LauncherSettings.flag(this, LauncherSettings.LIVE_TV) && !LiveChannels.enabled(this).isEmpty();
+    }
+
     /** How many screens above home: 0 home (and grid/settings), 1 Running apps, 2 Live TV. */
     private int pageLevel(int sec) {
         return sec == LIVE ? 2 : onUpPage(sec) ? 1 : 0;
@@ -1271,7 +1276,7 @@ public class MainActivity extends Activity {
                 break;
             case UP:
                 if (upIdx > 0) moveFocus(UP, upIdx - 1);
-                else moveFocus(LIVE, 0); // above the first app: Live TV
+                else if (liveTvOn()) moveFocus(LIVE, 0); // above the first app: Live TV
                 break;
             case GRID:
                 if (gridIdx >= cols) moveFocus(GRID, gridIdx - cols);
@@ -2152,6 +2157,7 @@ public class MainActivity extends Activity {
         }
         resumed = true;
         if (section == LIVE) liveTv().show(); // back from another app with Live TV still open
+        if (section == SETTINGS) settingsScreen.refreshRows(); // e.g. back from signing in to Tonton
         hiddenSinceResume = false;
         IntentFilter tf = new IntentFilter(Intent.ACTION_TIME_TICK);
         tf.addAction(Intent.ACTION_TIME_CHANGED);

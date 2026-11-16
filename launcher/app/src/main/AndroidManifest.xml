@@ -214,6 +214,15 @@
             </intent-filter>
         </activity>
 
+        <!-- Settings → Live TV → Sign in to Tonton: Tonton's own sign-in page, full screen. -->
+        <activity
+            android:name=".TontonSignInActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density" />
+
         <activity
             android:name=".UpdateActivity"
             android:exported="false"

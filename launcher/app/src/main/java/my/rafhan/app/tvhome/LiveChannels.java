@@ -19,10 +19,11 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 /**
- * RTMKlik's live channels shown on the Live TV screen, and their programme guide. The guide comes
- * from RTMKlik's schedule API, asked for just these channels over today and tomorrow (~100 KB);
+ * The Live TV screen's channels (RTMKlik's and Tonton's) and their programme guide. RTMKlik's guide
+ * comes from its schedule API, asked for just these channels over today and tomorrow (~100 KB);
  * if that fails, from the snapshot RTMKlik's EPG page reads (every channel for a week, ~5 MB
- * unpacked). Either way only these channels, over a day and a half from now, are kept.
+ * unpacked). Tonton's from the public guide its website reads. Only these channels, over a day and
+ * a half from now, are kept.
  */
 final class LiveChannels {
     static final String SITE = "https://rtmklik.rtm.gov.my/";
@@ -37,43 +38,117 @@ final class LiveChannels {
     private static final ZoneOffset MALAYSIA = ZoneOffset.ofHours(8);
     private static final java.util.regex.Pattern SPACES = java.util.regex.Pattern.compile("\\s+");
     private static final String IMAGES = "https://rtm-images.glueapi.io/240x0/";
+    private static final String TONTON_API = "https://headend-api.tonton.com.my/v600/";
+    private static final String TONTON_IMAGES = TONTON_API + "imageHelper.php?id=";
+    /** Tonton's guide (public, as its website reads it): listings for the tags given, between two times. */
+    static final String TONTON_GUIDE = TONTON_API + "api/epg.class.api.php/getChannelListings/378?format=json&appID=TONTON";
 
-    static final class Channel {
-        final String slug, name, path, logo;
-        final int epgId; // the channel's id in RTMKlik's schedule API
-        Channel(String slug, String name, String path, String logo, int epgId) {
-            this.slug = slug;
-            this.name = name;
-            this.path = path;
-            this.logo = logo;
-            this.epgId = epgId;
+    /** Where a channel plays from: its website, whose own player (and DRM licence) TvPlayer uses. */
+    enum Site {
+        RTMKLIK("RTMKlik", "rtmklik.rtm.gov.my"),
+        TONTON("Tonton", "watch.tonton.com.my");
+
+        final String label, host;
+
+        Site(String label, String host) {
+            this.label = label;
+            this.host = host;
         }
-        String page() { return SITE + path; }
-        String logoUrl() { return IMAGES + logo; }
+
+        String base() { return "https://" + host + "/"; }
     }
 
-    /** In the order the screen lists them. Logos are RTMKlik's white 16:9 channel cards. */
+    /**
+     * The WebView's own user agent as Windows Chrome's (same Chrome version). Tonton's site plays
+     * only on the computers and browsers it supports, and shows an "install our app" page to the
+     * rest (Android, and Linux too).
+     */
+    static String windowsUserAgent(String webViewAgent) {
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("Chrome/([0-9.]+)").matcher(webViewAgent);
+        String chrome = m.find() ? m.group(1) : "120.0.0.0";
+        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + chrome
+                + " Safari/537.36";
+    }
+
+    static final class Channel {
+        final String slug, name, path, logoUrl;
+        final Site site;
+        final int epgId;     // the channel's id in RTMKlik's schedule API; 0 for other sites
+        final String epgTag; // the channel's tag in Tonton's guide; null for other sites
+        Channel(String slug, String name, Site site, String path, String logoUrl, int epgId, String epgTag) {
+            this.slug = slug;
+            this.name = name;
+            this.site = site;
+            this.path = path;
+            this.logoUrl = logoUrl;
+            this.epgId = epgId;
+            this.epgTag = epgTag;
+        }
+        String page() { return site.base() + path; }
+        String logoUrl() { return logoUrl; }
+    }
+
+    private static Channel rtm(String slug, String name, String path, String logo, int epgId) {
+        return new Channel(slug, name, Site.RTMKLIK, path, IMAGES + logo, epgId, null);
+    }
+
+    /** Tonton: its guide tag, and its logo's image id (transparent, made for a dark background). */
+    private static Channel tonton(String slug, String name, String epgTag, long imageId) {
+        return new Channel(slug, name, Site.TONTON, "live/" + slug, TONTON_IMAGES + imageId
+                + ":378:CHANNEL:IMAGE:png&w=240&appID=TONTON", 0, epgTag);
+    }
+
+    /**
+     * In the order the screen lists them: the free-to-air channels by their usual numbers, then
+     * RTM's others, Tonton's, and RTMKlik's streaming channels. RTMKlik's logos are white 16:9 cards.
+     */
     static final List<Channel> ALL = Collections.unmodifiableList(java.util.Arrays.asList(
-            new Channel("tv1", "TV1", "live/tv/tv1", "live_channel/tv1_bckg.png", 1),
-            new Channel("tv2", "TV2", "live/tv/tv2", "live_channel/6.png", 2),
-            new Channel("okey", "OKEY", "live/tv/okey", "live_channel/4.png", 3),
-            new Channel("berita", "Berita RTM", "live/tv/berita", "live_channel/berita_bckg.jpg", 7),
-            new Channel("sukan", "Sukan RTM", "live/tv/sukan", "live_channel/1920SUKAN_Logo_-01.jpg", 4),
-            new Channel("dewanrakyat00002", "Dewan Rakyat", "live/khas/dewanrakyat00002", "live_channel/PDR_bckg.png", 9),
-            new Channel("dewannegara00002", "Dewan Negara", "live/khas/dewannegara00002", "live_channel/PDN_bckg.png", 10),
-            new Channel("rtmworld00001", "RTM World", "live/khas/rtmworld00001", "live_channel/RtmW.png", 61),
+            rtm("tv1", "TV1", "live/tv/tv1", "live_channel/tv1_bckg.png", 1),
+            rtm("tv2", "TV2", "live/tv/tv2", "live_channel/6.png", 2),
+            tonton("tv3", "TV3", "TV3", 6420323),
+            tonton("ntv7", "NTV7", "NTV7", 6420324),
+            tonton("8tv", "8TV", "8TV", 6420325),
+            tonton("tv9", "TV9", "TV9", 6420326),
+            rtm("okey", "OKEY", "live/tv/okey", "live_channel/4.png", 3),
+            rtm("berita", "Berita RTM", "live/tv/berita", "live_channel/berita_bckg.jpg", 7),
+            rtm("sukan", "Sukan RTM", "live/tv/sukan", "live_channel/1920SUKAN_Logo_-01.jpg", 4),
+            rtm("dewanrakyat00002", "Dewan Rakyat", "live/khas/dewanrakyat00002", "live_channel/PDR_bckg.png", 9),
+            rtm("dewannegara00002", "Dewan Negara", "live/khas/dewannegara00002", "live_channel/PDN_bckg.png", 10),
+            rtm("rtmworld00001", "RTM World", "live/khas/rtmworld00001", "live_channel/RtmW.png", 61),
+            tonton("ds", "Drama Sangat", "DS", 6420342),
+            tonton("fifa", "FIFA+", "FIFA", 6576795),
+            tonton("mlp", "Major League Pickleball Asia", "MLP", 6621108),
             // RTMKlik's "Feeling-feeling" streaming channels.
-            new Channel("roll", "Roll", "live/feeling-feeling/roll", "fast_channel/ROLL_CHANNEL.jpg", 70),
-            new Channel("snap", "Snap", "live/feeling-feeling/snap", "fast_channel/SNAP_CHANNEL.jpg", 84),
-            new Channel("apetito", "Apetito", "live/feeling-feeling/apetito", "fast_channel/APETITO_CHANNEL.jpg", 85),
-            new Channel("lead", "Lead", "live/feeling-feeling/lead", "fast_channel/LEAD_CHANNEL.jpg", 81),
-            new Channel("aura", "Aura", "live/feeling-feeling/aura", "fast_channel/AURA_CHANNEL.jpg", 88),
-            new Channel("fitrah", "Fitrah", "live/feeling-feeling/fitrah", "fast_channel/FITRAH_CHANNEL.jpg", 89),
-            new Channel("rtmklikjr", "JR.", "live/feeling-feeling/rtmklikjr", "fast_channel/JR_CHANNEL.jpg", 83)));
+            rtm("roll", "Roll", "live/feeling-feeling/roll", "fast_channel/ROLL_CHANNEL.jpg", 70),
+            rtm("snap", "Snap", "live/feeling-feeling/snap", "fast_channel/SNAP_CHANNEL.jpg", 84),
+            rtm("apetito", "Apetito", "live/feeling-feeling/apetito", "fast_channel/APETITO_CHANNEL.jpg", 85),
+            rtm("lead", "Lead", "live/feeling-feeling/lead", "fast_channel/LEAD_CHANNEL.jpg", 81),
+            rtm("aura", "Aura", "live/feeling-feeling/aura", "fast_channel/AURA_CHANNEL.jpg", 88),
+            rtm("fitrah", "Fitrah", "live/feeling-feeling/fitrah", "fast_channel/FITRAH_CHANNEL.jpg", 89),
+            rtm("rtmklikjr", "JR.", "live/feeling-feeling/rtmklikjr", "fast_channel/JR_CHANNEL.jpg", 83)));
+
+    // The list before Tonton's channels, in order: a saved channel number from then maps to its slug.
+    private static final String[] LEGACY_ORDER = {"tv1", "tv2", "okey", "berita", "sukan", "dewanrakyat00002",
+            "dewannegara00002", "rtmworld00001", "roll", "snap", "apetito", "lead", "aura", "fitrah", "rtmklikjr"};
+
+    static String legacyChannelSlug(int index) {
+        return LEGACY_ORDER[Math.max(0, Math.min(LEGACY_ORDER.length - 1, index))];
+    }
+
+    /** The stations switched on in Settings → Live TV, in list order. */
+    static List<Channel> enabled(android.content.Context ctx) {
+        List<Channel> out = new ArrayList<>();
+        for (Channel c : ALL) if (LauncherSettings.flag(ctx, LauncherSettings.stationKey(c.slug))) out.add(c);
+        return out;
+    }
+
+    static Channel byPage(String url) {
+        for (Channel c : ALL) if (c.page().equals(url)) return c;
+        return null;
+    }
 
     static boolean isChannelPage(String url) {
-        for (Channel c : ALL) if (c.page().equals(url)) return true;
-        return false;
+        return byPage(url) != null;
     }
 
     static final class Programme {
@@ -110,7 +185,7 @@ final class LiveChannels {
         }
         if (rows == null) throw new IOException("No EPG data");
         java.util.Set<String> wanted = new java.util.HashSet<>();
-        for (Channel c : ALL) wanted.add(c.slug);
+        for (Channel c : ALL) if (c.site == Site.RTMKLIK) wanted.add(c.slug); // RTMKlik's guide
         Map<String, List<Programme>> out = new HashMap<>();
         for (int i = 0; i < rows.length(); i++) {
             JSONObject row = rows.optJSONObject(i);
@@ -169,16 +244,75 @@ final class LiveChannels {
         return out;
     }
 
+    /** Tonton's guide for its channels here, from {@code from} to {@code to} (epoch ms). */
+    static String tontonGuideUrl(long from, long to) {
+        StringBuilder tags = new StringBuilder();
+        for (Channel c : ALL) if (c.epgTag != null) tags.append(tags.length() == 0 ? "" : ",").append(c.epgTag);
+        return TONTON_GUIDE + "&filter_starttime=" + from / 1000 + "&filter_endtime=" + to / 1000
+                + "&filter_channels=" + tags;
+    }
+
+    /**
+     * Tonton's guide: [{SourceChannel: {ChannelTag}, ChannelSchedule: {EventList: [{StartTimeUTC,
+     * EndTimeUTC, EventTitle, ShortSynopsis}]}}] (times in epoch seconds), by our slugs.
+     */
+    static Map<String, List<Programme>> parseTonton(String json, long from, long to) throws Exception {
+        Map<String, String> slugs = new HashMap<>();
+        for (Channel c : ALL) if (c.epgTag != null) slugs.put(c.epgTag, c.slug);
+        JSONArray rows = new JSONArray(json);
+        Map<String, List<Programme>> out = new HashMap<>();
+        for (int i = 0; i < rows.length(); i++) {
+            JSONObject row = rows.optJSONObject(i);
+            JSONObject src = row == null ? null : row.optJSONObject("SourceChannel");
+            String slug = src == null ? null : slugs.get(src.optString("ChannelTag"));
+            JSONObject sched = row == null ? null : row.optJSONObject("ChannelSchedule");
+            JSONArray events = sched == null ? null : sched.optJSONArray("EventList");
+            if (slug == null || events == null || out.containsKey(slug)) continue;
+            List<Programme> list = new ArrayList<>();
+            for (int j = 0; j < events.length(); j++) {
+                JSONObject e = events.optJSONObject(j);
+                if (e == null) continue;
+                long start = e.optLong("StartTimeUTC") * 1000, end = e.optLong("EndTimeUTC") * 1000;
+                String title = clean(e.optString("EventTitle"));
+                if (end <= start || title.isEmpty() || "null".equals(title) || end <= from || start >= to) continue;
+                String synopsis = e.isNull("ShortSynopsis") ? "" : clean(e.optString("ShortSynopsis"));
+                list.add(new Programme(start, end, title, synopsis));
+            }
+            if (list.isEmpty()) continue;
+            Collections.sort(list, (a, b) -> Long.compare(a.start, b.start));
+            ((ArrayList<Programme>) list).trimToSize();
+            out.put(slug, list);
+        }
+        return out;
+    }
+
     /** The schedule API's URL for these channels over today and tomorrow (Malaysian dates). */
     static String scheduleUrl(long now) {
         java.time.LocalDate today = java.time.Instant.ofEpochMilli(now).atOffset(MALAYSIA).toLocalDate();
         StringBuilder ids = new StringBuilder();
-        for (Channel c : ALL) ids.append(ids.length() == 0 ? "" : ",").append(c.epgId);
+        for (Channel c : ALL) if (c.epgId > 0) ids.append(ids.length() == 0 ? "" : ",").append(c.epgId);
         return SCHEDULE + ids + "&dateStart=" + today + "&dateEnd=" + today.plusDays(1);
     }
 
+    /** RTMKlik's guide and Tonton's, merged by slug; whichever is reachable (fails if neither is). */
     static Map<String, List<Programme>> load() throws Exception {
         long now = System.currentTimeMillis(), from = now - KEEP_BEFORE_MS, to = now + KEEP_AHEAD_MS;
+        Map<String, List<Programme>> all = new HashMap<>();
+        Exception failure = null;
+        try {
+            all.putAll(loadRtm(now, from, to));
+        } catch (Exception e) {
+            failure = e;
+        }
+        try {
+            all.putAll(parseTonton(text(tontonGuideUrl(from, to), 4 << 20), from, to));
+        } catch (Exception e) {
+            if (failure != null) throw failure;
+        }
+        return all;
+    }
+
+    private static Map<String, List<Programme>> loadRtm(long now, long from, long to) throws Exception {
         try {
             Map<String, List<Programme>> g = parse(text(scheduleUrl(now), 4 << 20), from, to);
             if (!g.isEmpty()) return g;

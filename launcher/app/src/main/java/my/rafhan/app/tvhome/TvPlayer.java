@@ -18,6 +18,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
+import androidx.webkit.UserAgentMetadata;
+
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -28,14 +30,13 @@ import org.json.JSONTokener;
  * {@link #play} and {@link #release}, and one is reused across channel changes.
  */
 final class TvPlayer {
-    static final int CONNECTING = 0, PLAYING = 1, FAILED = 2;
+    static final int CONNECTING = 0, PLAYING = 1, FAILED = 2, SIGN_IN = 3;
 
     interface Listener {
         /** {@code message} explains FAILED; otherwise null. */
         void onState(int state, String message);
     }
 
-    private static final String HOST = "rtmklik.rtm.gov.my";
     private static final long GIVE_UP_MS = 45_000;
     // How often the page is checked: often while it starts, rarely once the picture plays.
     private static final long POLL_STARTING_MS = 2000, POLL_PLAYING_MS = 5000;
@@ -79,12 +80,48 @@ final class TvPlayer {
             + "return JSON.stringify({playing:on&&shape&&!!v&&v.readyState>=3,"
             + "error:v&&v.error?v.error.code:0});})";
 
+    // Tonton (TV3, NTV7, 8TV, TV9, …): its Shaka player in #player-container, cropped the same way.
+    private static final String TONTON_CSS = "html,body{background:#000!important;overflow:hidden!important}"
+            + "body *{visibility:hidden!important}"
+            + "#player-container,#player-container *{visibility:visible!important}"
+            + "#player-container{position:fixed!important;left:0!important;top:0!important;width:100vw!important;"
+            + "height:100vh!important;max-width:none!important;margin:0!important;z-index:2147483647!important;"
+            + "background:#000!important}"
+            + "#player-container video{width:100%!important;height:100%!important;object-fit:contain!important}"
+            + "#player-container .shaka-controls-container,#player-container .overlay,"
+            + "#player-container .shaka-spinner-container{display:none!important}";
+    // Starts and unmutes the video; picks the stream like RTMKlik's (smallest rendition at least as
+    // tall as the view, never one that comes out the wrong shape; Shaka's own choice for 0); and
+    // reports whether the picture plays, or that Tonton wants a sign-in.
+    private static final String TONTON_SNAPSHOT = "(function(cap){"
+            + "if(!document.getElementById('tvhome-crop')){var s=document.createElement('style');"
+            + "s.id='tvhome-crop';s.textContent=" + JSONObject.quote(TONTON_CSS) + ";"
+            + "document.documentElement.appendChild(s);}"
+            + "if(/^\\/login|^\\/signin/.test(location.pathname))return JSON.stringify({signIn:true});"
+            + "var v=document.querySelector('#player-container video')||document.querySelector('video'),p=window.player;"
+            + "if(v){if(v.muted)v.muted=false;if(v.paused){var r=v.play();if(r&&r.catch)r.catch(function(){});}}"
+            + "var on=!!v&&!v.paused&&v.readyState>=3,shape=true,bad=window.__tvhomeBad||(window.__tvhomeBad={});"
+            + "if(on&&p&&p.getVariantTracks){try{var t=p.getVariantTracks(),cur=null,i;"
+            + "for(i=0;i<t.length;i++)if(t[i].active)cur=t[i];"
+            + "if(cur&&v.videoWidth&&v.videoHeight){var a=v.videoWidth/v.videoHeight;if(a<1.2||a>2.4){bad[cur.id]=1;shape=false;}}"
+            + "var q=t.filter(function(x){return !bad[x.id];}).sort(function(x,y){return (x.height||0)-(y.height||0);}),pick=null;"
+            + "if(cap>0){for(i=0;i<q.length;i++)if((q[i].height||0)>=cap){pick=q[i];break;}pick=pick||q[q.length-1];}"
+            + "else if(cur&&bad[cur.id]){for(i=0;i<q.length;i++)if((q[i].height||0)>(cur.height||0)){pick=q[i];break;}"
+            + "pick=pick||q[q.length-1];}"
+            + "if(pick){if(p.getConfiguration().abr.enabled)p.configure({abr:{enabled:false}});"
+            + "if(!cur||cur.id!==pick.id)p.selectVariantTrack(pick,true);}"
+            + "else if(cap===0&&!p.getConfiguration().abr.enabled)p.configure({abr:{enabled:true}});"
+            + "}catch(e){}}"
+            + "return JSON.stringify({playing:on&&shape,error:v&&v.error?v.error.code:0});})";
+
     private final Context ctx;
     private final FrameLayout host;
     private final Listener listener;
     private final Handler main = new Handler(Looper.getMainLooper());
     private WebView browser;
     private String url;
+    private LiveChannels.Site site;
+    private UserAgentMetadata defaultMetadata; // the WebView's own Client Hints, before identify()
     private long deadline;
     private int generation, state = -1, viewHeight;
 
@@ -94,14 +131,17 @@ final class TvPlayer {
         this.listener = listener;
     }
 
-    /** Starts {@code page} (an RTMKlik channel page), replacing whatever was playing. */
-    void play(String page) {
+    /** Starts {@code channel}, replacing whatever was playing. */
+    void play(LiveChannels.Channel channel) {
+        String page = channel.page();
         if (!LiveChannels.isChannelPage(page)) return;
-        if (page.equals(url) && browser != null && state != FAILED) return;
+        site = channel.site;
+        if (page.equals(url) && browser != null && state != FAILED && state != SIGN_IN) return;
         generation++;
         main.removeCallbacks(poll);
         url = page;
         if (browser == null && !create()) return;
+        identify(site == LiveChannels.Site.TONTON);
         setState(CONNECTING, null);
         deadline = SystemClock.elapsedRealtime() + GIVE_UP_MS;
         browser.loadUrl(page);
@@ -133,7 +173,13 @@ final class TvPlayer {
             browser.loadUrl("about:blank");
             browser.destroy();
             browser = null;
+            defaultMetadata = null; // a new WebView next time: read its own again
         }
+    }
+
+    /** Tonton's pages see a desktop browser (TontonAccount.identify); other sites the WebView as it is. */
+    private void identify(boolean desktop) {
+        defaultMetadata = TontonAccount.identify(browser, desktop, defaultMetadata);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -142,6 +188,7 @@ final class TvPlayer {
             browser = new WebView(ctx);
         } catch (RuntimeException e) { // WebView disabled or being updated
             browser = null;
+            defaultMetadata = null;
             setState(FAILED, "Live TV needs Android System WebView enabled and up to date");
             return false;
         }
@@ -162,7 +209,8 @@ final class TvPlayer {
             // The player asks for the DRM system; allow only that, and only for RTMKlik.
             @Override public void onPermissionRequest(PermissionRequest r) {
                 Uri o = r.getOrigin();
-                boolean ours = o != null && "https".equals(o.getScheme()) && HOST.equals(o.getHost());
+                LiveChannels.Site s = site;
+                boolean ours = o != null && s != null && "https".equals(o.getScheme()) && s.host.equals(o.getHost());
                 for (String res : r.getResources()) {
                     if (ours && PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID.equals(res)) {
                         r.grant(new String[]{PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID});
@@ -174,7 +222,11 @@ final class TvPlayer {
         });
         browser.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest r) {
-                return !r.getUrl().toString().equals(url); // never navigate away from the channel
+                String to = r.getUrl().toString();
+                if (to.equals(url)) return false;
+                // Never navigate away from the channel. Tonton sends a signed-out viewer to sign in.
+                if (site == LiveChannels.Site.TONTON && TontonAccount.isSignInPage(r.getUrl())) needsSignIn();
+                return true;
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest r, WebResourceError e) {
                 if (r.isForMainFrame() && url != null) fail("Couldn't reach RTMKlik. Check the connection");
@@ -189,12 +241,17 @@ final class TvPlayer {
         @Override public void run() {
             if (browser == null) return;
             int gen = generation;
-            browser.evaluateJavascript(SNAPSHOT + "(" + viewHeight + ")", value -> {
+            String script = site == LiveChannels.Site.TONTON ? TONTON_SNAPSHOT : SNAPSHOT;
+            browser.evaluateJavascript(script + "(" + viewHeight + ")", value -> {
                 if (gen != generation || browser == null) return;
                 boolean playing = false;
                 int error = 0;
                 try {
                     JSONObject o = new JSONObject((String) new JSONTokener(value).nextValue());
+                    if (o.optBoolean("signIn")) {
+                        needsSignIn();
+                        return;
+                    }
                     playing = o.optBoolean("playing");
                     error = o.optInt("error");
                 } catch (Exception ignored) { // page still loading
@@ -205,6 +262,8 @@ final class TvPlayer {
                 }
                 if (playing) {
                     deadline = SystemClock.elapsedRealtime() + GIVE_UP_MS;
+                    // Playing a Tonton channel proves the session (Settings shows it signed in).
+                    if (site == LiveChannels.Site.TONTON && state != PLAYING) TontonAccount.setSignedIn(ctx, true);
                     setState(PLAYING, null);
                 } else if (SystemClock.elapsedRealtime() > deadline) {
                     fail("Not on air right now. Try again later");
@@ -214,6 +273,18 @@ final class TvPlayer {
             });
         }
     };
+
+    /** Tonton wants a sign-in: stop, and say so (the sign-in itself is in Settings → Live TV). */
+    private void needsSignIn() {
+        generation++;
+        main.removeCallbacks(poll);
+        if (browser != null) {
+            browser.stopLoading();
+            browser.loadUrl("about:blank");
+        }
+        TontonAccount.setSignedIn(ctx, false);
+        setState(SIGN_IN, null);
+    }
 
     /** Keeps the browser (a retry reuses it) but stops this attempt. */
     private void fail(String why) {
@@ -227,7 +298,7 @@ final class TvPlayer {
     }
 
     private void setState(int s, String message) {
-        if (s == state && s != FAILED) return;
+        if (s == state && s != FAILED && s != SIGN_IN) return;
         state = s;
         listener.onState(s, message);
     }

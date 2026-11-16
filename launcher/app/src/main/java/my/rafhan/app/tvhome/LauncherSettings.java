@@ -32,6 +32,14 @@ final class LauncherSettings {
             STATUS_BAR = "status_bar", STATUS_LEFT = "status_left", STATUS_CENTER = "status_center",
             STATUS_RIGHT = "status_right", STATUS_POS = "status_position", STATUS_SIZE = "status_size",
             STATUS_BG = "status_background", APPS_PER_ROW = "apps_per_row";
+    // Live TV (Settings → Live TV): the screen above Running apps, and each station in it
+    // (stationKey); all on by default.
+    static final String LIVE_TV = "live_tv";
+
+    static String stationKey(String slug) {
+        return "live_tv_ch_" + slug;
+    }
+
     // The Weather card (Settings → Weather): on/off, MET place id ("" = Auto), APIMS station id ("" = Nearest).
     static final String SHOW_WEATHER = "show_weather", WEATHER_PLACE = "weather_place",
             WEATHER_STATION = "weather_station", WEATHER_FX = "weather_effects";

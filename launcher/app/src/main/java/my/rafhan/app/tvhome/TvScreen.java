@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 
 /**
- * The Live TV screen (Up from the top of Running apps): RTMKlik's channels on the left, the
+ * The Live TV screen (Up from the top of Running apps): RTMKlik's and Tonton's channels on the left, the
  * selected one playing on the right with what's on now and next, and full screen on OK.
  * MainActivity hands it the remote's keys while it has focus. Nothing plays or downloads while
  * it is closed.
@@ -55,8 +55,8 @@ final class TvScreen {
     private final float dp;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final SharedPreferences prefs;
-    private final List<LiveChannels.Channel> channels = LiveChannels.ALL;
-    private final Row[] rows;
+    private List<LiveChannels.Channel> channels; // the stations switched on (Settings → Live TV)
+    private Row[] rows;
     private final FrameLayout root, video, cover, listColumn;
     private final View fadeTop, fadeBottom;
     // dp: the list's faded edges, and the padding at each end that keeps the first and last row
@@ -64,7 +64,8 @@ final class TvScreen {
     // shorter so the last channel isn't left far above them.
     private static final int FADE = 26, FADE_BOTTOM = 24; // the top one starts just under the header
     private static final int HINTS = 31; // dp: the key-hint line along the bottom (the list ends just above it)
-    private final int rowH, windowH, contentH; // dp
+    private final int rowH, windowH, listW; // dp
+    private int contentH; // dp
     private float scroll = -1; // dp the list is scrolled by; -1 before the first layout
     private final LinearLayout banner;
     private final TvPlayer player;
@@ -94,13 +95,15 @@ final class TvScreen {
         this.worker = worker;
         dp = ctx.getResources().getDisplayMetrics().density;
         prefs = ctx.getSharedPreferences("live_tv", Context.MODE_PRIVATE);
-        selected = Math.max(0, Math.min(channels.size() - 1, prefs.getInt("channel", 0)));
+        channels = enabledChannels();
+        selected = savedIndex();
 
         float w = ctx.getResources().getDisplayMetrics().widthPixels / dp;
         // top: where the list and video start, leaving a clear gap between the header and the
         // list's top fade (which reaches FADE above it).
         int margin = 48, top = 95, vw = Math.round(w * 0.4667f), vh = vw * 9 / 16;
-        int videoX = Math.round(w) - margin - vw, listW = videoX - 24 - margin, rowH = 58;
+        int videoX = Math.round(w) - margin - vw, rowH = 58;
+        listW = videoX - 24 - margin;
 
         background = new GradientDrawable(GradientDrawable.Orientation.TL_BR, BACKGROUND);
         root.setBackground(background);
@@ -112,7 +115,7 @@ final class TvScreen {
         title.setText("Live TV");
         head.addView(title);
         TextView source = text(12, 500, FAINT);
-        source.setText("RTMKLIK  ·  RTM");
+        source.setText("RTMKLIK  ·  TONTON");
         source.setLetterSpacing(0.12f);
         LinearLayout.LayoutParams sp = wrap();
         sp.setMarginStart(px(14));
@@ -147,15 +150,10 @@ final class TvScreen {
         // to the key hints, which keep clean background under them) holds the fades, so neither
         // covers a row's text.
         windowH = Math.max(3 * rowH, (int) (h - top - FADE_BOTTOM - HINTS));
-        contentH = FADE + FADE_BOTTOM + channels.size() * rowH - 4;
         FrameLayout window = new FrameLayout(ctx);
         listColumn = new FrameLayout(ctx);
-        rows = new Row[channels.size()];
-        for (int i = 0; i < rows.length; i++) {
-            rows[i] = new Row(i, channels.get(i));
-            listColumn.addView(rows[i].view, at(0, FADE + i * rowH, listW, rowH - 4));
-        }
-        window.addView(listColumn, new FrameLayout.LayoutParams(px(listW), px(contentH)));
+        window.addView(listColumn, new FrameLayout.LayoutParams(px(listW), 0));
+        buildRows();
         fadeTop = new EdgeFade(ctx, root, true);
         window.addView(fadeTop, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(FADE), Gravity.TOP));
         fadeBottom = new EdgeFade(ctx, root, false);
@@ -285,6 +283,40 @@ final class TvScreen {
         refresh(); // the cover starts as "Press OK to watch"
     }
 
+    /** The stations switched on in Settings → Live TV (all of them if none are, so the screen isn't empty). */
+    private List<LiveChannels.Channel> enabledChannels() {
+        List<LiveChannels.Channel> on = LiveChannels.enabled(ctx);
+        return on.isEmpty() ? LiveChannels.ALL : on;
+    }
+
+    /** The last channel watched, by slug (once saved by list index: read that once). */
+    private int savedIndex() {
+        String slug = prefs.getString("channel_slug", null);
+        if (slug == null && prefs.contains("channel")) {
+            int old = prefs.getInt("channel", 0);
+            slug = LiveChannels.legacyChannelSlug(old);
+            prefs.edit().remove("channel").putString("channel_slug", slug).apply();
+        }
+        for (int i = 0; i < channels.size(); i++) if (channels.get(i).slug.equals(slug)) return i;
+        return 0;
+    }
+
+    /** (Re)builds the list's rows for {@code channels}. */
+    private void buildRows() {
+        listColumn.removeAllViews();
+        contentH = FADE + FADE_BOTTOM + channels.size() * rowH - 4;
+        ViewGroup.LayoutParams lp = listColumn.getLayoutParams();
+        lp.height = px(contentH);
+        listColumn.setLayoutParams(lp);
+        rows = new Row[channels.size()];
+        for (int i = 0; i < rows.length; i++) {
+            rows[i] = new Row(i, channels.get(i));
+            listColumn.addView(rows[i].view, at(0, FADE + i * rowH, listW, rowH - 4));
+        }
+        scroll = -1;
+        listColumn.setTranslationY(0);
+    }
+
     // ---------------------------------------------------------------- lifecycle
 
     /** The screen came into view (or home came back with it open). */
@@ -292,6 +324,14 @@ final class TvScreen {
         if (shown) return;
         shown = true;
         focus = LIST;
+        List<LiveChannels.Channel> now = enabledChannels();
+        if (!now.equals(channels)) { // stations switched on or off in Settings since last time
+            channels = now;
+            selected = savedIndex();
+            tuned = -1;
+            buildRows();
+            loadLogos();
+        }
         refresh();
         loadGuide(false);
         loadLogos(); // nothing plays until OK
@@ -404,11 +444,11 @@ final class TvScreen {
     private void tune(int i) {
         if (!shown) return;
         selected = tuned = i;
-        prefs.edit().putInt("channel", i).apply();
+        prefs.edit().putString("channel_slug", channels.get(i).slug).apply();
         LiveChannels.Channel c = channels.get(i);
         showCover(c, "Tuning to " + c.name + "…", true, DIM);
         player.setViewHeight(fullscreen ? 0 : videoHeightPx);
-        player.play(c.page());
+        player.play(c);
         refresh();
     }
 
@@ -420,6 +460,8 @@ final class TvScreen {
                 cover.animate().alpha(0f).setDuration(250).withEndAction(() -> cover.setVisibility(View.GONE)).start();
             } else if (state == TvPlayer.FAILED) {
                 showCover(c, message, false, TEXT);
+            } else if (state == TvPlayer.SIGN_IN) {
+                showCover(c, "Sign in to Tonton in Settings → Live TV to watch " + c.name, false, TEXT);
             } else {
                 showCover(c, "Tuning to " + c.name + "…", true, DIM);
             }
@@ -433,7 +475,7 @@ final class TvScreen {
             cover.setAlpha(1f);
             cover.setVisibility(View.VISIBLE);
         }
-        setLogo(coverLogo, logos.get(c.slug));
+        logo(coverLogo, c);
         spinner.setVisibility(busy ? View.VISIBLE : View.GONE);
         set(coverText, text);
         coverText.setTextColor(color);
@@ -546,8 +588,8 @@ final class TvScreen {
             main.post(() -> {
                 logosLoading = false;
                 logos.putAll(got);
-                for (Row r : rows) setLogo(r.logo, logos.get(r.channel.slug));
-                if (tuned >= 0) setLogo(coverLogo, logos.get(channels.get(tuned).slug));
+                for (Row r : rows) logo(r.logo, r.channel);
+                if (tuned >= 0) logo(coverLogo, channels.get(tuned));
                 refresh();
             });
         });
@@ -600,7 +642,7 @@ final class TvScreen {
         }
 
         // Full-screen banner: the channel on, or the one browsed to (OK switches to it).
-        setLogo(bannerLogo, logos.get(c.slug));
+        logo(bannerLogo, c);
         boolean live = playerState == TvPlayer.PLAYING && tuned == selected;
         set(bannerChannel, (selected + 1) + "   " + c.name.toUpperCase(Locale.ROOT) + (live ? "   ●  LIVE" : ""));
         bannerChannel.setTextColor(live ? LIVE : DIM);
@@ -755,6 +797,7 @@ final class TvScreen {
             number.setGravity(Gravity.CENTER);
             view.addView(number, new LinearLayout.LayoutParams(px(22), ViewGroup.LayoutParams.WRAP_CONTENT));
             logo = logoView(5);
+            logo(logo, channel);
             LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(px(72), px(40));
             ll.setMarginStart(px(8));
             ll.setMarginEnd(px(14));
@@ -872,7 +915,16 @@ final class TvScreen {
 
     // ---------------------------------------------------------------- helpers
 
-    /** RTMKlik's logos are white 16:9 cards; this frames them the same way before they load. */
+    /**
+     * A channel's logo into a card: RTMKlik's logos are white 16:9 cards (the card matches them
+     * before they load); Tonton's are transparent, made for a dark background.
+     */
+    private void logo(ImageView v, LiveChannels.Channel c) {
+        ((GradientDrawable) v.getBackground()).setColor(c.site == LiveChannels.Site.TONTON ? 0xFF1C2433 : Color.WHITE);
+        setLogo(v, logos.get(c.slug));
+    }
+
+    /** A logo card (white until logo() says otherwise). */
     private ImageView logoView(int radiusDp) {
         ImageView v = new ImageView(ctx);
         v.setScaleType(ImageView.ScaleType.FIT_CENTER);

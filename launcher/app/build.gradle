@@ -133,6 +133,8 @@ dependencies {
     // plugin 9 (app/lint.xml).
     implementation 'androidx.core:core:1.13.0'
     implementation 'androidx.annotation:annotation:1.11.0'
+    // Live TV: setting the WebView's Client Hints (Tonton's site turns away Android browsers by them).
+    implementation 'androidx.webkit:webkit:1.15.0'
     // Loopback ADB client for the phone remote (D-pad and typing in any app while USB debugging is on).
     implementation 'dev.mobile:dadb:1.2.10'
 

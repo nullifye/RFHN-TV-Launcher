@@ -112,6 +112,13 @@ final class RemoteSettings {
                 choice(LauncherSettings.STATUS_SIZE, "Text size", "Tiny 10, Small 12, Medium 14, Large 18",
                         StatusOverlay.SIZE_VALUES, StatusOverlay.SIZE_NAMES),
                 toggle(LauncherSettings.STATUS_BG, "Background", "A dark see-through box behind the text")));
+        // Live TV: the screen and each station on or off (signing in to Tonton needs the TV's screen).
+        java.util.List<JSONObject> live = new java.util.ArrayList<>();
+        live.add(toggle(LauncherSettings.LIVE_TV, "Live TV screen", "Up from the first app on the running-apps screen"));
+        for (LiveChannels.Channel c : LiveChannels.ALL)
+            live.add(toggle(LauncherSettings.stationKey(c.slug), c.name, c.site.label));
+        cats.put(category("Live TV", TontonAccount.signedIn(ctx) ? "Channels · signed in to Tonton"
+                : "Channels · sign in to Tonton on the TV", live.toArray(new JSONObject[0])));
         // Set up on the TV (press the button there); the phone can put them all back to normal,
         // in case a remapping makes the TV hard to use.
         int buttons = LauncherSettings.buttons(ctx).size();
