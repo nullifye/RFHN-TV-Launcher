@@ -10,15 +10,18 @@ const source = fs.readFileSync(path.resolve(__dirname,
 function constant(name) {
   const declaration = source.match(new RegExp(`private static final String ${name} = ([\\s\\S]*?);\\n`));
   assert(declaration, name);
-  const tokens = declaration[1].match(/JSONObject\.quote\(\w+\)|"(?:\\.|[^"\\])*"/g);
+  // String literals, JSONObject.quote(CONSTANT) and other constants (+ MARK +) concatenated.
+  const tokens = declaration[1].match(/JSONObject\.quote\(\w+\)|"(?:\\.|[^"\\])*"|\b[A-Z][A-Z_]+\b/g);
   return tokens.map(token => token.startsWith('JSONObject')
-    ? JSON.stringify(constant(token.match(/\((\w+)\)/)[1])) : JSON.parse(token)).join('');
+    ? JSON.stringify(constant(token.match(/\((\w+)\)/)[1]))
+    : token.startsWith('"') ? JSON.parse(token) : constant(token)).join('');
 }
 
 const rtm = constant('SNAPSHOT'), tonton = constant('TONTON_SNAPSHOT');
+const rtmSwitch = constant('RTM_SWITCH'), tontonSwitch = constant('TONTON_SWITCH');
 function environment() {
   let clock = 100_000;
-  const video = { readyState: 0, paused: true, muted: true, videoWidth: 1280, videoHeight: 720,
+  const video = { readyState: 0, paused: true, muted: true, videoWidth: 1280, videoHeight: 720, currentSrc: 'blob:old',
     calls: 0, play() { this.calls++; return { catch() {} }; } };
   const context = { Date: { now: () => clock },
     location: { origin: 'https://watch.tonton.com.my', pathname: '/live/tv3' },
@@ -28,7 +31,8 @@ function environment() {
   return { context, video, advance(ms) { clock += ms; },
     read(script, cap = 540, expected) {
       return JSON.parse(vm.runInContext(`${script}(${cap},${JSON.stringify(expected)})`, context));
-    } };
+    },
+    switchTo(script, path) { return vm.runInContext(`${script}(${JSON.stringify(path)})`, context); } };
 }
 
 let checks = 0;
@@ -139,5 +143,58 @@ test('a still-playing previous document is never reported ready for the new chan
   t.video.readyState = 3;
   assert.equal(t.read(tonton, 540, 'https://watch.tonton.com.my/live/tv9').playing, false);
   assert.equal(t.read(tonton, 540, 'https://watch.tonton.com.my/live/tv3').playing, true);
+});
+test('RTM switch inside the page uses its router and marks the playing video', () => {
+  const e = rtmEnvironment();
+  e.player.on = true;
+  e.video.readyState = 3;
+  e.read(rtm);
+  const pushed = [];
+  e.context.next = { router: { push: path => pushed.push(path) } };
+  assert.equal(e.switchTo(rtmSwitch, '/live/tv/tv2'), true);
+  assert.deepEqual(pushed, ['/live/tv/tv2']);
+  assert.equal(e.context.__tvhomeOldVideo, e.video);
+  assert.equal(e.context.__tvhomePlayAt, 0);
+  assert.equal(e.context.__tvhomeQuality, null);
+  e.context.location = { origin: 'https://rtmklik.rtm.gov.my', pathname: '/live/tv/tv2' };
+  const stale = e.read(rtm, 540, 'https://rtmklik.rtm.gov.my/live/tv/tv2');
+  assert.equal(stale.stale, true); // the old channel still plays: not ready
+  assert.equal(stale.playing, false);
+  e.video.currentSrc = 'blob:new';
+  assert.equal(e.read(rtm, 540, 'https://rtmklik.rtm.gov.my/live/tv/tv2').playing, true);
+});
+test('RTM switch refuses a page without the router', () => {
+  const e = rtmEnvironment();
+  assert.equal(e.switchTo(rtmSwitch, '/live/tv/tv2'), false);
+  e.context.next = { router: {} };
+  assert.equal(e.switchTo(rtmSwitch, '/live/tv/tv2'), false);
+  assert.equal(e.context.__tvhomeOldVideo, undefined);
+});
+test('Tonton switch changes the address and waits for a new stream on the same video', () => {
+  const t = tontonEnvironment();
+  t.video.paused = false;
+  t.video.readyState = 4;
+  const pushed = [], events = [];
+  t.context.history = { pushState: (s, title, path) => { pushed.push(path); t.context.location.pathname = path; } };
+  t.context.PopStateEvent = function (type) { this.type = type; };
+  t.context.dispatchEvent = event => events.push(event.type);
+  assert.equal(t.switchTo(tontonSwitch, '/live/ntv7'), true);
+  assert.deepEqual(pushed, ['/live/ntv7']);
+  assert.deepEqual(events, ['popstate']);
+  const expected = 'https://watch.tonton.com.my/live/ntv7';
+  assert.equal(t.read(tonton, 540, expected).stale, true);
+  t.video.currentSrc = '';
+  t.video.readyState = 0;
+  assert.equal(t.read(tonton, 540, expected).stale, true); // emptied, the new stream not attached yet
+  t.video.currentSrc = 'blob:ntv7';
+  t.video.readyState = 4;
+  assert.equal(t.read(tonton, 540, expected).playing, true);
+});
+test('Tonton switch refuses pages other than a live channel', () => {
+  const t = tontonEnvironment();
+  t.context.location.pathname = '/login';
+  assert.equal(t.switchTo(tontonSwitch, '/live/ntv7'), false);
+  t.context.location = { origin: 'https://rtmklik.rtm.gov.my', pathname: '/live/tv/tv1' };
+  assert.equal(t.switchTo(tontonSwitch, '/live/ntv7'), false);
 });
 console.log(`${checks} player script tests passed`);

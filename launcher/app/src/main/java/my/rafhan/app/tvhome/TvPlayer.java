@@ -68,8 +68,13 @@ final class TvPlayer {
     // A rendition whose picture comes out the wrong shape is never used again: RTM's 480p one
     // reports 854x11712 on this TV and shows as a thin strip down the middle of the poster. If
     // the player's own choice (full screen) lands on such a one, the next taller one is used.
+    // After a switch inside the page (RTM_SWITCH), the previous channel's video is reported
+    // "stale" until it's gone, so its picture is never taken for the new channel's.
     private static final String SNAPSHOT = "(function(cap,expected){"
             + "if(expected&&location.origin+location.pathname!==expected)return JSON.stringify({playing:false});"
+            + "var sv=document.querySelector('#vidBox video');"
+            + "if(sv&&sv===window.__tvhomeOldVideo&&(!sv.currentSrc||sv.currentSrc===window.__tvhomeOldSrc))"
+            + "return JSON.stringify({playing:false,stale:true});"
             + "if(!document.getElementById('tvhome-crop')){var s=document.createElement('style');"
             + "s.id='tvhome-crop';s.textContent=" + JSONObject.quote(CSS) + ";"
             + "document.documentElement.appendChild(s);}"
@@ -112,6 +117,9 @@ final class TvPlayer {
             + "if(location.origin==='https://watch.tonton.com.my'&&/^\\/login|^\\/signin/.test(location.pathname))"
             + "return JSON.stringify({signIn:true});"
             + "if(expected&&location.origin+location.pathname!==expected)return JSON.stringify({playing:false});"
+            + "var sv=document.querySelector('#player-container video')||document.querySelector('video');"
+            + "if(sv&&sv===window.__tvhomeOldVideo&&(!sv.currentSrc||sv.currentSrc===window.__tvhomeOldSrc))"
+            + "return JSON.stringify({playing:false,stale:true});"
             + "if(!document.getElementById('tvhome-crop')){var s=document.createElement('style');"
             + "s.id='tvhome-crop';s.textContent=" + JSONObject.quote(TONTON_CSS) + ";"
             + "document.documentElement.appendChild(s);}"
@@ -136,6 +144,30 @@ final class TvPlayer {
             + "return JSON.stringify({player:!!p,video:!!v,readyState:v?v.readyState:0,"
             + "playing:on&&shape,error:v&&v.error?v.error.code:0});})";
 
+    // Changing channel within the same provider without reloading its page: the site's own router
+    // shows the new channel, skipping the page's start-up (seconds on this TV). Argument: the new
+    // channel's path. Returns false when the page can't switch (then it's loaded instead).
+    // The playing video and its source are noted first: while that video is still there with its
+    // old source or none, the snapshots report "stale" (Tonton keeps the same <video>, plays the
+    // old channel for a moment, then empties it until the new stream attaches, within about a
+    // second; RTMKlik replaces the <video>). Per-channel play/quality throttles start over.
+    private static final String MARK = "window.__tvhomeOldVideo=v||null;window.__tvhomeOldSrc=v?v.currentSrc:null;"
+            + "window.__tvhomePlayAt=0;window.__tvhomeQuality=null;window.__tvhomeQualityAt=0;";
+    // RTMKlik is a Next.js app: its router is window.next.router.
+    private static final String RTM_SWITCH = "(function(path){var n=window.next,r=n&&n.router;"
+            + "if(location.origin!=='https://rtmklik.rtm.gov.my'||!r||typeof r.push!=='function')return false;"
+            + "var v=document.querySelector('#vidBox video');" + MARK + "r.push(path);return true;})";
+    // Tonton's React router follows the address on a history change (it has no channel links).
+    private static final String TONTON_SWITCH = "(function(path){"
+            + "if(location.origin!=='https://watch.tonton.com.my'||location.pathname.indexOf('/live/')!==0)return false;"
+            + "var v=document.querySelector('#player-container video')||document.querySelector('video');" + MARK
+            + "history.pushState({},'',path);dispatchEvent(new PopStateEvent('popstate',{state:{}}));return true;})";
+    // A switch still stale after SWITCH_STALL_MS, or not playing after SWITCH_GIVE_UP_MS, loads
+    // the page instead (Tonton sometimes never starts the new stream).
+    // After MAX_IN_PAGE switches in a row the page is loaded afresh, so it can't build up.
+    private static final long SWITCH_STALL_MS = 4000, SWITCH_GIVE_UP_MS = 8000;
+    private static final int MAX_IN_PAGE = 20;
+
     private final Context ctx;
     private final FrameLayout host;
     private final Listener listener;
@@ -148,9 +180,10 @@ final class TvPlayer {
     private LiveChannels.Site identitySite;
     private UserAgentMetadata defaultMetadata; // the WebView's own Client Hints, before identify()
     private long deadline, startedAt;
+    private long switchedAt; // when this channel was switched to inside the page; 0 when loaded
     private String channelSlug;
     private String stateMessage;
-    private int generation, pollSerial, state = -1, viewHeight, startupPhases;
+    private int generation, pollSerial, state = -1, viewHeight, startupPhases, inPageRun;
 
     TvPlayer(Context ctx, FrameLayout host, Listener listener) {
         this.ctx = ctx;
@@ -169,6 +202,10 @@ final class TvPlayer {
     void play(LiveChannels.Channel channel) {
         String page = channel.page();
         if (!LiveChannels.isChannelPage(page)) return;
+        // Only from a channel that plays: its page is up and its picture is known, so the
+        // snapshots can tell it from the new one (one still starting may yet attach its stream).
+        boolean inPage = browser != null && url != null && state == PLAYING && site == channel.site
+                && inPageRun < MAX_IN_PAGE;
         site = channel.site;
         if (page.equals(url) && browser != null && state != FAILED && state != SIGN_IN) return;
         generation++;
@@ -189,8 +226,31 @@ final class TvPlayer {
         setState(CONNECTING, startup.label());
         deadline = SystemClock.elapsedRealtime() + GIVE_UP_MS;
         main.postDelayed(watchdog, GIVE_UP_MS);
+        if (inPage) switchInPage(page);
+        else load(page);
+    }
+
+    private void load(String page) {
+        switchedAt = 0;
+        inPageRun = 0;
         browser.loadUrl(page);
         checkSoon();
+    }
+
+    private void switchInPage(String page) {
+        int gen = generation;
+        String script = site == LiveChannels.Site.TONTON ? TONTON_SWITCH : RTM_SWITCH;
+        browser.evaluateJavascript(script + "(" + JSONObject.quote(Uri.parse(page).getPath()) + ")", v -> {
+            if (gen != generation || browser == null) return;
+            if (!"true".equals(v)) {
+                load(page);
+                return;
+            }
+            switchedAt = SystemClock.elapsedRealtime();
+            inPageRun++;
+            trace("switched in page");
+            checkSoon();
+        });
     }
 
     /**
@@ -213,6 +273,8 @@ final class TvPlayer {
         url = null;
         state = -1;
         stateMessage = null;
+        switchedAt = 0;
+        inPageRun = 0;
         if (browser != null) {
             host.removeView(browser);
             browser.stopLoading();
@@ -314,7 +376,7 @@ final class TvPlayer {
             String script = site == LiveChannels.Site.TONTON ? TONTON_SNAPSHOT : SNAPSHOT;
             browser.evaluateJavascript(script + "(" + viewHeight + "," + JSONObject.quote(url) + ")", value -> {
                 if (gen != generation || serial != pollSerial || browser == null) return;
-                boolean playing = false;
+                boolean playing = false, stale = false;
                 int error = 0;
                 try {
                     JSONObject o = new JSONObject((String) new JSONTokener(value).nextValue());
@@ -326,14 +388,24 @@ final class TvPlayer {
                         return;
                     }
                     playing = o.optBoolean("playing");
+                    stale = o.optBoolean("stale");
                     error = o.optInt("error");
                 } catch (Exception ignored) { // page still loading
+                }
+                if (switchedAt > 0 && !playing) {
+                    long since = SystemClock.elapsedRealtime() - switchedAt;
+                    if ((stale && since > SWITCH_STALL_MS) || since > SWITCH_GIVE_UP_MS) {
+                        trace("switch in page stalled; loading the page");
+                        load(url);
+                        return;
+                    }
                 }
                 if (error != 0) {
                     fail("This channel couldn't play (error " + error + ")");
                     return;
                 }
                 if (playing) {
+                    switchedAt = 0; // later stalls are the stream's, not the switch's
                     deadline = SystemClock.elapsedRealtime() + GIVE_UP_MS;
                     // Playing a Tonton channel proves the session (Settings shows it signed in).
                     if (site == LiveChannels.Site.TONTON && state != PLAYING) TontonAccount.setSignedIn(ctx, true);

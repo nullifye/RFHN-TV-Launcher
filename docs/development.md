@@ -151,7 +151,7 @@ Release builds use size optimization, fat LTO, one codegen unit and symbol strip
 For the Live TV startup scripts, `node scripts/test-tv-player.cjs` (Node 18+, no npm packages)
 exercises the exact JavaScript injected by `TvPlayer`: early preview-quality selection, throttled
 play/quality requests, full-screen quality, malformed-video fallback, sign-in/errors and rejecting
-the previous channel's still-playing document during navigation. These are provider stubs, not a
+the previous channel's still-playing document during navigation, and switching channel inside the page (RTMKlik's router, Tonton's history change) without taking the previous channel's video for the new one. These are provider stubs, not a
 replacement for testing real DRM playback on a TV.
 
 To inspect real startup timing, `adb -s <TV IP>:5555 logcat -v time TvPlayer:I '*:S'` shows browser
