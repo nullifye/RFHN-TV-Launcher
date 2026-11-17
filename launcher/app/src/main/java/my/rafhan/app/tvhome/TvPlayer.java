@@ -14,6 +14,7 @@ import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -24,7 +25,10 @@ import androidx.webkit.UserAgentMetadata;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.io.ByteArrayInputStream;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import my.rafhan.app.tvhome.TvStartupProgress.Stage;
 
@@ -137,6 +141,7 @@ final class TvPlayer {
     private final Listener listener;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final TvStartupProgress startup = new TvStartupProgress();
+    private final AtomicInteger refused = new AtomicInteger(); // requests TvPageFilter refused this tune
     private WebView browser;
     private String url;
     private LiveChannels.Site site;
@@ -171,6 +176,7 @@ final class TvPlayer {
         main.removeCallbacks(watchdog);
         startedAt = SystemClock.elapsedRealtime();
         startupPhases = 0;
+        refused.set(0);
         startup.reset(channel.name);
         channelSlug = channel.slug;
         trace("tune requested");
@@ -285,6 +291,16 @@ final class TvPlayer {
                 if (r.isForMainFrame() && r.getUrl().toString().equals(url))
                     fail("Couldn't reach " + site.label + ". Check the connection");
             }
+            // Ad loaders and trackers are refused at once (TvPageFilter), as an ad blocker would:
+            // the players start the programme instead of waiting for them. Runs off the main thread.
+            @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest r) {
+                if (r.isForMainFrame()) return null;
+                Uri u = r.getUrl();
+                if (!TvPageFilter.blocked(u.getHost(), u.getPath())) return null;
+                refused.incrementAndGet();
+                return new WebResourceResponse("text/plain", "utf-8", 403, "Blocked",
+                        Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+            }
         });
         host.addView(browser, 0, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
@@ -394,7 +410,7 @@ final class TvPlayer {
 
     private void setState(int s, String message) {
         if (s == state && s != FAILED && s != SIGN_IN && Objects.equals(message, stateMessage)) return;
-        if (s == PLAYING) trace("playing");
+        if (s == PLAYING) trace("playing (" + refused.get() + " ad/tracker requests refused)");
         else if (s == FAILED || s == SIGN_IN) trace(s == FAILED ? "failed" : "sign-in required");
         state = s;
         stateMessage = message;
