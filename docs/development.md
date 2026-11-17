@@ -148,6 +148,19 @@ Release builds use size optimization, fat LTO, one codegen unit and symbol strip
 
 ## Tests and CI
 
+For the Live TV startup scripts, `node scripts/test-tv-player.cjs` (Node 18+, no npm packages)
+exercises the exact JavaScript injected by `TvPlayer`: early preview-quality selection, throttled
+play/quality requests, full-screen quality, malformed-video fallback, sign-in/errors and rejecting
+the previous channel's still-playing document during navigation. These are provider stubs, not a
+replacement for testing real DRM playback on a TV.
+
+To inspect real startup timing, `adb -s <TV IP>:5555 logcat -v time TvPlayer:I '*:S'` shows browser
+preparation and each channel's elapsed time to page visibility, page load, player/video presence,
+media metadata and playback. It logs only channel slugs and timings, not stream URLs or credentials.
+The independent 45-second watchdog still ends a stalled attempt if navigation discards a JavaScript
+callback. When comparing builds, measure several cold and warm runs on the same channels and network;
+one faster run does not establish a speedup.
+
 The launcher's pure logic is unit tested on the computer, so a change doesn't need the TV to catch a regression:
 
 ```bash

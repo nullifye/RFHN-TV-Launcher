@@ -332,6 +332,7 @@ final class TvScreen {
         refresh();
         loadGuide(false);
         loadLogos(); // nothing plays until OK
+        main.post(() -> { if (shown) player.prepare(); }); // warm WebView without loading a station
         scheduleTick();
     }
 
@@ -473,7 +474,7 @@ final class TvScreen {
         selected = tuned = i;
         prefs.edit().putString("channel_slug", channels.get(i).slug).apply();
         LiveChannels.Channel c = channels.get(i);
-        showCover(c, "Tuning to " + c.name + "…", true, DIM);
+        showCover(c, TvStartupProgress.tuningLabel(c.name), true, DIM);
         player.setViewHeight(fullscreen ? 0 : videoHeightPx);
         player.play(c);
         refresh();
@@ -490,7 +491,7 @@ final class TvScreen {
             } else if (state == TvPlayer.SIGN_IN) {
                 showCover(c, "Sign in to Tonton in Settings → Live TV to watch " + c.name, false, TEXT);
             } else {
-                showCover(c, "Tuning to " + c.name + "…", true, DIM);
+                showCover(c, message != null ? message : TvStartupProgress.tuningLabel(c.name), true, DIM);
             }
         }
         refresh();
