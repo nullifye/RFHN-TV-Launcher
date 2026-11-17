@@ -45,7 +45,7 @@ final class TvScreen {
     private static final int ROW_FOCUS = 0xFFF2F2F2, ROW_SELECTED = 0x1AFFFFFF, INK = 0xFF101318, INK_DIM = 0xB3101318;
     private static final long BANNER_MS = 5000;
     private static final long GUIDE_MAX_AGE_MS = 30 * 60_000L;
-    private static final int LIST = 0, VIDEO = 1;
+    private static final int LIST = 0, GUIDE = 1;
     private static final DateTimeFormatter HM = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("EEE, d MMM", Locale.ENGLISH);
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH);
@@ -69,13 +69,13 @@ final class TvScreen {
     private float scroll = -1; // dp the list is scrolled by; -1 before the first layout
     private final LinearLayout banner;
     private final TvPlayer player;
+    private TvGuide timetable; // built only when Left opens the hourly guide
     private final TextView clock, date, coverText, nowLabel, nowTitle, nowDesc, nextLabel;
     private final TextView[] nextTime = new TextView[2], nextTitle = new TextView[2];
     private final ImageView coverLogo, bannerLogo;
     private final ProgressBar spinner;
     private final Bar nowBar, bannerBar;
     private final TextView bannerChannel, bannerTitle, bannerTime, bannerNext, bannerHint, hint, watchTag;
-    private final GradientDrawable ring;
     private final CornerMask corners;
     // The screen's background, top-left to bottom-right (CornerMask paints the same gradient).
     private static final int[] BACKGROUND = {0xFF101A2B, 0xFF070A10, 0xFF040509};
@@ -166,9 +166,6 @@ final class TvScreen {
         // Its corners are rounded by a mask on top (CornerMask), not by clipping to an outline.
         video = new FrameLayout(ctx);
         video.setBackgroundColor(Color.BLACK);
-        ring = new GradientDrawable();
-        ring.setCornerRadius(px(14));
-        ring.setStroke(px(3), TEXT);
         cover = new FrameLayout(ctx);
         cover.setBackgroundColor(0xFF0B0F17);
         LinearLayout coverBox = new LinearLayout(ctx);
@@ -357,6 +354,7 @@ final class TvScreen {
     void hide() {
         if (!shown) return;
         shown = false;
+        if (focus == GUIDE) closeTimetable();
         main.removeCallbacksAndMessages(null);
         if (fullscreen) setFullscreen(false);
         player.release();
@@ -371,29 +369,36 @@ final class TvScreen {
 
     void up() {
         if (fullscreen) browse(-1, true);
-        else if (focus == LIST && selected > 0) browse(-1, false);
+        else if ((focus == LIST || focus == GUIDE) && selected > 0) browse(-1, false);
     }
 
     void down() {
         if (fullscreen) browse(1, true);
-        else if (focus == LIST && selected < channels.size() - 1) browse(1, false);
+        else if ((focus == LIST || focus == GUIDE) && selected < channels.size() - 1) browse(1, false);
     }
 
     void left() {
         if (fullscreen) showBanner();
-        else if (focus == VIDEO) setFocus(LIST);
+        else if (focus == GUIDE) scrollTimetable(-1);
+        else openTimetable();
     }
 
     void right() {
         if (fullscreen) showBanner();
-        else if (focus == LIST) setFocus(VIDEO);
+        else if (focus == GUIDE) scrollTimetable(1);
     }
 
     /**
-     * OK: on a channel, watch it in the video (OK again on the one playing goes full screen); on
-     * the video, full screen; in full screen, switch to the channel browsed in the banner.
+     * OK: on a channel, watch it in the preview (OK again on the one playing goes full screen);
+     * in full screen, switch to the channel browsed in the banner. The preview never takes focus.
      */
     void select() {
+        if (focus == GUIDE) {
+            closeTimetable();
+            // A future listing isn't catch-up: OK always watches this channel's live stream.
+            if (selected != tuned || playerState == TvPlayer.FAILED) tune(selected);
+            return;
+        }
         if (fullscreen) {
             if (selected != tuned) {
                 tune(selected);
@@ -405,21 +410,22 @@ final class TvScreen {
             }
             return;
         }
-        if (focus == VIDEO) {
-            if (tuned < 0) tune(selected);
-            setFullscreen(true);
-        } else if (selected == tuned && playerState != TvPlayer.FAILED) {
+        if (selected == tuned && playerState != TvPlayer.FAILED) {
             setFullscreen(true);
         } else {
             tune(selected);
         }
     }
 
-    /** Back: leaves full screen. False when there is nothing to close here. */
+    /** Back: closes the timetable first, then full screen. False when nothing is open here. */
     boolean back() {
+        if (focus == GUIDE) {
+            closeTimetable();
+            return true;
+        }
         if (!fullscreen) return false;
         setFullscreen(false);
-        setFocus(VIDEO);
+        setFocus(LIST);
         return true;
     }
 
@@ -433,6 +439,27 @@ final class TvScreen {
     }
 
     // ---------------------------------------------------------------- state
+
+    private void openTimetable() {
+        if (timetable == null) {
+            timetable = new TvGuide(ctx);
+            root.addView(timetable, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        timetable.open();
+        loadGuide(false);
+        setFocus(GUIDE);
+    }
+
+    private void closeTimetable() {
+        timetable.close();
+        setFocus(LIST);
+    }
+
+    private void scrollTimetable(int direction) {
+        timetable.move(direction);
+        refresh();
+    }
 
     private void browse(int dir, boolean wrap) {
         int n = channels.size();
@@ -604,16 +631,13 @@ final class TvScreen {
         set(date, DATE.format(t.atZone(ZoneId.systemDefault())));
         for (Row r : rows) r.update(now);
         scrollList();
-        video.setForeground(focus == VIDEO && !fullscreen ? ring : null);
         LiveChannels.Channel sel = channels.get(selected);
         if (tuned < 0) showCover(sel, "Press OK to watch", false, DIM); // nothing on yet
         boolean browsing = tuned >= 0 && selected != tuned;
         set(watchTag, "OK   Watch " + sel.name);
         watchTag.setVisibility(browsing && !fullscreen ? View.VISIBLE : View.GONE);
-        set(hint, focus == VIDEO
-                ? "◀  Channels      OK  Full screen      BACK  Running apps"
-                : "▲▼  Browse      OK  " + (selected == tuned ? "Full screen" : "Watch")
-                        + "      ▶  Video      BACK  Running apps");
+        set(hint, "▲▼  Browse      OK  " + (selected == tuned ? "Full screen" : "Watch")
+                + "      ◀  Guide      BACK  Running apps");
         set(bannerHint, (browsing ? "OK  Watch      " : "") + "▲▼  Channels      BACK  Exit full screen");
 
         LiveChannels.Channel c = channels.get(selected);
@@ -651,6 +675,7 @@ final class TvScreen {
         bannerBar.set(p != null ? p.progress(now) : 0f);
         bannerBar.setVisibility(p != null ? View.VISIBLE : View.GONE);
         set(bannerNext, next.isEmpty() ? "" : "Next   " + time(next.get(0).start) + "   " + next.get(0).title);
+        if (focus == GUIDE) timetable.update(channels, selected, guide, logos, guideLoading, now);
     }
 
     /**
