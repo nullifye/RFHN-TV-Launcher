@@ -23,6 +23,14 @@ public class TvPageFilterTest {
     }
 
     @Test
+    public void refusesRtmKliksHiddenGuideWidget() {
+        assertTrue(TvPageFilter.blocked("rtmklik-epg-production.s3.ap-southeast-1.amazonaws.com", "/epg-tv/epg-tv-v1.html"));
+        assertTrue(TvPageFilter.blocked("rtmklik-epg-production.s3.ap-southeast-1.amazonaws.com", "/epg-tv/tv-epg-v1.js"));
+        assertTrue(TvPageFilter.blocked("dggz3oflbpnah.cloudfront.net", "/epg-data/latest/epg_today.json"));
+        assertFalse(TvPageFilter.blocked("dggz3oflbpnah.cloudfront.net", "/other/x.js"));
+    }
+
+    @Test
     public void keepsTheProvidersPagesPlayerLicenceAndStream() {
         assertFalse(TvPageFilter.blocked("watch.tonton.com.my", "/live/tv3"));
         assertFalse(TvPageFilter.blocked("headend-api.tonton.com.my", "/v600/api/auth.class.api.php/logon/377"));

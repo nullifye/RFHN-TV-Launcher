@@ -1,12 +1,12 @@
 package my.rafhan.app.tvhome;
 
 /**
- * What Live TV's player refuses to load from the channel pages: ad loaders and third-party
- * trackers. On the TV's slow processor these scripts compete with the page's own start-up, and
- * the players wait for their ad request to fail before starting the stream (seconds, behind an
- * ad-blocking DNS). Refused straight away, the players start the programme as they do for a
- * viewer with an ad blocker. The providers' own pages, APIs, player, licence and stream hosts
- * are never on this list.
+ * What Live TV's player refuses to load from the channel pages: ad loaders, third-party trackers
+ * and RTMKlik's hidden programme guide. On the TV's slow processor these compete with the page's
+ * own start-up, and the players wait for their ad request to fail before starting the stream
+ * (seconds, behind an ad-blocking DNS). Refused straight away, the players start the programme as
+ * they do for a viewer with an ad blocker. The providers' own pages, APIs, player, licence and
+ * stream hosts are never on this list.
  */
 final class TvPageFilter {
     private TvPageFilter() {}
@@ -40,6 +40,12 @@ final class TvPageFilter {
                 return path.equals("/tr") || path.startsWith("/tr/");
             case "rtmklik.rtm.gov.my": // RTMKlik's own ad schedule for its player
                 return path.startsWith("/api/video-ads/");
+            // RTMKlik's programme guide widget, hidden by the crop: its page and its data (4.8 MB of
+            // JSON, never cached, parsed on every page load). Live TV reads the guide itself.
+            case "rtmklik-epg-production.s3.ap-southeast-1.amazonaws.com":
+                return path.startsWith("/epg-tv/");
+            case "dggz3oflbpnah.cloudfront.net":
+                return path.startsWith("/epg-data/");
             default: // CleverTap's script, served from a shared CDN host
                 return path.endsWith("/clevertap.min.js");
         }

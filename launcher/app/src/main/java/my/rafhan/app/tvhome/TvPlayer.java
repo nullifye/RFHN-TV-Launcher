@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -162,8 +163,9 @@ final class TvPlayer {
             + "if(location.origin!=='https://watch.tonton.com.my'||location.pathname.indexOf('/live/')!==0)return false;"
             + "var v=document.querySelector('#player-container video')||document.querySelector('video');" + MARK
             + "history.pushState({},'',path);dispatchEvent(new PopStateEvent('popstate',{state:{}}));return true;})";
-    // A switch still stale after SWITCH_STALL_MS, or not playing after SWITCH_GIVE_UP_MS, loads
-    // the page instead (Tonton sometimes never starts the new stream).
+    // A switch still stale after SWITCH_STALL_MS, or whose new stream has no media yet after
+    // SWITCH_GIVE_UP_MS, loads the page instead (Tonton sometimes never starts the new stream).
+    // Once the media has arrived it's left to start, as slow channels (RTM's Roll, ~7 s) do.
     // After MAX_IN_PAGE switches in a row the page is loaded afresh, so it can't build up.
     private static final long SWITCH_STALL_MS = 4000, SWITCH_GIVE_UP_MS = 8000;
     private static final int MAX_IN_PAGE = 20;
@@ -174,6 +176,9 @@ final class TvPlayer {
     private final Handler main = new Handler(Looper.getMainLooper());
     private final TvStartupProgress startup = new TvStartupProgress();
     private final AtomicInteger refused = new AtomicInteger(); // requests TvPageFilter refused this tune
+    private final AtomicInteger fromCopy = new AtomicInteger(); // scripts served from TvAssetCache this tune
+    private final File assets; // TvAssetCache's folder
+    private volatile String userAgent; // the browser's, for TvAssetCache's fetches (read off the main thread)
     private WebView browser;
     private String url;
     private LiveChannels.Site site;
@@ -189,6 +194,7 @@ final class TvPlayer {
         this.ctx = ctx;
         this.host = host;
         this.listener = listener;
+        this.assets = new File(ctx.getCacheDir(), "tv-player-scripts");
     }
 
     /** Warm the browser engine while browsing; no station, video, or licence is requested yet. */
@@ -214,6 +220,7 @@ final class TvPlayer {
         startedAt = SystemClock.elapsedRealtime();
         startupPhases = 0;
         refused.set(0);
+        fromCopy.set(0);
         startup.reset(channel.name);
         channelSlug = channel.slug;
         trace("tune requested");
@@ -289,6 +296,7 @@ final class TvPlayer {
     /** Tonton's pages see a desktop browser (TontonAccount.identify); other sites the WebView as it is. */
     private void identify(boolean desktop) {
         defaultMetadata = TontonAccount.identify(browser, desktop, defaultMetadata);
+        userAgent = browser.getSettings().getUserAgentString();
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -308,6 +316,7 @@ final class TvPlayer {
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setSupportMultipleWindows(true); // onCreateWindow isn't handled: popups cannot open
+        userAgent = s.getUserAgentString();
         browser.setBackgroundColor(Color.BLACK);
         browser.setFocusable(false); // the remote stays with the launcher
         browser.setFocusableInTouchMode(false);
@@ -353,15 +362,22 @@ final class TvPlayer {
                 if (r.isForMainFrame() && r.getUrl().toString().equals(url))
                     fail("Couldn't reach " + site.label + ". Check the connection");
             }
-            // Ad loaders and trackers are refused at once (TvPageFilter), as an ad blocker would:
-            // the players start the programme instead of waiting for them. Runs off the main thread.
+            // Ad loaders, trackers and RTMKlik's hidden guide are refused at once (TvPageFilter), as
+            // an ad blocker would: the players start the programme instead of waiting for them.
+            // RTMKlik's player scripts come from the app's own copy (TvAssetCache).
+            // Runs off the main thread.
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest r) {
                 if (r.isForMainFrame()) return null;
                 Uri u = r.getUrl();
-                if (!TvPageFilter.blocked(u.getHost(), u.getPath())) return null;
-                refused.incrementAndGet();
-                return new WebResourceResponse("text/plain", "utf-8", 403, "Blocked",
-                        Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+                if (TvPageFilter.blocked(u.getHost(), u.getPath())) {
+                    refused.incrementAndGet();
+                    return new WebResourceResponse("text/plain", "utf-8", 403, "Blocked",
+                            Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+                }
+                if (!"GET".equals(r.getMethod())) return null;
+                WebResourceResponse kept = TvAssetCache.serve(assets, u, r.getRequestHeaders(), userAgent);
+                if (kept != null) fromCopy.incrementAndGet();
+                return kept;
             }
         });
         host.addView(browser, 0, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -394,7 +410,8 @@ final class TvPlayer {
                 }
                 if (switchedAt > 0 && !playing) {
                     long since = SystemClock.elapsedRealtime() - switchedAt;
-                    if ((stale && since > SWITCH_STALL_MS) || since > SWITCH_GIVE_UP_MS) {
+                    boolean media = (startupPhases & 4) != 0; // Stage.MEDIA_METADATA_READY
+                    if ((stale && since > SWITCH_STALL_MS) || (!media && since > SWITCH_GIVE_UP_MS)) {
                         trace("switch in page stalled; loading the page");
                         load(url);
                         return;
@@ -482,7 +499,8 @@ final class TvPlayer {
 
     private void setState(int s, String message) {
         if (s == state && s != FAILED && s != SIGN_IN && Objects.equals(message, stateMessage)) return;
-        if (s == PLAYING) trace("playing (" + refused.get() + " ad/tracker requests refused)");
+        if (s == PLAYING) trace("playing (" + refused.get() + " requests refused, "
+                + fromCopy.get() + " scripts from the app's copy)");
         else if (s == FAILED || s == SIGN_IN) trace(s == FAILED ? "failed" : "sign-in required");
         state = s;
         stateMessage = message;
