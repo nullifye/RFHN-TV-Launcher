@@ -1,5 +1,6 @@
 package my.rafhan.app.tvhome;
 
+import android.annotation.SuppressLint;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -57,6 +58,10 @@ final class DesktopChrome {
      * WebView also sends an X-Requested-With header naming the app on every request; Google
      * cancelled its removal and WebView offers no way to drop it.
      */
+    // RestrictedApi: setFormFactors isn't public in androidx.webkit yet (kept to its own library
+    // group), but WebView supports it (checked through its feature). Without it the form factor
+    // hint says "Mobile", contradicting the rest. If a webkit update changes it, the build breaks.
+    @SuppressLint("RestrictedApi")
     static void apply(WebView w) {
         WebSettings ws = w.getSettings();
         ws.setUserAgentString(userAgent(WebSettings.getDefaultUserAgent(w.getContext())));
@@ -66,11 +71,14 @@ final class DesktopChrome {
             for (UserAgentMetadata.BrandVersion b : own.getBrandVersionList()) {
                 brands.add(new UserAgentMetadata.BrandVersion.Builder(b).setBrand(brand(b.getBrand())).build());
             }
-            WebSettingsCompat.setUserAgentMetadata(ws, new UserAgentMetadata.Builder(own)
+            UserAgentMetadata.Builder windows = new UserAgentMetadata.Builder(own)
                     .setBrandVersionList(brands).setMobile(false).setPlatform("Windows")
                     .setPlatformVersion(PLATFORM_VERSION).setArchitecture("x86").setBitness(64)
-                    .setWow64(false).setModel("").setFormFactors(Collections.singletonList("Desktop"))
-                    .build());
+                    .setWow64(false).setModel("");
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.USER_AGENT_METADATA_FORM_FACTORS)) {
+                windows.setFormFactors(Collections.singletonList("Desktop"));
+            }
+            WebSettingsCompat.setUserAgentMetadata(ws, windows.build());
         }
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             WebViewCompat.addDocumentStartJavaScript(w, PLATFORM_SCRIPT, Collections.singleton("*"));
