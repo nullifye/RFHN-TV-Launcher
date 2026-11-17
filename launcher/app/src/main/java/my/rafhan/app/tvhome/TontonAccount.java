@@ -3,13 +3,8 @@ package my.rafhan.app.tvhome;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.webkit.CookieManager;
-import android.webkit.WebSettings;
 import android.webkit.WebStorage;
-import android.webkit.WebView;
 
-import androidx.webkit.UserAgentMetadata;
-import androidx.webkit.WebSettingsCompat;
-import androidx.webkit.WebViewFeature;
 
 /**
  * The Tonton account the Tonton channels play with. Signing in happens on Tonton's own page
@@ -64,24 +59,6 @@ final class TontonAccount {
         }
         cm.flush();
         setSignedIn(ctx, false);
-    }
-
-    /**
-     * Tonton's site plays only on the systems it supports (judged by the user agent and its Client
-     * Hints) and shows an "install our app" page to Android and Linux, so for Tonton the WebView
-     * presents itself as Chrome on Windows, same version. {@code original}: the WebView's own
-     * Client Hints, to restore with {@code desktop} false (null when unknown).
-     */
-    static UserAgentMetadata identify(WebView w, boolean desktop, UserAgentMetadata original) {
-        WebSettings ws = w.getSettings();
-        ws.setUserAgentString(desktop ? LiveChannels.windowsUserAgent(WebSettings.getDefaultUserAgent(w.getContext())) : null);
-        if (!WebViewFeature.isFeatureSupported(WebViewFeature.USER_AGENT_METADATA)) return original;
-        if (original == null) original = WebSettingsCompat.getUserAgentMetadata(ws);
-        WebSettingsCompat.setUserAgentMetadata(ws, desktop
-                ? new UserAgentMetadata.Builder(original).setMobile(false).setPlatform("Windows")
-                        .setPlatformVersion("15.0.0").setArchitecture("x86").setBitness(64).setModel("").build()
-                : original);
-        return original;
     }
 
     private static SharedPreferences prefs(Context ctx) {

@@ -126,14 +126,6 @@ public class LiveChannelsTest {
     }
 
     @Test
-    public void tontonSeesWindowsChromeOfTheSameVersion() {
-        String ua = LiveChannels.windowsUserAgent("Mozilla/5.0 (Linux; Android 10; MiTV-MOOQ0 Build/QTG3; wv) "
-                + "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/159.0.8154.4 Mobile Safari/537.36");
-        assertEquals("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                + "Chrome/159.0.8154.4 Safari/537.36", ua);
-    }
-
-    @Test
     public void cleansEscapedQuotesAndLineBreaks() {
         assertEquals("titled \"Surreal Experiences\" here", LiveChannels.clean("titled \\\"Surreal Experiences\\\"\n here "));
     }

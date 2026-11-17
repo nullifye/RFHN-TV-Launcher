@@ -58,18 +58,6 @@ final class LiveChannels {
         String base() { return "https://" + host + "/"; }
     }
 
-    /**
-     * The WebView's own user agent as Windows Chrome's (same Chrome version). Tonton's site plays
-     * only on the computers and browsers it supports, and shows an "install our app" page to the
-     * rest (Android, and Linux too).
-     */
-    static String windowsUserAgent(String webViewAgent) {
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("Chrome/([0-9.]+)").matcher(webViewAgent);
-        String chrome = m.find() ? m.group(1) : "120.0.0.0";
-        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + chrome
-                + " Safari/537.36";
-    }
-
     static final class Channel {
         final String slug, name, path, logoUrl;
         final Site site;

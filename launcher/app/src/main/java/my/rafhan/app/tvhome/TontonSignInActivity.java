@@ -148,7 +148,7 @@ public final class TontonSignInActivity extends Activity {
         s.setAllowContentAccess(false);
         s.setSupportMultipleWindows(true);
         s.setJavaScriptCanOpenWindowsAutomatically(true);
-        TontonAccount.identify(w, true, null);
+        DesktopChrome.apply(w);
         CookieManager.getInstance().setAcceptThirdPartyCookies(w, true); // the sign-in host's session
         w.setFocusable(true);
         w.setFocusableInTouchMode(true);

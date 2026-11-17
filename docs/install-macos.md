@@ -113,16 +113,16 @@ adb version
 ### Step 2. Download the APK
 
 1. Open [github.com/nullifye/RFHN-TV-Launcher/releases/latest](https://github.com/nullifye/RFHN-TV-Launcher/releases/latest). No GitHub account needed.
-2. Under **Assets**, click **`tvhome-<version>.apk`** (for example `tvhome-2.0.1.apk`). It downloads to your **Downloads** folder.
+2. Under **Assets**, click **`tvhome-<version>.apk`** (for example `tvhome-2.0.2.apk`). It downloads to your **Downloads** folder.
 
 ### Step 3. Go to the APK
 
 ```bash
 cd ~/Downloads
-ls tvhome-*.apk       # shows the file's exact name, e.g. tvhome-2.0.1.apk
+ls tvhome-*.apk       # shows the file's exact name, e.g. tvhome-2.0.2.apk
 ```
 
-In the commands below, replace `tvhome-2.0.1.apk` with your file's exact name.
+In the commands below, replace `tvhome-2.0.2.apk` with your file's exact name.
 
 ### Step 4. Connect to the TV
 
@@ -156,7 +156,7 @@ The **last line** is the TV's own home screen, for example `com.google.android.a
 ### Step 6. Install the APK
 
 ```bash
-adb install -r tvhome-2.0.1.apk
+adb install -r tvhome-2.0.2.apk
 ```
 
 Wait for `Success`.
@@ -164,7 +164,7 @@ Wait for `Success`.
 - **`INSTALL_FAILED_UPDATE_INCOMPATIBLE`?** A copy you built yourself is installed (a different signing key). Remove it first (its settings are lost), then install again:
   ```bash
   adb uninstall my.rafhan.app.tvhome
-  adb install tvhome-2.0.1.apk
+  adb install tvhome-2.0.2.apk
   ```
 
 ### Step 7. Give it its permissions

@@ -20,8 +20,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
-import androidx.webkit.UserAgentMetadata;
-
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -182,8 +180,6 @@ final class TvPlayer {
     private WebView browser;
     private String url;
     private LiveChannels.Site site;
-    private LiveChannels.Site identitySite;
-    private UserAgentMetadata defaultMetadata; // the WebView's own Client Hints, before identify()
     private long deadline, startedAt;
     private long switchedAt; // when this channel was switched to inside the page; 0 when loaded
     private String channelSlug;
@@ -226,10 +222,6 @@ final class TvPlayer {
         trace("tune requested");
         url = page;
         if (browser == null && !create()) return;
-        if (identitySite != site) {
-            identify(site == LiveChannels.Site.TONTON);
-            identitySite = site;
-        }
         setState(CONNECTING, startup.label());
         deadline = SystemClock.elapsedRealtime() + GIVE_UP_MS;
         main.postDelayed(watchdog, GIVE_UP_MS);
@@ -288,15 +280,7 @@ final class TvPlayer {
             browser.loadUrl("about:blank");
             browser.destroy();
             browser = null;
-            defaultMetadata = null; // a new WebView next time: read its own again
-            identitySite = null;
         }
-    }
-
-    /** Tonton's pages see a desktop browser (TontonAccount.identify); other sites the WebView as it is. */
-    private void identify(boolean desktop) {
-        defaultMetadata = TontonAccount.identify(browser, desktop, defaultMetadata);
-        userAgent = browser.getSettings().getUserAgentString();
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -305,7 +289,6 @@ final class TvPlayer {
             browser = new WebView(ctx);
         } catch (RuntimeException e) { // WebView disabled or being updated
             browser = null;
-            defaultMetadata = null;
             setState(FAILED, "Live TV needs Android System WebView enabled and up to date");
             return false;
         }
@@ -316,6 +299,7 @@ final class TvPlayer {
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setSupportMultipleWindows(true); // onCreateWindow isn't handled: popups cannot open
+        DesktopChrome.apply(browser); // both sites see Chrome on Windows 11
         userAgent = s.getUserAgentString();
         browser.setBackgroundColor(Color.BLACK);
         browser.setFocusable(false); // the remote stays with the launcher
