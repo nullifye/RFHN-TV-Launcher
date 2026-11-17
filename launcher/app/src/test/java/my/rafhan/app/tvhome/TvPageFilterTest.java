@@ -31,6 +31,14 @@ public class TvPageFilterTest {
     }
 
     @Test
+    public void keepsTontonsApisIncludingTheGuideItsPlayerWaitsFor() {
+        assertFalse(TvPageFilter.blocked("headend-api.tonton.com.my", "/v600/api/epg.class.api.php/getChannelListings/378"));
+        assertFalse(TvPageFilter.blocked("headend-api.tonton.com.my", "/v600/api/categoryTree.class.api.php/GOgetLiveChannels/378"));
+        assertFalse(TvPageFilter.blocked("headend-api.tonton.com.my", "/v600/bundleAPI/getConfiguration.php"));
+        assertFalse(TvPageFilter.blocked("headend-api.tonton.com.my", "/v600/api/auth.class.api.php/logon/377"));
+    }
+
+    @Test
     public void keepsTheProvidersPagesPlayerLicenceAndStream() {
         assertFalse(TvPageFilter.blocked("watch.tonton.com.my", "/live/tv3"));
         assertFalse(TvPageFilter.blocked("headend-api.tonton.com.my", "/v600/api/auth.class.api.php/logon/377"));

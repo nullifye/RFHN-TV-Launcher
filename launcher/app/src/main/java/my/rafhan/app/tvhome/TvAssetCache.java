@@ -21,9 +21,10 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Live TV's own copy of RTMKlik's player scripts. WebView's HTTP cache doesn't keep them: the live
- * video's segments go through the same small cache and push them out, so every RTMKlik page load
- * downloaded the 1.3 MB player again. Served from here, the page skips that download.
+ * Live TV's own copy of RTMKlik's player scripts. WebView's HTTP cache didn't keep them (the
+ * server revalidates them cheaply, yet every RTMKlik page load downloaded the 1.3 MB player in
+ * full; most likely the live video's segments, which share that small cache, push it out).
+ * Served from here, the page skips that download.
  *
  * The player's file name carries its content hash (a new version comes under a new name), so its
  * copy is used while that name is; the player UI's name isn't versioned, so its copy is fetched

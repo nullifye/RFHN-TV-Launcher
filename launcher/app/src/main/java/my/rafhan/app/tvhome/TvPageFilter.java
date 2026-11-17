@@ -2,7 +2,7 @@ package my.rafhan.app.tvhome;
 
 /**
  * What Live TV's player refuses to load from the channel pages: ad loaders, third-party trackers
- * and RTMKlik's hidden programme guide. On the TV's slow processor these compete with the page's
+ * and RTMKlik's own programme guide, hidden by the crop. On the TV's slow processor these compete with the page's
  * own start-up, and the players wait for their ad request to fail before starting the stream
  * (seconds, behind an ad-blocking DNS). Refused straight away, the players start the programme as
  * they do for a viewer with an ad blocker. The providers' own pages, APIs, player, licence and
@@ -46,6 +46,8 @@ final class TvPageFilter {
                 return path.startsWith("/epg-tv/");
             case "dggz3oflbpnah.cloudfront.net":
                 return path.startsWith("/epg-data/");
+            // Not Tonton's guide (headend-api …/epg.class.api.php/): its live page waits for it
+            // before it creates the player, so without it no channel starts.
             default: // CleverTap's script, served from a shared CDN host
                 return path.endsWith("/clevertap.min.js");
         }
